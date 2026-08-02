@@ -10,6 +10,8 @@ extern const struct CompressedSpritePalette gBerryCheckCirclePaletteTable;
 void RemoveBagSprite(u8 id);
 void AddBagVisualSprite(u8 bagPocketId);
 void SetBagVisualPocketId(u8 bagPocketId, bool8 isSwitchingPockets);
+u8 CreateIndependentBagVisualSprite(u8 bagPocketId);
+void SetIndependentBagVisualPocketId(u8 spriteId, u8 bagPocketId);
 void ShakeBagSprite(void);
 void AddSwitchPocketRotatingBallSprite(s16 rotationDirection);
 void AddBagItemIconSprite(u16 itemId, u8 id);

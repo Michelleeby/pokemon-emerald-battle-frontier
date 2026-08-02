@@ -4417,6 +4417,37 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
     }
 }
 
+void SetMonPersonality(struct Pokemon *mon, u32 personality)
+{
+    struct BoxPokemon *boxMon = &mon->box;
+    union PokemonSubstruct substructs[4];
+    u32 oldPersonality = boxMon->personality;
+    u8 i;
+
+    if (personality == oldPersonality)
+        return;
+
+    DecryptBoxMon(boxMon);
+    if (CalculateBoxMonChecksum(boxMon) != boxMon->checksum)
+    {
+        boxMon->isBadEgg = TRUE;
+        boxMon->isEgg = TRUE;
+        GetSubstruct(boxMon, oldPersonality, 3)->type3.isEgg = TRUE;
+        EncryptBoxMon(boxMon);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_COUNT(substructs); i++)
+        substructs[i] = *GetSubstruct(boxMon, oldPersonality, i);
+
+    boxMon->personality = personality;
+    for (i = 0; i < ARRAY_COUNT(substructs); i++)
+        *GetSubstruct(boxMon, personality, i) = substructs[i];
+
+    boxMon->checksum = CalculateBoxMonChecksum(boxMon);
+    EncryptBoxMon(boxMon);
+}
+
 void CopyMon(void *dest, void *src, size_t size)
 {
     memcpy(dest, src, size);

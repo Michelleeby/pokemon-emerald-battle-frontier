@@ -441,6 +441,21 @@ void AddBagVisualSprite(u8 bagPocketId)
     SetBagVisualPocketId(bagPocketId, FALSE);
 }
 
+u8 CreateIndependentBagVisualSprite(u8 bagPocketId)
+{
+    u8 spriteId = CreateSprite(&sBagSpriteTemplate, 68, 66, 0);
+
+    if (spriteId != MAX_SPRITES)
+        StartSpriteAnim(&gSprites[spriteId], bagPocketId + 1);
+    return spriteId;
+}
+
+void SetIndependentBagVisualPocketId(u8 spriteId, u8 bagPocketId)
+{
+    if (spriteId != MAX_SPRITES)
+        StartSpriteAnim(&gSprites[spriteId], bagPocketId + 1);
+}
+
 #define sPocketId data[0]
 
 void SetBagVisualPocketId(u8 bagPocketId, bool8 isSwitchingPockets)
