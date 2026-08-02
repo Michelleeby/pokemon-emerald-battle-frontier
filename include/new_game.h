@@ -2,6 +2,7 @@
 #define GUARD_NEW_GAME_H
 
 extern bool8 gDifferentSaveFile;
+extern u8 gNewGameAvatarStyle;
 // Shortcuts some randomness in berry_blender.c, and enables debug printing
 // in contest.c.
 extern bool8 gEnableContestDebugging;
@@ -12,5 +13,6 @@ void CopyTrainerId(u8 *dst, u8 *src);
 void NewGameInitData(void);
 void ResetMenuAndMonGlobals(void);
 void Sav2_ClearSetDefault(void);
+u8 GetPlayerAvatarStyle(void);
 
 #endif // GUARD_NEW_GAME_H

@@ -45,6 +45,9 @@
 #include "mystery_gift.h"
 #include "union_room_chat.h"
 #include "constants/items.h"
+#include "constants/flags.h"
+#include "constants/heal_locations.h"
+#include "constants/vars.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 
@@ -54,6 +57,7 @@ static void ResetMiniGamesRecords(void);
 
 EWRAM_DATA bool8 gDifferentSaveFile = FALSE;
 EWRAM_DATA bool8 gEnableContestDebugging = FALSE;
+EWRAM_DATA u8 gNewGameAvatarStyle = FEMALE;
 
 static const struct ContestWinner sContestWinnerPicDummy =
 {
@@ -165,6 +169,8 @@ void NewGameInitData(void)
     PlayTimeCounter_Reset();
     ClearPokedexFlags();
     InitEventData();
+    VarSet(VAR_PLAYER_AVATAR_STYLE, gNewGameAvatarStyle);
+    gSaveBlock2Ptr->playerGender = FEMALE;
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();
@@ -204,6 +210,11 @@ void NewGameInitData(void)
     WipeTrainerNameRecords();
     ResetTrainerHillResults();
     ResetContestLinkResults();
+}
+
+u8 GetPlayerAvatarStyle(void)
+{
+    return VarGet(VAR_PLAYER_AVATAR_STYLE);
 }
 
 static void ResetMiniGamesRecords(void)
