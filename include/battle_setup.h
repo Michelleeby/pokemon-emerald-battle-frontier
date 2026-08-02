@@ -30,6 +30,7 @@ void StartRegiBattle(void);
 u8 BattleSetup_GetEnvironmentId(void);
 u8 GetSpecialBattleTransition(s32 id);
 void ChooseStarter(void);
+void ChooseFrontierStarter(void);
 void ResetTrainerOpponentIds(void);
 void SetMapVarsToTrainer(void);
 const u8 *BattleSetup_ConfigureTrainerBattle(const u8 *data);

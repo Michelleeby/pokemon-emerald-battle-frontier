@@ -1529,6 +1529,11 @@ static bool8 RunFieldCallback(void)
     return TRUE;
 }
 
+static void FieldCB_FrontierFerryOpening(void)
+{
+    ScriptContext_SetupScript(SlateportCity_Harbor_EventScript_FrontierFerryOpening);
+}
+
 void CB2_NewGame(void)
 {
     FieldClearVBlankHBlankCallbacks();
@@ -1539,12 +1544,18 @@ void CB2_NewGame(void)
     PlayTimeCounter_Start();
     ScriptContext_Init();
     UnlockPlayerFieldControls();
-    gFieldCallback = ExecuteTruckSequence;
+    gFieldCallback = NULL;
     gFieldCallback2 = NULL;
     DoMapLoadLoop(&gMain.state);
     SetFieldVBlankCallback();
     SetMainCallback1(CB1_Overworld);
-    SetMainCallback2(CB2_Overworld);
+    ChooseFrontierStarter();
+}
+
+void CB2_StartFrontierFerryOpening(void)
+{
+    gFieldCallback = FieldCB_FrontierFerryOpening;
+    CB2_ReturnToField();
 }
 
 void CB2_WhiteOut(void)

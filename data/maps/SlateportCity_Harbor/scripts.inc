@@ -538,3 +538,17 @@ SlateportCity_Harbor_Text_HandedScannerToStern:
 SlateportCity_Harbor_Text_ThisWillHelpResearch:
 	.string "CAPT. STERN: Thanks, {PLAYER}{KUN}!\n"
 	.string "This will help our research a lot!$"
+SlateportCity_Harbor_EventScript_FrontierFerryOpening::
+	lockall
+	fadescreen FADE_FROM_BLACK
+	delay 30
+	applymovement LOCALID_PLAYER, SlateportCity_Harbor_Movement_BoardFerryNorth
+	waitmovement 0
+	delay 30
+	hideplayer
+	setvar VAR_0x8004, LOCALID_SLATEPORT_HARBOR_SS_TIDAL
+	call Common_EventScript_FerryDepart
+	warp MAP_BATTLE_FRONTIER_OUTSIDE_WEST, 19, 67
+	waitstate
+	releaseall
+	end

@@ -82,6 +82,7 @@ static u8 GetTrainerBattleTransition(void);
 static void TryUpdateGymLeaderRematchFromWild(void);
 static void TryUpdateGymLeaderRematchFromTrainer(void);
 static void CB2_GiveStarter(void);
+static void CB2_GiveFrontierStarter(void);
 static void CB2_StartFirstBattle(void);
 static void CB2_EndFirstBattle(void);
 static void CB2_EndTrainerBattle(void);
@@ -912,6 +913,22 @@ void ChooseStarter(void)
 {
     SetMainCallback2(CB2_ChooseStarter);
     gMain.savedCallback = CB2_GiveStarter;
+}
+
+void ChooseFrontierStarter(void)
+{
+    SetMainCallback2(CB2_ChooseStarter);
+    gMain.savedCallback = CB2_GiveFrontierStarter;
+}
+
+static void CB2_GiveFrontierStarter(void)
+{
+    *GetVarPointer(VAR_STARTER_MON) = gSpecialVar_Result;
+    ScriptGiveMon(GetStarterPokemon(gSpecialVar_Result), 50, ITEM_NONE, 0, 0, 0);
+    FlagSet(FLAG_SYS_POKEMON_GET);
+    FreeAllWindowBuffers();
+    ResetTasks();
+    SetMainCallback2(CB2_StartFrontierFerryOpening);
 }
 
 static void CB2_GiveStarter(void)
