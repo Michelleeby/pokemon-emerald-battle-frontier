@@ -58,6 +58,7 @@
 #include "string_util.h"
 #include "strings.h"
 #include "task.h"
+#include "team_lab.h"
 #include "text.h"
 #include "text_window.h"
 #include "trade.h"
@@ -339,6 +340,9 @@ static u8 GetPartySlotEntryStatus(s8);
 static void Task_UpdateHeldItemSprite(u8);
 static void Task_HandleSelectionMenuInput(u8);
 static void CB2_ShowPokemonSummaryScreen(void);
+static void CB2_HandleTeamLabPartySelection(void);
+static void CB2_OpenTeamLabSummary(void);
+static void CB2_ReturnToTeamLabParty(void);
 static void UpdatePartyToBattleOrder(void);
 static void CB2_ReturnToPartyMenuFromSummaryScreen(void);
 static void SlidePartyMenuBoxOneStep(u8);
@@ -2798,6 +2802,44 @@ static void CB2_ShowPokemonSummaryScreen(void)
     {
         ShowPokemonSummaryScreen(SUMMARY_MODE_NORMAL, gPlayerParty, gPartyMenu.slotId, gPlayerPartyCount - 1, CB2_ReturnToPartyMenuFromSummaryScreen);
     }
+}
+
+void OpenTeamLabPartyMenu(void)
+{
+    InitPartyMenu(PARTY_MENU_TYPE_TEAM_LAB, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_AND_CLOSE, FALSE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_HandleTeamLabPartySelection);
+}
+
+static void CB2_HandleTeamLabPartySelection(void)
+{
+    if (gPlayerPartyCount != 0
+     && gPartyMenu.slotId < gPlayerPartyCount
+     && GetMonData(&gPlayerParty[gPartyMenu.slotId], MON_DATA_SPECIES) != SPECIES_NONE)
+        CB2_OpenTeamLabSummary();
+    else
+        SetMainCallback2(CB2_ReturnToField);
+}
+
+static void CB2_OpenTeamLabSummary(void)
+{
+    if (gPlayerPartyCount == 0 || gPartyMenu.slotId >= gPlayerPartyCount)
+    {
+        SetMainCallback2(CB2_ReturnToField);
+        return;
+    }
+
+    ShowTeamLabScreen(gPartyMenu.slotId, CB2_ReturnToTeamLabParty);
+}
+
+static void CB2_ReturnToTeamLabParty(void)
+{
+    if (gPlayerPartyCount == 0)
+    {
+        SetMainCallback2(CB2_ReturnToField);
+        return;
+    }
+
+    gPartyMenu.slotId = min(gLastViewedMonIndex, gPlayerPartyCount - 1);
+    InitPartyMenu(PARTY_MENU_TYPE_TEAM_LAB, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_AND_CLOSE, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_HandleTeamLabPartySelection);
 }
 
 static void CB2_ReturnToPartyMenuFromSummaryScreen(void)

@@ -64,6 +64,7 @@
 #define PARTY_MENU_TYPE_SPIN_TRADE                10 // Unused beta for Gen IV's Spin Trade
 #define PARTY_MENU_TYPE_MINIGAME                  11
 #define PARTY_MENU_TYPE_STORE_PYRAMID_HELD_ITEMS  12
+#define PARTY_MENU_TYPE_TEAM_LAB                  13
 
 #define PARTY_ACTION_CHOOSE_MON         0
 #define PARTY_ACTION_SEND_OUT           1
