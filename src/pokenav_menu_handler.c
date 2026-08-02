@@ -1,8 +1,12 @@
 #include "global.h"
 #include "pokenav.h"
 #include "event_data.h"
+#include "event_scripts.h"
 #include "main.h"
+#include "party_menu.h"
+#include "script.h"
 #include "sound.h"
+#include "task.h"
 #include "constants/songs.h"
 
 struct Pokenav_Menu
@@ -31,13 +35,15 @@ static u32 HandleMainMenuInput(struct Pokenav_Menu *);
 static u32 (*GetMainMenuInputHandler(void))(struct Pokenav_Menu *);
 static void SetMenuInputHandler(struct Pokenav_Menu *);
 
+extern const u8 EventScript_PCMainMenu[];
+
 // Number of entries - 1 for that menu type
 static const u8 sLastCursorPositions[] =
 {
     [POKENAV_MENU_TYPE_DEFAULT]           = 2,
     [POKENAV_MENU_TYPE_UNLOCK_MC]         = 3,
     [POKENAV_MENU_TYPE_UNLOCK_MC_RIBBONS] = 4,
-    [POKENAV_MENU_TYPE_CONDITION]         = 2,
+    [POKENAV_MENU_TYPE_CONDITION]         = 4,
     [POKENAV_MENU_TYPE_CONDITION_SEARCH]  = 5
 };
 
@@ -66,10 +72,12 @@ static const u8 sMenuItems[][MAX_POKENAV_MENUITEMS] =
     },
     [POKENAV_MENU_TYPE_CONDITION] =
     {
+        POKENAV_MENUITEM_CONDITION_TEAM_LAB,
+        POKENAV_MENUITEM_CONDITION_ACCESS_PC,
         POKENAV_MENUITEM_CONDITION_PARTY,
         POKENAV_MENUITEM_CONDITION_SEARCH,
         POKENAV_MENUITEM_CONDITION_CANCEL,
-        [3 ... MAX_POKENAV_MENUITEMS - 1] = POKENAV_MENUITEM_SWITCH_OFF
+        [5 ... MAX_POKENAV_MENUITEMS - 1] = POKENAV_MENUITEM_SWITCH_OFF
     },
     [POKENAV_MENU_TYPE_CONDITION_SEARCH] =
     {
@@ -78,7 +86,7 @@ static const u8 sMenuItems[][MAX_POKENAV_MENUITEMS] =
         POKENAV_MENUITEM_CONDITION_SEARCH_CUTE,
         POKENAV_MENUITEM_CONDITION_SEARCH_SMART,
         POKENAV_MENUITEM_CONDITION_SEARCH_TOUGH,
-        POKENAV_MENUITEM_CONDITION_SEARCH_CANCEL
+            POKENAV_MENUITEM_CONDITION_SEARCH_CANCEL
     },
 };
 
@@ -145,8 +153,8 @@ bool32 PokenavCallback_Init_ConditionMenu(void)
         return FALSE;
 
     menu->menuType = POKENAV_MENU_TYPE_CONDITION;
-    menu->cursorPos = 0;   //party
-    menu->currMenuItem = POKENAV_MENUITEM_CONDITION_PARTY;
+    menu->cursorPos = 0;
+    menu->currMenuItem = POKENAV_MENUITEM_CONDITION_TEAM_LAB;
     menu->helpBarIndex = HELPBAR_NONE;
     SetMenuInputHandler(menu);
     return TRUE;
@@ -338,6 +346,24 @@ static u32 HandleCantOpenRibbonsInput(struct Pokenav_Menu *menu)
     return POKENAV_MENU_FUNC_NONE;
 }
 
+static void Task_WaitFadeAccessPC(u8 taskId)
+{
+    if (!WaitForPokenavShutdownFade())
+    {
+        ScriptContext_SetupScript(EventScript_PCMainMenu);
+        DestroyTask(taskId);
+    }
+}
+
+static void Task_WaitFadeOpenTeamLabParty(u8 taskId)
+{
+    if (!WaitForPokenavShutdownFade())
+    {
+        OpenTeamLabPartyMenu();
+        DestroyTask(taskId);
+    }
+}
+
 static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
 {
     if (UpdateMenuCursorPos(menu))
@@ -347,12 +373,19 @@ static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
     {
         switch (sMenuItems[menu->menuType][menu->cursorPos])
         {
+        case POKENAV_MENUITEM_CONDITION_TEAM_LAB:
+            CreateTask(Task_WaitFadeOpenTeamLabParty, 0);
+            return POKENAV_MENU_FUNC_EXIT;
         case POKENAV_MENUITEM_CONDITION_SEARCH:
             menu->menuType = POKENAV_MENU_TYPE_CONDITION_SEARCH;
             menu->cursorPos = 0;
             menu->currMenuItem = sMenuItems[POKENAV_MENU_TYPE_CONDITION_SEARCH][0];
             menu->callback = HandleConditionSearchMenuInput;
             return POKENAV_MENU_FUNC_OPEN_CONDITION_SEARCH;
+        case POKENAV_MENUITEM_CONDITION_ACCESS_PC:
+            FlagSet(FLAG_SYS_PC_FROM_POKENAV);
+            CreateTask(Task_WaitFadeAccessPC, 0);
+            return POKENAV_MENU_FUNC_EXIT;
         case POKENAV_MENUITEM_CONDITION_PARTY:
             menu->helpBarIndex = 0;
             SetMenuIdAndCB(menu, POKENAV_CONDITION_GRAPH_PARTY);
