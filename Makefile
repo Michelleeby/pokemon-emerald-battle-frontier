@@ -160,7 +160,7 @@ MAKEFLAGS += --no-print-directory
 .DELETE_ON_ERROR:
 
 RULES_NO_SCAN += libagbsyscall clean clean-assets tidy tidymodern tidynonmodern generated clean-generated
-.PHONY: all rom modern compare
+.PHONY: all rom modern compare retroid
 .PHONY: $(RULES_NO_SCAN)
 
 infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
@@ -383,6 +383,10 @@ $(ELF): $(LD_SCRIPT) $(LD_SCRIPT_DEPS) $(OBJS) libagbsyscall
 $(ROM): $(ELF)
 	$(OBJCOPY) -O binary $< $@
 	$(FIX) $@ -p --silent
+
+# Build the legacy ROM, then deploy it to the connected Retroid Pocket Classic.
+retroid: rom
+	powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/deploy_retroid.ps1 -RomPath "$$(wslpath -w "$(abspath $(ROM_NAME))")"
 
 # Symbol file (`make syms`)
 $(SYM): $(ELF)
