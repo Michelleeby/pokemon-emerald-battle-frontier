@@ -688,6 +688,8 @@ static bool8 MainState_PressedOKButton(void)
 
 static bool8 MainState_FadeOut(void)
 {
+    if (sNamingScreen->templateNum == NAMING_SCREEN_PLAYER)
+        PlaySE(SE_EXIT);
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     sNamingScreen->state++;
     return FALSE;

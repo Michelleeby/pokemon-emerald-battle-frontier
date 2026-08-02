@@ -44,6 +44,7 @@
 #include "constants/items.h"
 #include "constants/songs.h"
 #include "constants/map_types.h"
+#include "constants/rgb.h"
 #include "constants/trainers.h"
 #include "constants/trainer_hill.h"
 #include "constants/weather.h"
@@ -82,6 +83,7 @@ static u8 GetTrainerBattleTransition(void);
 static void TryUpdateGymLeaderRematchFromWild(void);
 static void TryUpdateGymLeaderRematchFromTrainer(void);
 static void CB2_GiveStarter(void);
+static void CB2_BeginGiveFrontierStarter(void);
 static void CB2_GiveFrontierStarter(void);
 static void CB2_StartFirstBattle(void);
 static void CB2_EndFirstBattle(void);
@@ -918,11 +920,22 @@ void ChooseStarter(void)
 void ChooseFrontierStarter(void)
 {
     SetMainCallback2(CB2_ChooseStarter);
-    gMain.savedCallback = CB2_GiveFrontierStarter;
+    gMain.savedCallback = CB2_BeginGiveFrontierStarter;
+}
+
+static void CB2_BeginGiveFrontierStarter(void)
+{
+    PlaySE(SE_EXIT);
+    BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+    SetMainCallback2(CB2_GiveFrontierStarter);
 }
 
 static void CB2_GiveFrontierStarter(void)
 {
+    UpdatePaletteFade();
+    if (gPaletteFade.active)
+        return;
+
     *GetVarPointer(VAR_STARTER_MON) = gSpecialVar_Result;
     ScriptGiveMon(GetStarterPokemon(gSpecialVar_Result), 50, ITEM_NONE, 0, 0, 0);
     FlagSet(FLAG_SYS_POKEMON_GET);
