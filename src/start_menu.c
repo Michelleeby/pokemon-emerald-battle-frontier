@@ -644,7 +644,7 @@ static bool8 StartMenuPokedexCallback(void)
         PlayRainStoppingSoundEffect();
         RemoveExtraStartMenuWindows();
         CleanupOverworldWindowsAndTilemaps();
-        SetMainCallback2(CB2_OpenPokedex);
+        OpenPokedex(CB2_ReturnToFieldWithOpenMenu);
 
         return TRUE;
     }

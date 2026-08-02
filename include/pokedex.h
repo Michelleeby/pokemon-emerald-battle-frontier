@@ -41,6 +41,8 @@ u16 CreateMonSpriteFromNationalDexNumber(u16 nationalNum, s16 x, s16 y, u16 pale
 bool16 HasAllHoennMons(void);
 void ResetPokedexScrollPositions(void);
 bool16 HasAllMons(void);
-void CB2_OpenPokedex(void);
+void OpenPokedex(void (*returnCallback)(void));
+void OpenPokedexForSelection(u16 initialSpecies, void (*returnCallback)(void));
+bool8 GetPokedexSelectionResult(u16 *species);
 
 #endif // GUARD_POKEDEX_H
