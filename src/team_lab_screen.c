@@ -30,6 +30,7 @@
 #include "constants/abilities.h"
 #include "constants/rgb.h"
 #include "constants/items.h"
+#include "constants/moves.h"
 #include "constants/songs.h"
 
 enum
@@ -92,6 +93,7 @@ struct TeamLabScreen
     u8 evPresetStats[3];
     u8 moveSearch[MOVE_NAME_LENGTH + 1];
     bool8 dirty;
+    bool8 isCreating;
 };
 
 static EWRAM_DATA struct TeamLabScreen *sTeamLabScreen = NULL;
@@ -112,6 +114,7 @@ static void DrawTeamLabBuildPage(void);
 static void DrawTeamLabStatsPage(void);
 static void DrawTeamLabMovesPage(void);
 static void ExtractTeamLabDraft(struct TeamLabMonBuild *draft, struct Pokemon *mon);
+static void CreateDefaultTeamLabMon(struct Pokemon *mon);
 static void DrawTeamLabModal(void);
 static void HandleTeamLabNormalInput(u8 taskId);
 static void HandleTeamLabModalInput(void);
@@ -254,7 +257,7 @@ static void PrintSelectedSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
 
 void ShowTeamLabScreen(u8 partyIndex, void (*returnCallback)(void))
 {
-    if (partyIndex >= gPlayerPartyCount)
+    if (partyIndex >= PARTY_SIZE)
     {
         SetMainCallback2(returnCallback);
         return;
@@ -269,12 +272,36 @@ void ShowTeamLabScreen(u8 partyIndex, void (*returnCallback)(void))
 
     sTeamLabScreen->returnCallback = returnCallback;
     sTeamLabScreen->partyIndex = partyIndex;
-    sTeamLabScreen->original = gPlayerParty[partyIndex];
-    sTeamLabScreen->preview = sTeamLabScreen->original;
+    if (GetMonData(&gPlayerParty[partyIndex], MON_DATA_SPECIES) == SPECIES_NONE)
+    {
+        sTeamLabScreen->isCreating = TRUE;
+        CreateDefaultTeamLabMon(&sTeamLabScreen->preview);
+    }
+    else
+    {
+        sTeamLabScreen->original = gPlayerParty[partyIndex];
+        sTeamLabScreen->preview = sTeamLabScreen->original;
+    }
     sTeamLabScreen->monIconSpriteId = SPRITE_NONE;
     ExtractTeamLabDraft(&sTeamLabScreen->draft, &sTeamLabScreen->preview);
     gMain.state = 0;
     SetMainCallback2(CB2_InitTeamLabScreen);
+}
+
+static void CreateDefaultTeamLabMon(struct Pokemon *mon)
+{
+    struct TeamLabMonBuild build = {0};
+    u8 i;
+
+    build.species = SPECIES_BULBASAUR;
+    build.level = 50;
+    build.nature = NATURE_HARDY;
+    build.abilityNum = 0;
+    build.moves[0] = MOVE_TACKLE;
+    for (i = 0; i < NUM_STATS; i++)
+        build.ivs[i] = MAX_PER_STAT_IVS;
+
+    TeamLab_CreateMon(mon, &build);
 }
 
 static void ExtractTeamLabDraft(struct TeamLabMonBuild *draft, struct Pokemon *mon)
@@ -730,7 +757,18 @@ static void HandleTeamLabNormalInput(u8 taskId)
             PlaySE(SE_FAILURE);
             return;
         }
+        if (sTeamLabScreen->isCreating)
+        {
+            CalculatePlayerPartyCount();
+            if (gPlayerPartyCount >= PARTY_SIZE)
+            {
+                PlaySE(SE_FAILURE);
+                return;
+            }
+            sTeamLabScreen->partyIndex = gPlayerPartyCount;
+        }
         gPlayerParty[sTeamLabScreen->partyIndex] = sTeamLabScreen->preview;
+        CalculatePlayerPartyCount();
         BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
         gTasks[taskId].func = Task_ExitTeamLabScreen;
         PlaySE(SE_SELECT);

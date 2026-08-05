@@ -527,7 +527,9 @@ static void InitPartyMenu(u8 menuType, u8 layout, u8 partyAction, bool8 keepCurs
 
         if (!keepCursorPos)
             gPartyMenu.slotId = 0;
-        else if (gPartyMenu.slotId > PARTY_SIZE - 1 || GetMonData(&gPlayerParty[gPartyMenu.slotId], MON_DATA_SPECIES) == SPECIES_NONE)
+        else if (gPartyMenu.slotId > PARTY_SIZE - 1
+              || (gPartyMenu.menuType != PARTY_MENU_TYPE_TEAM_LAB
+               && GetMonData(&gPlayerParty[gPartyMenu.slotId], MON_DATA_SPECIES) == SPECIES_NONE))
             gPartyMenu.slotId = 0;
 
         gTextFlags.autoScroll = 0;
@@ -843,7 +845,10 @@ static void RenderPartyMenuBox(u8 slot)
         if (GetMonData(&gPlayerParty[slot], MON_DATA_SPECIES) == SPECIES_NONE)
         {
             DrawEmptySlot(sPartyMenuBoxes[slot].windowId);
-            LoadPartyBoxPalette(&sPartyMenuBoxes[slot], PARTY_PAL_NO_MON);
+            if (gPartyMenu.menuType == PARTY_MENU_TYPE_TEAM_LAB && gPartyMenu.slotId == slot)
+                LoadPartyBoxPalette(&sPartyMenuBoxes[slot], GetPartyBoxPaletteFlags(slot, 1));
+            else
+                LoadPartyBoxPalette(&sPartyMenuBoxes[slot], PARTY_PAL_NO_MON);
             CopyWindowToVram(sPartyMenuBoxes[slot].windowId, COPYWIN_GFX);
         }
         else
@@ -1133,6 +1138,13 @@ void AnimatePartySlot(u8 slot, u8 animNum)
             LoadPartyBoxPalette(&sPartyMenuBoxes[slot], GetPartyBoxPaletteFlags(slot, animNum));
             AnimateSelectedPartyIcon(sPartyMenuBoxes[slot].monSpriteId, animNum);
             PartyMenuStartSpriteAnim(sPartyMenuBoxes[slot].pokeballSpriteId, animNum);
+        }
+        else if (gPartyMenu.menuType == PARTY_MENU_TYPE_TEAM_LAB)
+        {
+            if (animNum == 0)
+                LoadPartyBoxPalette(&sPartyMenuBoxes[slot], PARTY_PAL_NO_MON);
+            else
+                LoadPartyBoxPalette(&sPartyMenuBoxes[slot], GetPartyBoxPaletteFlags(slot, animNum));
         }
         return;
     case PARTY_SIZE: // Confirm
@@ -1526,6 +1538,11 @@ static void UpdateCurrentPartySelection(s8 *slotPtr, s8 movementDir)
 
 static void UpdatePartySelectionSingleLayout(s8 *slotPtr, s8 movementDir)
 {
+    u8 slotCount = gPlayerPartyCount;
+
+    if (gPartyMenu.menuType == PARTY_MENU_TYPE_TEAM_LAB)
+        slotCount = PARTY_SIZE;
+
     // PARTY_SIZE + 1 is Cancel, PARTY_SIZE is Confirm
     switch (movementDir)
     {
@@ -1536,14 +1553,14 @@ static void UpdatePartySelectionSingleLayout(s8 *slotPtr, s8 movementDir)
         }
         else if (*slotPtr == PARTY_SIZE)
         {
-            *slotPtr = gPlayerPartyCount - 1;
+            *slotPtr = slotCount - 1;
         }
         else if (*slotPtr == PARTY_SIZE + 1)
         {
             if (sPartyMenuInternal->chooseHalf)
                 *slotPtr = PARTY_SIZE;
             else
-                *slotPtr = gPlayerPartyCount - 1;
+                *slotPtr = slotCount - 1;
         }
         else
         {
@@ -1557,7 +1574,7 @@ static void UpdatePartySelectionSingleLayout(s8 *slotPtr, s8 movementDir)
         }
         else
         {
-            if (*slotPtr == gPlayerPartyCount - 1)
+            if (*slotPtr == slotCount - 1)
             {
                 if (sPartyMenuInternal->chooseHalf)
                     *slotPtr = PARTY_SIZE;
@@ -1571,7 +1588,7 @@ static void UpdatePartySelectionSingleLayout(s8 *slotPtr, s8 movementDir)
         }
         break;
     case MENU_DIR_RIGHT:
-        if (gPlayerPartyCount != 1 && *slotPtr == 0)
+        if (slotCount != 1 && *slotPtr == 0)
         {
             if (sPartyMenuInternal->lastSelectedSlot == 0)
                 *slotPtr = 1;
@@ -2811,9 +2828,7 @@ void OpenTeamLabPartyMenu(void)
 
 static void CB2_HandleTeamLabPartySelection(void)
 {
-    if (gPlayerPartyCount != 0
-     && gPartyMenu.slotId < gPlayerPartyCount
-     && GetMonData(&gPlayerParty[gPartyMenu.slotId], MON_DATA_SPECIES) != SPECIES_NONE)
+    if (gPartyMenu.slotId < PARTY_SIZE)
         CB2_OpenTeamLabSummary();
     else
         SetMainCallback2(CB2_ReturnToField);
@@ -2821,7 +2836,7 @@ static void CB2_HandleTeamLabPartySelection(void)
 
 static void CB2_OpenTeamLabSummary(void)
 {
-    if (gPlayerPartyCount == 0 || gPartyMenu.slotId >= gPlayerPartyCount)
+    if (gPartyMenu.slotId >= PARTY_SIZE)
     {
         SetMainCallback2(CB2_ReturnToField);
         return;
@@ -2832,13 +2847,7 @@ static void CB2_OpenTeamLabSummary(void)
 
 static void CB2_ReturnToTeamLabParty(void)
 {
-    if (gPlayerPartyCount == 0)
-    {
-        SetMainCallback2(CB2_ReturnToField);
-        return;
-    }
-
-    gPartyMenu.slotId = min(gLastViewedMonIndex, gPlayerPartyCount - 1);
+    gPartyMenu.slotId = min(gLastViewedMonIndex, PARTY_SIZE - 1);
     InitPartyMenu(PARTY_MENU_TYPE_TEAM_LAB, PARTY_LAYOUT_SINGLE, PARTY_ACTION_CHOOSE_AND_CLOSE, TRUE, PARTY_MSG_CHOOSE_MON, Task_HandleChooseMonInput, CB2_HandleTeamLabPartySelection);
 }
 
