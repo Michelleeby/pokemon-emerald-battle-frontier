@@ -162,6 +162,7 @@ void TeamLab_SetAbilityNum(struct Pokemon *mon, u8 abilityNum)
     u32 personality = GetTeamLabPersonality(mon, nature, abilityNum);
 
     SetMonPersonality(mon, personality);
+    SetMonData(mon, MON_DATA_ABILITY_NUM, &abilityNum);
     CalculateMonStats(mon);
 }
 
