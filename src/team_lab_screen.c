@@ -231,6 +231,16 @@ static const u8 *const sTeamLabStatNames[NUM_STATS] =
     gText_Speed2,
 };
 
+static const u8 sTeamLabStatDataIndexes[NUM_STATS] =
+{
+    STAT_HP,
+    STAT_ATK,
+    STAT_DEF,
+    STAT_SPATK,
+    STAT_SPDEF,
+    STAT_SPEED,
+};
+
 static const u8 *const sTeamLabNatureStatNames[NUM_STATS - 1] =
 {
     gText_Attack3,
@@ -496,15 +506,16 @@ static void DrawTeamLabStatsPage(void)
     PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabStat, 90, 18);
     for (i = 0; i < NUM_STATS; i++)
     {
+        u8 stat = sTeamLabStatDataIndexes[i];
         u8 y = 31 + i * 13;
 
         PrintSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabStatNames[i], 0, y);
-        ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.ivs[i], STR_CONV_MODE_RIGHT_ALIGN, 2);
+        ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.ivs[stat], STR_CONV_MODE_RIGHT_ALIGN, 2);
         if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 0)
             PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
         else
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
-        ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.evs[i], STR_CONV_MODE_RIGHT_ALIGN, 3);
+        ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.evs[stat], STR_CONV_MODE_RIGHT_ALIGN, 3);
         if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 1)
             PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
         else
@@ -713,7 +724,8 @@ static void HandleTeamLabNormalInput(u8 taskId)
         }
         else if (sTeamLabScreen->page == TEAM_LAB_PAGE_STATS)
         {
-            u8 *value = sTeamLabScreen->statColumn == 0 ? &sTeamLabScreen->draft.ivs[sTeamLabScreen->statFocus] : &sTeamLabScreen->draft.evs[sTeamLabScreen->statFocus];
+            u8 stat = sTeamLabStatDataIndexes[sTeamLabScreen->statFocus];
+            u8 *value = sTeamLabScreen->statColumn == 0 ? &sTeamLabScreen->draft.ivs[stat] : &sTeamLabScreen->draft.evs[stat];
             u8 max = sTeamLabScreen->statColumn == 0 ? MAX_PER_STAT_IVS : TEAM_LAB_MAX_PER_STAT_EVS;
             u16 evTotal = 0;
             u8 i;
@@ -902,7 +914,8 @@ static void HandleTeamLabModalInput(void)
             for (step = 0; step < 3; step++)
             {
                 u8 value = step < 2 ? TEAM_LAB_MAX_PER_STAT_EVS : 4;
-                SetMonData(&sTeamLabScreen->preview, MON_DATA_HP_EV + sTeamLabScreen->evPresetStats[step], &value);
+                u8 stat = sTeamLabStatDataIndexes[sTeamLabScreen->evPresetStats[step]];
+                SetMonData(&sTeamLabScreen->preview, MON_DATA_HP_EV + stat, &value);
             }
             ExtractTeamLabDraft(&sTeamLabScreen->draft, &sTeamLabScreen->preview);
             CalculateMonStats(&sTeamLabScreen->preview);
