@@ -188,8 +188,9 @@ void NewGameInitData(void)
     ResetPokemonStorageSystem();
     ClearRoamerData();
     ClearRoamerLocationData();
-    gSaveBlock1Ptr->registeredItem = ITEM_NONE;
     ClearBag();
+    AddBagItem(ITEM_MACH_BIKE, 1);
+    gSaveBlock1Ptr->registeredItem = ITEM_MACH_BIKE;
     NewGameInitPCItems();
     ClearPokeblocks();
     ClearDecorationInventories();
@@ -205,6 +206,14 @@ void NewGameInitData(void)
     FlagSet(FLAG_SYS_B_DASH);
     FlagSet(FLAG_SYS_POKENAV_GET);
     FlagSet(FLAG_SYS_FRONTIER_PASS);
+    FlagSet(FLAG_BADGE01_GET);
+    FlagSet(FLAG_BADGE02_GET);
+    FlagSet(FLAG_BADGE03_GET);
+    FlagSet(FLAG_BADGE04_GET);
+    FlagSet(FLAG_BADGE05_GET);
+    FlagSet(FLAG_BADGE06_GET);
+    FlagSet(FLAG_BADGE07_GET);
+    FlagSet(FLAG_BADGE08_GET);
     SetLastHealLocationWarp(HEAL_LOCATION_BATTLE_FRONTIER_OUTSIDE_EAST);
     ResetMiniGamesRecords();
     InitUnionRoomChatRegisteredTexts();
