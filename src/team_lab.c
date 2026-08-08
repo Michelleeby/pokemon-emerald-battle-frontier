@@ -183,6 +183,7 @@ void TeamLab_SetLevel(struct Pokemon *mon, u8 level)
 
 void TeamLab_CreateMon(struct Pokemon *mon, const struct TeamLabMonBuild *build)
 {
+    u8 gender = GetGenderFromSpeciesAndPersonality(build->species, Random32());
     u32 personality;
     u8 i;
 
@@ -190,7 +191,8 @@ void TeamLab_CreateMon(struct Pokemon *mon, const struct TeamLabMonBuild *build)
     {
         personality = Random32();
     } while (GetNatureFromPersonality(personality) != build->nature
-          || ((personality & 1) != build->abilityNum && gSpeciesInfo[build->species].abilities[1] != ABILITY_NONE));
+          || ((personality & 1) != build->abilityNum && gSpeciesInfo[build->species].abilities[1] != ABILITY_NONE)
+          || GetGenderFromSpeciesAndPersonality(build->species, personality) != gender);
 
     CreateMon(mon, build->species, build->level, 0, TRUE, personality, OT_ID_PLAYER_ID, 0);
     SetMonData(mon, MON_DATA_HELD_ITEM, &build->heldItem);
