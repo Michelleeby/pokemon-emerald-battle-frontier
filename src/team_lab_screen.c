@@ -91,6 +91,7 @@ struct TeamLabScreen
     u8 natureRaised;
     u8 natureLowered;
     u8 evPresetStats[3];
+    u8 statInputHoldFrames;
     u8 moveSearch[MOVE_NAME_LENGTH + 1];
     bool8 dirty;
     bool8 isCreating;
@@ -118,6 +119,7 @@ static void CreateDefaultTeamLabMon(struct Pokemon *mon);
 static void DrawTeamLabModal(void);
 static void HandleTeamLabNormalInput(u8 taskId);
 static void HandleTeamLabModalInput(void);
+static u16 GetAcceleratedStatInput(void);
 static void RefreshTeamLabPreview(void);
 static void RecreateTeamLabScene(void);
 static void FreeTeamLabVisualResources(void);
@@ -638,9 +640,41 @@ static void ChangeWrappedValue(u8 *value, s8 delta, u8 count)
         *value = (*value + 1) % count;
 }
 
+static u16 GetAcceleratedStatInput(void)
+{
+    u16 heldKeys = JOY_HELD(DPAD_LEFT | DPAD_RIGHT);
+
+    if (sTeamLabScreen->page != TEAM_LAB_PAGE_STATS
+     || (heldKeys != DPAD_LEFT && heldKeys != DPAD_RIGHT))
+    {
+        sTeamLabScreen->statInputHoldFrames = 0;
+        return 0;
+    }
+
+    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        sTeamLabScreen->statInputHoldFrames = 0;
+        return heldKeys;
+    }
+
+    if (sTeamLabScreen->statInputHoldFrames < 255)
+        sTeamLabScreen->statInputHoldFrames++;
+
+    if (sTeamLabScreen->statInputHoldFrames < 20)
+        return 0;
+    if (sTeamLabScreen->statInputHoldFrames < 50
+     && (sTeamLabScreen->statInputHoldFrames - 20) % 3 != 0)
+        return 0;
+
+    return heldKeys;
+}
+
 static void HandleTeamLabNormalInput(u8 taskId)
 {
     s8 delta = 0;
+    u16 horizontalInput = sTeamLabScreen->page == TEAM_LAB_PAGE_STATS
+                        ? GetAcceleratedStatInput()
+                        : JOY_NEW(DPAD_LEFT | DPAD_RIGHT);
 
     if (GetLRKeysPressed() == MENU_L_PRESSED)
     {
@@ -706,9 +740,9 @@ static void HandleTeamLabNormalInput(u8 taskId)
         }
         PlaySE(SE_SELECT);
     }
-    else if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    else if (horizontalInput)
     {
-        delta = JOY_NEW(DPAD_LEFT) ? -1 : 1;
+        delta = horizontalInput & DPAD_LEFT ? -1 : 1;
         if (sTeamLabScreen->page == TEAM_LAB_PAGE_BUILD && sTeamLabScreen->buildFocus == TEAM_LAB_BUILD_LEVEL)
         {
             if ((delta < 0 && sTeamLabScreen->draft.level > 1) || (delta > 0 && sTeamLabScreen->draft.level < MAX_LEVEL))
