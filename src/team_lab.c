@@ -19,6 +19,7 @@ static const u16 sTmHmMoves[] =
 #undef TMHM_MOVE
 
 extern const u16 gEggMoves[];
+extern const struct Evolution gEvolutionTable[][EVOS_PER_MON];
 
 static bool8 IsEggMove(u16 species, u16 move)
 {
@@ -62,18 +63,52 @@ static bool8 IsTmHmMove(u16 species, u16 move)
     return FALSE;
 }
 
+static bool8 IsMoveLegalForSpecies(u16 species, u16 move)
+{
+    return IsLevelUpMove(species, move)
+        || IsTmHmMove(species, move)
+        || CanSpeciesLearnTutorMove(species, move)
+        || IsEggMove(species, move);
+}
+
+static u16 GetPreviousEvolution(u16 species)
+{
+    u16 previousSpecies;
+    u8 evolution;
+
+    for (previousSpecies = SPECIES_NONE + 1; previousSpecies < NUM_SPECIES; previousSpecies++)
+    {
+        for (evolution = 0; evolution < EVOS_PER_MON; evolution++)
+        {
+            if (gEvolutionTable[previousSpecies][evolution].targetSpecies == species)
+                return previousSpecies;
+        }
+    }
+
+    return SPECIES_NONE;
+}
+
 bool8 TeamLab_IsMoveLegal(u16 species, u16 move)
 {
+    u8 evolution;
+
     if (move == MOVE_NONE)
         return TRUE;
 
     if (species == SPECIES_NONE || species >= NUM_SPECIES || move >= MOVES_COUNT)
         return FALSE;
 
-    return IsLevelUpMove(species, move)
-        || IsTmHmMove(species, move)
-        || CanSpeciesLearnTutorMove(species, move)
-        || IsEggMove(species, move);
+    for (evolution = 0; evolution < EVOS_PER_MON; evolution++)
+    {
+        if (IsMoveLegalForSpecies(species, move))
+            return TRUE;
+
+        species = GetPreviousEvolution(species);
+        if (species == SPECIES_NONE)
+            break;
+    }
+
+    return FALSE;
 }
 
 enum TeamLabValidationResult TeamLab_ValidateBuild(const struct TeamLabMonBuild *build)
