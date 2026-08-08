@@ -1169,7 +1169,7 @@ void CB2_InitCopyrightScreenAfterTitleScreen(void)
 static void Task_Scene1_Load(u8 taskId)
 {
     SetVBlankCallback(NULL);
-    sIntroCharacterGender = MOD(Random(), GENDER_COUNT);
+    sIntroCharacterGender = (Random() % 5 == 0) ? MALE : FEMALE;
     IntroResetGpuRegs();
     SetGpuReg(REG_OFFSET_BG3VOFS, 0);
     SetGpuReg(REG_OFFSET_BG2VOFS, 80);
