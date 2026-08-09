@@ -13,6 +13,7 @@
 #include "field_player_avatar.h"
 #include "event_object_movement.h"
 #include "event_data.h"
+#include "frontier_intro_tutorial.h"
 #include "constants/songs.h"
 #include "pokemon_storage_system.h"
 #include "graphics.h"
@@ -652,6 +653,17 @@ static bool8 MainState_WaitFadeIn(void)
 
 static bool8 MainState_HandleInput(void)
 {
+    if (sNamingScreen->templateNum == NAMING_SCREEN_MOVE_SEARCH)
+    {
+        FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_NAMING_SCREEN);
+        if (FrontierIntroTutorial_IsSkipping())
+        {
+            SetInputState(INPUT_STATE_DISABLED);
+            SetCursorFlashing(FALSE);
+            sNamingScreen->state = STATE_FADE_OUT;
+            return TRUE;
+        }
+    }
     return HandleKeyboardEvent();
 }
 

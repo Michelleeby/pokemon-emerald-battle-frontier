@@ -21,6 +21,7 @@
 #include "field_screen_effect.h"
 #include "field_specials.h"
 #include "field_weather.h"
+#include "frontier_intro_tutorial.h"
 #include "fieldmap.h"
 #include "fldeff.h"
 #include "fldeff_misc.h"
@@ -1277,6 +1278,9 @@ void Task_HandleChooseMonInput(u8 taskId)
     if (!gPaletteFade.active && MenuHelpers_ShouldWaitForLinkRecv() != TRUE)
     {
         s8 *slotPtr = GetCurrentPartySlotPtr();
+
+        if (gPartyMenu.menuType == PARTY_MENU_TYPE_TEAM_LAB)
+            FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_TEAM_LAB_PARTY);
 
         switch (PartyMenuButtonHandler(slotPtr))
         {
@@ -2831,7 +2835,10 @@ static void CB2_HandleTeamLabPartySelection(void)
     if (gPartyMenu.slotId < PARTY_SIZE)
         CB2_OpenTeamLabSummary();
     else
+    {
         SetMainCallback2(CB2_ReturnToField);
+        FrontierIntroTutorial_CompleteSkip();
+    }
 }
 
 static void CB2_OpenTeamLabSummary(void)

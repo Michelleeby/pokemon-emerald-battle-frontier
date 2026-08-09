@@ -5,6 +5,7 @@
 #include "decompress.h"
 #include "gpu_regs.h"
 #include "graphics.h"
+#include "frontier_intro_tutorial.h"
 #include "item.h"
 #include "list_menu.h"
 #include "main.h"
@@ -95,6 +96,7 @@ struct TeamLabScreen
     u8 moveSearch[MOVE_NAME_LENGTH + 1];
     bool8 dirty;
     bool8 isCreating;
+    bool8 aButtonPressed;
 };
 
 static EWRAM_DATA struct TeamLabScreen *sTeamLabScreen = NULL;
@@ -185,11 +187,18 @@ static const u8 sTeamLabTextColors[] =
     TEXT_COLOR_LIGHT_GRAY,
 };
 
+static const u8 sTeamLabIdleTextColors[] =
+{
+    TEXT_COLOR_TRANSPARENT,
+    TEXT_COLOR_DARK_GRAY,
+    TEXT_COLOR_LIGHT_GRAY,
+};
+
 static const u8 sTeamLabSelectedTextColors[] =
 {
     TEXT_COLOR_TRANSPARENT,
-    TEXT_COLOR_BLUE,
-    TEXT_COLOR_LIGHT_BLUE,
+    TEXT_COLOR_RED,
+    TEXT_COLOR_LIGHT_RED,
 };
 
 static const u8 sText_TeamLabTitle[] = _("TEAM LAB");
@@ -262,9 +271,69 @@ static void PrintSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
     AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, text);
 }
 
+static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 maxWidth)
+{
+    u8 line[64];
+
+    while (*text != EOS)
+    {
+        const u8 *wordStart;
+        u8 lineLength = 0;
+
+        while (*text == CHAR_SPACE)
+            text++;
+
+        while (*text != EOS && *text != CHAR_NEWLINE)
+        {
+            u8 wordLength = 0;
+            u8 candidateLength;
+
+            wordStart = text;
+            while (wordStart[wordLength] != EOS
+                && wordStart[wordLength] != CHAR_SPACE
+                && wordStart[wordLength] != CHAR_NEWLINE)
+                wordLength++;
+
+            candidateLength = lineLength + (lineLength != 0) + wordLength;
+            if (lineLength != 0)
+                line[lineLength] = CHAR_SPACE;
+            memcpy(&line[lineLength + (lineLength != 0)], wordStart, wordLength);
+            line[candidateLength] = EOS;
+
+            if (lineLength != 0 && GetStringWidth(FONT_SMALL, line, 0) > maxWidth)
+                break;
+
+            lineLength = candidateLength;
+            text += wordLength;
+            while (*text == CHAR_SPACE)
+                text++;
+        }
+
+        line[lineLength] = EOS;
+        PrintSmallText(windowId, line, x, y);
+        y += 14;
+
+        if (*text == CHAR_NEWLINE)
+            text++;
+    }
+}
+
 static void PrintSelectedSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
 {
     AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabSelectedTextColors, TEXT_SKIP_DRAW, text);
+}
+
+static void PrintIdleSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
+{
+    AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabIdleTextColors, TEXT_SKIP_DRAW, text);
+}
+
+static void PrintFocusedSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
+{
+    if (sTeamLabScreen->aButtonPressed)
+        PrintSelectedSmallText(windowId, text, x, y);
+    else
+        PrintSmallText(windowId, text, x, y);
 }
 
 void ShowTeamLabScreen(u8 partyIndex, void (*returnCallback)(void))
@@ -482,9 +551,12 @@ static void DrawTeamLabBuildPage(void)
         u8 y = 17 + i * 16;
 
         if (i == sTeamLabScreen->buildFocus)
-            PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 0, y);
+        {
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, y);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
+        }
         else
-            PrintSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 0, y);
+            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
         PrintSmallText(WIN_TEAM_LAB_CONTENT, values[i], 58, y);
     }
 }
@@ -511,15 +583,20 @@ static void DrawTeamLabStatsPage(void)
         u8 stat = sTeamLabStatDataIndexes[i];
         u8 y = 31 + i * 13;
 
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabStatNames[i], 0, y);
+        if (sTeamLabScreen->statFocus == i)
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, y);
+        if (sTeamLabScreen->statFocus == i)
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabStatNames[i], 8, y);
+        else
+            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabStatNames[i], 8, y);
         ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.ivs[stat], STR_CONV_MODE_RIGHT_ALIGN, 2);
         if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 0)
-            PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
         else
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
         ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.evs[stat], STR_CONV_MODE_RIGHT_ALIGN, 3);
         if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 1)
-            PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
         else
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
         ConvertIntToDecimalStringN(gStringVar1, GetMonData(&sTeamLabScreen->preview, sStatDataIds[i]), STR_CONV_MODE_RIGHT_ALIGN, 3);
@@ -538,19 +615,25 @@ static void DrawTeamLabMovesPage(void)
 
         ConvertIntToDecimalStringN(gStringVar1, i + 1, STR_CONV_MODE_LEFT_ALIGN, 1);
         if (i == sTeamLabScreen->moveFocus)
-            PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 0, 25 + i * 20);
+        {
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, 25 + i * 20);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 8, 25 + i * 20);
+        }
         else
-            PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 0, 25 + i * 20);
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, moveName, 16, 25 + i * 20);
+            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 8, 25 + i * 20);
+        PrintSmallText(WIN_TEAM_LAB_CONTENT, moveName, 20, 25 + i * 20);
     }
 }
 
 static void DrawModalChoice(const u8 *text, u8 choice, u8 y)
 {
     if (choice == sTeamLabScreen->modalCursor)
-        PrintSelectedSmallText(WIN_TEAM_LAB_CONTENT, text, 8, y);
+    {
+        PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, y);
+        PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, text, 8, y);
+    }
     else
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, text, 8, y);
+        PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, text, 8, y);
 }
 
 static void DrawTeamLabModal(void)
@@ -590,7 +673,7 @@ static void DrawTeamLabModal(void)
         PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabChooseAbility, 0, 1);
         for (i = 0; i < abilityCount; i++)
             DrawModalChoice(gAbilityNames[GetAbilityBySpecies(sTeamLabScreen->draft.species, i)], i, 21 + i * 18);
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, gAbilityDescriptionPointers[GetAbilityBySpecies(sTeamLabScreen->draft.species, sTeamLabScreen->modalCursor)], 0, 65);
+        PrintWrappedSmallText(WIN_TEAM_LAB_CONTENT, gAbilityDescriptionPointers[GetAbilityBySpecies(sTeamLabScreen->draft.species, sTeamLabScreen->modalCursor)], 0, 65, 14 * 8);
         break;
     }
     case TEAM_LAB_MODE_STAT_PRESET:
@@ -622,6 +705,22 @@ static void Task_HandleTeamLabScreenInput(u8 taskId)
 {
     if (gPaletteFade.active)
         return;
+
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_TEAM_LAB_EDITOR);
+
+    if (!sTeamLabScreen->aButtonPressed && JOY_NEW(A_BUTTON))
+    {
+        sTeamLabScreen->aButtonPressed = TRUE;
+        DrawTeamLabScreen();
+        return;
+    }
+    if (sTeamLabScreen->aButtonPressed)
+    {
+        if (JOY_HELD(A_BUTTON))
+            return;
+        sTeamLabScreen->aButtonPressed = FALSE;
+        gMain.newKeys |= A_BUTTON;
+    }
 
     if (sTeamLabScreen->mode != TEAM_LAB_MODE_NORMAL)
     {

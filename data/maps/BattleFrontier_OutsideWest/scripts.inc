@@ -1,11 +1,35 @@
 BattleFrontier_OutsideWest_MapScripts::
 	map_script MAP_SCRIPT_ON_TRANSITION, BattleFrontier_OutsideWest_OnTransition
+	map_script MAP_SCRIPT_ON_FRAME_TABLE, BattleFrontier_OutsideWest_OnFrame
 	.byte 0
 
 BattleFrontier_OutsideWest_OnTransition:
 	setvar VAR_BRAVO_TRAINER_BATTLE_TOWER_ON, 0
 	setflag FLAG_HIDE_BATTLE_TOWER_REPORTER
+	call_if_set FLAG_FRONTIER_INTRO_TUTORIAL_PENDING, BattleFrontier_OutsideWest_EventScript_ArmFrontierIntro
 	end
+
+BattleFrontier_OutsideWest_EventScript_ArmFrontierIntro::
+	setvar VAR_TEMP_1, 1
+	return
+
+BattleFrontier_OutsideWest_OnFrame:
+	map_script_2 VAR_TEMP_1, 1, BattleFrontier_OutsideWest_EventScript_FrontierIntro
+	.2byte 0
+
+BattleFrontier_OutsideWest_EventScript_FrontierIntro::
+	setvar VAR_TEMP_1, 0
+	clearflag FLAG_FRONTIER_INTRO_TUTORIAL_PENDING
+	lockall
+	special StartFrontierIntroTutorial
+	msgbox BattleFrontier_OutsideWest_Text_NowYouTryOpenPokeNav, MSGBOX_DEFAULT
+	setflag FLAG_FRONTIER_INTRO_TUTORIAL_COMPLETE
+	releaseall
+	end
+
+BattleFrontier_OutsideWest_Text_NowYouTryOpenPokeNav:
+	.string "Now you try, press L to open the\n"
+	.string "PokéNav.$"
 
 BattleFrontier_OutsideWest_EventScript_FerryAttendant::
 	lock
@@ -514,4 +538,3 @@ BattleFrontier_OutsideWest_Text_MonWithLongTailInFrontier:
 	.string "It must be adorable. I'm sure of it…\p"
 	.string "Oh, challenges can wait. I feel driven\n"
 	.string "to find the delightful creature!$"
-

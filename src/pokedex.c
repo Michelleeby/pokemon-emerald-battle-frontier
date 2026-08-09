@@ -4,6 +4,7 @@
 #include "data.h"
 #include "decompress.h"
 #include "event_data.h"
+#include "frontier_intro_tutorial.h"
 #include "gpu_regs.h"
 #include "graphics.h"
 #include "international_string_util.h"
@@ -1716,9 +1717,11 @@ static void Task_HandlePokedexInput(u8 taskId)
     if (sPokedexView->menuY)
     {
         sPokedexView->menuY -= 8;
-        }
-        else
+    }
+    else
     {
+        FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_LIST);
+
         if (JOY_NEW(A_BUTTON) && sPokedexView->pokedexList[sPokedexView->selectedPokemon].seen)
         {
             if (sPokedexIsInSelectionMode)
@@ -1934,6 +1937,8 @@ static void Task_HandleSearchResultsInput(u8 taskId)
     }
     else
     {
+        FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_RESULTS);
+
         if (JOY_NEW(A_BUTTON) && sPokedexView->pokedexList[sPokedexView->selectedPokemon].seen)
         {
             u32 a;
@@ -5011,6 +5016,8 @@ static void Task_SwitchToSearchMenuTopBar(u8 taskId)
 
 static void Task_HandleSearchTopBarInput(u8 taskId)
 {
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_SEARCH_TOP);
+
     if (JOY_NEW(B_BUTTON))
     {
         PlaySE(SE_PC_OFF);
@@ -5069,6 +5076,8 @@ static void Task_SwitchToSearchMenu(u8 taskId)
 static void Task_HandleSearchMenuInput(u8 taskId)
 {
     const u8 (*movementMap)[4];
+
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_SEARCH_MENU);
 
     if (gTasks[taskId].tTopBarItem != SEARCH_TOPBAR_SEARCH)
     {
@@ -5206,6 +5215,14 @@ static void Task_WaitAndCompleteSearch(u8 taskId)
 
 static void Task_SearchCompleteWaitForInput(u8 taskId)
 {
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_SEARCH_COMPLETE);
+
+    if (FrontierIntroTutorial_IsSkipping())
+    {
+        gTasks[taskId].func = Task_ExitSearch;
+        return;
+    }
+
     if (JOY_NEW(A_BUTTON))
     {
         if (sPokedexView->pokemonListCount != 0)
@@ -5253,6 +5270,8 @@ static void Task_HandleSearchParameterInput(u8 taskId)
     u16 *scrollOffset;
     u16 maxOption;
     bool8 moved;
+
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKEDEX_SEARCH_PARAMETER);
 
     menuItem = gTasks[taskId].tMenuItem;
     texts = sSearchOptions[menuItem].texts;

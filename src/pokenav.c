@@ -5,6 +5,7 @@
 #include "overworld.h"
 #include "field_weather.h"
 #include "event_data.h"
+#include "frontier_intro_tutorial.h"
 #include "palette.h"
 #include "pokemon_storage_system.h"
 #include "pokenav.h"
@@ -522,15 +523,18 @@ static void Task_Pokenav(u8 taskId)
         if (!WaitForPokenavShutdownFade())
         {
             bool32 calledFromScript = (gPokenavResources->mode != POKENAV_MODE_NORMAL);
+            bool32 skippingTutorial = FrontierIntroTutorial_IsSkipping();
 
             FreeMenuHandlerSubstruct1();
             FreePokenavResources();
-            if (calledFromScript)
+            if (calledFromScript || skippingTutorial)
                 SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
             else if (FlagGet(FLAG_SYS_PC_FROM_POKENAV))
                 SetMainCallback2(CB2_ReturnToField);
             else
                 SetMainCallback2(CB2_ReturnToFieldWithOpenMenu);
+            if (skippingTutorial)
+                FrontierIntroTutorial_CompleteSkip();
         }
         break;
     }

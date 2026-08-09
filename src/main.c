@@ -1,4 +1,5 @@
 #include "global.h"
+#include "frontier_intro_tutorial.h"
 #include "crt0.h"
 #include "malloc.h"
 #include "link.h"
@@ -286,6 +287,8 @@ static void ReadKeys(void)
         if (JOY_HELD(L_BUTTON))
             gMain.heldKeys |= A_BUTTON;
     }
+
+    FrontierIntroTutorial_ApplyInput();
 
     if (JOY_NEW(gMain.watchedKeysMask))
         gMain.watchedKeysPressed = TRUE;

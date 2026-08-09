@@ -4,6 +4,7 @@
 #include "decompress.h"
 #include "graphics.h"
 #include "gpu_regs.h"
+#include "frontier_intro_tutorial.h"
 #include "item.h"
 #include "item_icon.h"
 #include "item_menu_icons.h"
@@ -185,6 +186,9 @@ static void SetInitialItem(u16 item)
 {
     u16 i;
     u8 pocket;
+
+    if (item == ITEM_NONE)
+        return;
 
     for (pocket = 0; pocket < SELECTOR_POCKET_COUNT; pocket++)
     {
@@ -414,6 +418,7 @@ static void Task_HandleTeamLabItemSelector(u8 taskId)
 
     if (gPaletteFade.active)
         return;
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_TEAM_LAB_ITEM);
     if (JOY_NEW(L_BUTTON))
     {
         SwitchPocket(-1);

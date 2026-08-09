@@ -548,6 +548,9 @@ SlateportCity_Harbor_EventScript_FrontierFerryOpening::
 	hideplayer
 	setvar VAR_0x8004, LOCALID_SLATEPORT_HARBOR_SS_TIDAL
 	call Common_EventScript_FerryDepart
+	goto_if_set FLAG_FRONTIER_INTRO_TUTORIAL_COMPLETE, SlateportCity_Harbor_EventScript_WarpToFrontier
+	setflag FLAG_FRONTIER_INTRO_TUTORIAL_PENDING
+SlateportCity_Harbor_EventScript_WarpToFrontier::
 	warp MAP_BATTLE_FRONTIER_OUTSIDE_WEST, 19, 67
 	waitstate
 	releaseall

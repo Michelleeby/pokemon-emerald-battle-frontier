@@ -486,6 +486,7 @@ gSpecials::
 	def_special Script_DoRayquazaScene, waitstate=1
 	def_special OpenPokenavForTutorial, waitstate=1
 	def_special ScriptMenu_CreateStartMenuForPokenavTutorial, waitstate=1
+	def_special StartFrontierIntroTutorial, waitstate=1
 	def_special CountPlayerTrainerStars
 	def_special BufferBattleFrontierTutorMoveName
 	def_special CloseBattleFrontierTutorWindow

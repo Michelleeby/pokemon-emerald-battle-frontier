@@ -2,6 +2,7 @@
 #include "pokenav.h"
 #include "event_data.h"
 #include "event_scripts.h"
+#include "frontier_intro_tutorial.h"
 #include "main.h"
 #include "party_menu.h"
 #include "script.h"
@@ -221,6 +222,8 @@ void FreeMenuHandlerSubstruct1(void)
 
 static u32 HandleMainMenuInput(struct Pokenav_Menu *menu)
 {
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKENAV_MAIN);
+
     if (UpdateMenuCursorPos(menu))
         return POKENAV_MENU_FUNC_MOVE_CURSOR;
 
@@ -366,6 +369,8 @@ static void Task_WaitFadeOpenTeamLabParty(u8 taskId)
 
 static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
 {
+    FrontierIntroTutorial_NotifyReady(FRONTIER_INTRO_CHECKPOINT_POKENAV_CONDITION);
+
     if (UpdateMenuCursorPos(menu))
         return POKENAV_MENU_FUNC_MOVE_CURSOR;
 
