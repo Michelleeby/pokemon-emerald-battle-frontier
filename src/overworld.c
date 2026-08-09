@@ -63,6 +63,7 @@
 #include "constants/layouts.h"
 #include "constants/map_types.h"
 #include "constants/region_map_sections.h"
+#include "constants/rgb.h"
 #include "constants/songs.h"
 #include "constants/trainer_hill.h"
 #include "constants/weather.h"
@@ -1531,6 +1532,7 @@ static bool8 RunFieldCallback(void)
 
 static void FieldCB_FrontierFerryOpening(void)
 {
+    BlendPalettes(PALETTES_ALL, 16, RGB_BLACK);
     ScriptContext_SetupScript(SlateportCity_Harbor_EventScript_FrontierFerryOpening);
 }
 

@@ -10,6 +10,7 @@
 #include "metatile_behavior.h"
 #include "field_player_avatar.h"
 #include "fieldmap.h"
+#include "gpu_regs.h"
 #include "random.h"
 #include "starter_choose.h"
 #include "script_pokemon_util.h"
@@ -21,6 +22,7 @@
 #include "trainer_see.h"
 #include "field_message_box.h"
 #include "sound.h"
+#include "sprite.h"
 #include "strings.h"
 #include "trainer_hill.h"
 #include "secret_base.h"
@@ -939,6 +941,13 @@ static void CB2_GiveFrontierStarter(void)
     *GetVarPointer(VAR_STARTER_MON) = gSpecialVar_Result;
     ScriptGiveMon(GetStarterPokemon(gSpecialVar_Result), 50, ITEM_NONE, 0, 0, 0);
     FlagSet(FLAG_SYS_POKEMON_GET);
+    SetGpuReg(REG_OFFSET_DISPCNT, 0);
+    SetVBlankCallback(NULL);
+    ResetSpriteData();
+    FreeAllSpritePalettes();
+    DmaFill16(3, 0, VRAM, VRAM_SIZE);
+    DmaFill32(3, 0, OAM, OAM_SIZE);
+    DmaFill16(3, 0, PLTT, PLTT_SIZE);
     FreeAllWindowBuffers();
     ResetTasks();
     SetMainCallback2(CB2_StartFrontierFerryOpening);
