@@ -1,11 +1,28 @@
-# Pokémon Emerald
+# Pokémon Emerald: Battle Frontier
 
-This is a decompilation of Pokémon Emerald.
+This project streamlines Pokémon Emerald around its post-game battling. Skip
+the main story, build your ideal team, and take on the Battle Frontier immediately.
 
-It builds the following ROM:
+## Pokémon Lab
 
-* [**pokeemerald.gba**](https://datomatic.no-intro.org/index.php?page=show_record&s=23&n=1961) `sha1: f3ae088181bf583e55daf962a92bb46f4f1d07b7`
+The Pokémon Lab is an in-game party editor for quickly creating and refining
+Battle Frontier teams. It can create a new Pokémon in an open party slot or
+edit an existing party member.
 
-To set up the repository, see [INSTALL.md](INSTALL.md).
+For each Pokémon, the editor supports:
 
-For contacts and other pret projects, see [pret.github.io](https://pret.github.io/).
+- Species, nature, ability, level, and held item selection
+- Individual IV and EV editing with a live stat preview
+- Presets for maximum IVs, zero Speed IVs, cleared EVs, and 252/252/4 EV
+  spreads
+- Move selection limited to moves the species can legally learn through level
+  up, TMs and HMs, move tutors, egg moves, or an earlier evolution
+- Validation of the completed build before it is saved to the party
+
+Use **L** and **R** to switch between the Build, Stats, and Moves pages. Press
+**Start** to save the Pokémon or **B** to cancel. On the Stats page, **Select**
+opens the stat presets; on the Moves page, it clears the selected move.
+
+## Building
+
+See [INSTALL.md](INSTALL.md) for toolchain setup and build instructions.
