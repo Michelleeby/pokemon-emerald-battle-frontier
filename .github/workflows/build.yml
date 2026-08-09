@@ -1,70 +1,99 @@
-name: CI
+name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [main]
   pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  AGBCC_REVISION: da598c1d918402c42c0c0d7128ba14567f3175e9
 
 jobs:
-  build:
+  prepare-agbcc:
+    name: Build / prepare agbcc
     runs-on: ubuntu-latest
-    env:
-      GAME_VERSION: EMERALD
-      GAME_REVISION: 0
-      GAME_LANGUAGE: ENGLISH
-      MODERN: 0
-      COMPARE: 1
+    timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
-
-      - name: Checkout syms
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@master
+      - name: Restore agbcc
+        id: agbcc-cache
+        uses: actions/cache/restore@v5
         with:
-          path: symbols
-          ref: symbols
+          path: tools/agbcc
+          key: ${{ runner.os }}-${{ runner.arch }}-agbcc-${{ env.AGBCC_REVISION }}
 
       - name: Checkout agbcc
-        uses: actions/checkout@master
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6
         with:
-          path: agbcc
           repository: pret/agbcc
-
-      - name: Install binutils
-        run: |
-          sudo apt update
-          sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
-        # build-essential and git are already installed
-        # gcc-arm-none-eabi is only needed for the modern build
-        # as an alternative to dkP
+          ref: ${{ env.AGBCC_REVISION }}
+          path: agbcc
 
       - name: Install agbcc
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        working-directory: agbcc
         run: |
           ./build.sh
-          ./install.sh ../
-        working-directory: agbcc
+          ./install.sh ..
 
-      - name: Compare
-        run: make -j${nproc} all syms
-
-      - name: Modern
-        env:
-          MODERN: 1
-          COMPARE: 0
-        run: make -j${nproc} all
-
-      - name: Move symfiles
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          cp -v *.sym symbols/
-          echo "SYMBOLS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
-
-      - name: Update symfiles
-        if: ${{ github.event_name == 'push' }}
-        uses: EndBug/add-and-commit@v7
+      - name: Save agbcc
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
         with:
-          branch: symbols
-          cwd: "./symbols"
-          add: "*.sym"
-          message: ${{ env.SYMBOLS_COMMIT_MSG }}
+          path: tools/agbcc
+          key: ${{ runner.os }}-${{ runner.arch }}-agbcc-${{ env.AGBCC_REVISION }}
+
+  build:
+    name: Build / ${{ matrix.name }}
+    needs: prepare-agbcc
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: legacy
+            target: all
+          - name: modern
+            target: modern
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Restore agbcc
+        uses: actions/cache/restore@v5
+        with:
+          path: tools/agbcc
+          key: ${{ runner.os }}-${{ runner.arch }}-agbcc-${{ env.AGBCC_REVISION }}
+          fail-on-cache-miss: true
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
+
+      - name: Build ${{ matrix.name }}
+        run: make -j"$(nproc)" ${{ matrix.target }}
+
+  required:
+    name: Build / required
+    if: ${{ always() }}
+    needs: [prepare-agbcc, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify build results
+        env:
+          PREPARE_RESULT: ${{ needs.prepare-agbcc.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          test "$PREPARE_RESULT" = success
+          test "$BUILD_RESULT" = success
