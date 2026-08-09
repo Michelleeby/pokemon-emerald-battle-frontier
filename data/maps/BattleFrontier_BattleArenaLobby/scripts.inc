@@ -122,10 +122,31 @@ BattleFrontier_BattleArenaLobby_EventScript_AskTakeChallenge::
 BattleFrontier_BattleArenaLobby_EventScript_TryEnterChallenge::
 	message BattleFrontier_BattleArenaLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattleArenaLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattleArenaLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattleArenaLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattleArenaLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattleArenaLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattleArenaLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattleArenaLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattleArenaLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleArenaLobby_EventScript_CheckEligibility
+BattleFrontier_BattleArenaLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattleArenaLobby_EventScript_CheckEligibility
+BattleFrontier_BattleArenaLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleArenaLobby_EventScript_CheckEligibility
+BattleFrontier_BattleArenaLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+BattleFrontier_BattleArenaLobby_EventScript_CheckEligibility::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattleArenaLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -382,7 +403,10 @@ BattleFrontier_BattleArenaLobby_Text_ExplainChallenge:
 	.string "to continue with your challenge.\p"
 	.string "If you pull off the feat of beating\n"
 	.string "seven TRAINERS in succession,\l"
-	.string "we will present you with Battle Points.$"
+	.string "we will present you with Battle Points.\p"
+	.string "HARD challenges feature the strongest\n"
+	.string "TRAINERS from the very beginning.\p"
+	.string "The ARENA TYCOON also appears earlier.$"
 
 BattleFrontier_BattleArenaLobby_Text_OkayToSave:
 	.string "Before showing you to the BATTLE\n"

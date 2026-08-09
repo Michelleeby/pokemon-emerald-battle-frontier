@@ -476,6 +476,43 @@ static const u8 sFrontierBrainStreakAppearances[NUM_FRONTIER_FACILITIES][4] =
     [FRONTIER_FACILITY_PYRAMID] = {21,  70, 35, 0},
 };
 
+static u8 GetPikeBrainStreakAppearance(u8 index)
+{
+    static const u8 sHardStreakAppearances[4] = {14, 70, 28, 1};
+
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return sHardStreakAppearances[index];
+    return sFrontierBrainStreakAppearances[FRONTIER_FACILITY_PIKE][index];
+}
+
+static u16 *GetPikeWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+}
+
+static u16 *GetPikeRecordStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeRecordStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeRecordStreaks[lvlMode];
+}
+
+static u16 *GetPikeTotalStreaksPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeTotalStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeTotalStreaks[lvlMode];
+}
+
+static u32 *GetPikeWinStreakActiveFlagsPtr(void)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeWinStreakActiveFlags;
+    return &gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+}
+
 static void (*const sBattlePikeFunctions[])(void) =
 {
     [BATTLE_PIKE_FUNC_SET_ROOM_TYPE]           = SetRoomType,
@@ -625,19 +662,19 @@ static void GetBattlePikeData(void)
         gSpecialVar_Result = gSaveBlock2Ptr->frontier.pikePrize;
         break;
     case PIKE_DATA_WIN_STREAK:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pikeWinStreaks[gSaveBlock2Ptr->frontier.lvlMode];
+        gSpecialVar_Result = *GetPikeWinStreakPtr(lvlMode);
         break;
     case PIKE_DATA_RECORD_STREAK:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pikeRecordStreaks[gSaveBlock2Ptr->frontier.lvlMode];
+        gSpecialVar_Result = *GetPikeRecordStreakPtr(lvlMode);
         break;
     case PIKE_DATA_TOTAL_STREAKS:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pikeTotalStreaks[gSaveBlock2Ptr->frontier.lvlMode];
+        gSpecialVar_Result = *GetPikeTotalStreaksPtr(lvlMode);
         break;
     case PIKE_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PIKE_OPEN;
+            gSpecialVar_Result = *GetPikeWinStreakActiveFlagsPtr() & STREAK_PIKE_OPEN;
         else
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PIKE_50;
+            gSpecialVar_Result = *GetPikeWinStreakActiveFlagsPtr() & STREAK_PIKE_50;
         break;
     }
 }
@@ -653,30 +690,30 @@ static void SetBattlePikeData(void)
         break;
     case PIKE_DATA_WIN_STREAK:
         if (gSpecialVar_0x8006 <= MAX_STREAK)
-            gSaveBlock2Ptr->frontier.pikeWinStreaks[gSaveBlock2Ptr->frontier.lvlMode] = gSpecialVar_0x8006;
+            *GetPikeWinStreakPtr(lvlMode) = gSpecialVar_0x8006;
         break;
     case PIKE_DATA_RECORD_STREAK:
-        if (gSpecialVar_0x8006 <= MAX_STREAK && gSaveBlock2Ptr->frontier.pikeRecordStreaks[gSaveBlock2Ptr->frontier.lvlMode] < gSpecialVar_0x8006)
-            gSaveBlock2Ptr->frontier.pikeRecordStreaks[gSaveBlock2Ptr->frontier.lvlMode] = gSpecialVar_0x8006;
+        if (gSpecialVar_0x8006 <= MAX_STREAK && *GetPikeRecordStreakPtr(lvlMode) < gSpecialVar_0x8006)
+            *GetPikeRecordStreakPtr(lvlMode) = gSpecialVar_0x8006;
         break;
     case PIKE_DATA_TOTAL_STREAKS:
         if (gSpecialVar_0x8006 <= MAX_STREAK)
-            gSaveBlock2Ptr->frontier.pikeTotalStreaks[gSaveBlock2Ptr->frontier.lvlMode] = gSpecialVar_0x8006;
+            *GetPikeTotalStreaksPtr(lvlMode) = gSpecialVar_0x8006;
         break;
     case PIKE_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PIKE_OPEN;
+                *GetPikeWinStreakActiveFlagsPtr() |= STREAK_PIKE_OPEN;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_PIKE_OPEN);
+                *GetPikeWinStreakActiveFlagsPtr() &= ~(STREAK_PIKE_OPEN);
         }
         else
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PIKE_50;
+                *GetPikeWinStreakActiveFlagsPtr() |= STREAK_PIKE_50;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_PIKE_50);
+                *GetPikeWinStreakActiveFlagsPtr() &= ~(STREAK_PIKE_50);
         }
         break;
     }
@@ -1155,7 +1192,7 @@ u8 GetBattlePikeWildMonHeaderId(void)
 {
     u8 headerId;
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    u16 winStreak = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+    u16 winStreak = *GetPikeWinStreakPtr(lvlMode);
 
     if (winStreak <= 20 * NUM_PIKE_ROOMS)
         headerId = 0;
@@ -1398,7 +1435,8 @@ static void PrepareOneTrainer(bool8 difficult)
         battleNum = FRONTIER_STAGES_PER_CHALLENGE - 1;
 
     lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    challengeNum = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] / NUM_PIKE_ROOMS;
+    challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                 ? 7 : *GetPikeWinStreakPtr(lvlMode) / NUM_PIKE_ROOMS;
     do
     {
         trainerId = GetRandomScaledFrontierTrainerId(challengeNum, battleNum);
@@ -1421,7 +1459,8 @@ static void PrepareTwoTrainers(void)
     int i;
     u16 trainerId;
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    u16 challengeNum = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] / NUM_PIKE_ROOMS;
+    u16 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                     ? 7 : *GetPikeWinStreakPtr(lvlMode) / NUM_PIKE_ROOMS;
 
     gFacilityTrainers = gBattleFrontierTrainers;
     do
@@ -1502,10 +1541,9 @@ static u8 GetPikeQueenFightType(u8 nextRoom)
 {
     u8 numPikeSymbols;
 
-    u8 facility = FRONTIER_FACILITY_PIKE;
     u8 ret = FRONTIER_BRAIN_NOT_READY;
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    u16 winStreak = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+    u16 winStreak = *GetPikeWinStreakPtr(lvlMode);
     winStreak += nextRoom;
     numPikeSymbols = GetPlayerSymbolCountForFacility(FRONTIER_FACILITY_PIKE);
 
@@ -1513,16 +1551,16 @@ static u8 GetPikeQueenFightType(u8 nextRoom)
     {
     case 0:
     case 1:
-        if (winStreak == sFrontierBrainStreakAppearances[facility][numPikeSymbols] - sFrontierBrainStreakAppearances[facility][3])
+        if (winStreak == GetPikeBrainStreakAppearance(numPikeSymbols) - GetPikeBrainStreakAppearance(3))
             ret = numPikeSymbols + 1; // FRONTIER_BRAIN_SILVER and FRONTIER_BRAIN_GOLD
         break;
     case 2:
     default:
-        if (winStreak == sFrontierBrainStreakAppearances[facility][0] - sFrontierBrainStreakAppearances[facility][3])
+        if (winStreak == GetPikeBrainStreakAppearance(0) - GetPikeBrainStreakAppearance(3))
             ret = FRONTIER_BRAIN_STREAK;
-        else if (winStreak == sFrontierBrainStreakAppearances[facility][1] - sFrontierBrainStreakAppearances[facility][3]
-                 || (winStreak > sFrontierBrainStreakAppearances[facility][1]
-                     && (winStreak - sFrontierBrainStreakAppearances[facility][1] + sFrontierBrainStreakAppearances[facility][3]) % sFrontierBrainStreakAppearances[facility][2] == 0))
+        else if (winStreak == GetPikeBrainStreakAppearance(1) - GetPikeBrainStreakAppearance(3)
+                 || (winStreak > GetPikeBrainStreakAppearance(1)
+                     && (winStreak - GetPikeBrainStreakAppearance(1) + GetPikeBrainStreakAppearance(3)) % GetPikeBrainStreakAppearance(2) == 0))
             ret = FRONTIER_BRAIN_STREAK_LONG;
         break;
     }
@@ -1618,8 +1656,8 @@ static void InitPikeChallenge(void)
     gSaveBlock2Ptr->frontier.challengeStatus = 0;
     gSaveBlock2Ptr->frontier.curChallengeBattleNum = 0;
     gSaveBlock2Ptr->frontier.challengePaused = FALSE;
-    if (!(gSaveBlock2Ptr->frontier.winStreakActiveFlags & sWinStreakFlags[lvlMode]))
-        gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] = 0;
+    if (!(*GetPikeWinStreakActiveFlagsPtr() & sWinStreakFlags[lvlMode]))
+        *GetPikeWinStreakPtr(lvlMode) = 0;
 
     gTrainerBattleOpponent_A = 0;
     gBattleOutcome = 0;

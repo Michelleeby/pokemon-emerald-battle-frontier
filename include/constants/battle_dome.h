@@ -50,6 +50,10 @@
 #define DOME_DATA_HAS_WON_CHALLENGE       7
 #define DOME_DATA_SELECTED_MONS           8
 #define DOME_DATA_PREV_TOURNEY_TYPE       9
+#define DOME_DATA_CHALLENGE_MODE          10
+
+#define DOME_CHALLENGE_NORMAL 0
+#define DOME_CHALLENGE_HARD   1
 
 // ID for Exit/Cancel on the tourney tree
 #define TOURNEY_TREE_CLOSE_BUTTON  31

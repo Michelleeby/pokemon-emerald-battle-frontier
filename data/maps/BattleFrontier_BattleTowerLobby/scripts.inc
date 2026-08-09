@@ -184,10 +184,38 @@ BattleFrontier_BattleTowerLobby_EventScript_TryEnterSinglesChallenge::
 	setvar VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_SINGLES
 	message BattleFrontier_BattleTowerLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattleTowerLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattleTowerLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattleTowerLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattleTowerLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattleTowerLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleTowerLobby_EventScript_DispatchEligibility
+
+BattleFrontier_BattleTowerLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattleTowerLobby_EventScript_DispatchEligibility
+
+BattleFrontier_BattleTowerLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleTowerLobby_EventScript_DispatchEligibility
+
+BattleFrontier_BattleTowerLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+
+BattleFrontier_BattleTowerLobby_EventScript_DispatchEligibility::
+	goto_if_eq VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_DOUBLES, BattleFrontier_BattleTowerLobby_EventScript_DoublesCheckEligibility
+
+BattleFrontier_BattleTowerLobby_EventScript_CheckEligibility::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattleTowerLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -246,10 +274,16 @@ BattleFrontier_BattleTowerLobby_EventScript_TryEnterDoublesChallenge::
 	setvar VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_DOUBLES
 	message BattleFrontier_BattleTowerLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattleTowerLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattleTowerLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattleTowerLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattleTowerLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattleTowerLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattleTowerLobby_EventScript_DoublesCheckEligibility::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattleTowerLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -307,6 +341,7 @@ BattleFrontier_BattleTowerLobby_EventScript_AskEnterMultisChallenge::
 
 BattleFrontier_BattleTowerLobby_EventScript_TryEnterMultisChallenge::
 	setvar VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_MULTIS
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
 	message BattleFrontier_BattleTowerLobby_Text_WhichLevelMode
 	waitmessage
 	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
@@ -369,6 +404,7 @@ BattleFrontier_BattleTowerLobby_EventScript_AskEnterLinkMultisChallenge::
 
 BattleFrontier_BattleTowerLobby_EventScript_TryEnterLinkMultisChallenge::
 	setvar VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_LINK_MULTIS
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
 	message BattleFrontier_BattleTowerLobby_Text_WhichLevelMode
 	waitmessage
 	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
@@ -1167,7 +1203,11 @@ BattleFrontier_BattleTowerLobby_Text_ExplainSinglesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "challenge, please save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD challenges feature the strongest\n"
+	.string "TRAINERS from the very beginning.\p"
+	.string "In SINGLE BATTLES, the SALON MAIDEN\n"
+	.string "appears earlier.$"
 
 BattleFrontier_BattleTowerLobby_Text_SelectThreeMons:
 	.string "Now please select the three POKéMON\n"
@@ -1197,7 +1237,9 @@ BattleFrontier_BattleTowerLobby_Text_ExplainDoublesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "challenge, please save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD challenges feature the strongest\n"
+	.string "TRAINERS from the very beginning.$"
 
 BattleFrontier_BattleTowerLobby_Text_PleaseSelectFourMons:
 	.string "Now please select the four POKéMON\n"

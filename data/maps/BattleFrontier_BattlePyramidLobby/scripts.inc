@@ -120,10 +120,31 @@ BattleFrontier_BattlePyramidLobby_EventScript_AskTakeChallenge::
 BattleFrontier_BattlePyramidLobby_EventScript_TryEnterChallenge::
 	message BattleFrontier_BattlePyramidLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattlePyramidLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattlePyramidLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattlePyramidLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattlePyramidLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattlePyramidLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattlePyramidLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattlePyramidLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattlePyramidLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattlePyramidLobby_EventScript_LevelSelected
+BattleFrontier_BattlePyramidLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattlePyramidLobby_EventScript_LevelSelected
+BattleFrontier_BattlePyramidLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattlePyramidLobby_EventScript_LevelSelected
+BattleFrontier_BattlePyramidLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+BattleFrontier_BattlePyramidLobby_EventScript_LevelSelected::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattlePyramidLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -549,12 +570,16 @@ BattleFrontier_BattlePyramidLobby_Text_ExplainBattlePyramid:
 	.string "challenge, you must select “REST”\l"
 	.string "and save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD challenges use the strongest\n"
+	.string "TRAINERS from the very beginning.\p"
+	.string "Layouts, visibility, items, and wild\n"
+	.string "POKéMON follow the normal rules.\l"
+	.string "The PYRAMID KING appears earlier.$"
 
 BattleFrontier_BattlePyramidLobby_Text_WhichLevelMode:
-	.string "The PYRAMID offers two courses,\n"
-	.string "Level 50 and Open Level.\l"
-	.string "Which will you enter?$"
+	.string "Which level and challenge mode\n"
+	.string "will you choose?$"
 
 BattleFrontier_BattlePyramidLobby_Text_SelectThreeMons:
 	.string "Very good. Now, please select the three\n"
@@ -894,4 +919,3 @@ BattleFrontier_BattlePyramidLobby_Text_ExplainBagRules:
 	.string "of ten kinds of items.\p"
 	.string "The contents of the BATTLE BAG are\n"
 	.string "lost if you fail in your quest.$"
-

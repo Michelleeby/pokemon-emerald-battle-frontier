@@ -103,6 +103,15 @@ static const struct MenuAction MultichoiceList_LevelMode[] =
     {gText_Exit},
 };
 
+static const struct MenuAction MultichoiceList_DomeLevelMode[] =
+{
+    {gText_Lv50},
+    {gText_OpenLevel},
+    {gText_HardLv50},
+    {gText_HardOpen},
+    {gText_Exit},
+};
+
 static const struct MenuAction MultichoiceList_Mechadoll1_Q1[] =
 {
     {gTrickHouse_Mechadoll_Oddish},
@@ -809,6 +818,7 @@ static const struct MultichoiceListStruct sMultichoiceLists[] =
     [MULTI_UNUSED_22]                  = MULTICHOICE(MultichoiceList_Exit),
     [MULTI_CHALLENGEINFO]              = MULTICHOICE(MultichoiceList_ChallengeInfo),
     [MULTI_LEVEL_MODE]                 = MULTICHOICE(MultichoiceList_LevelMode),
+    [MULTI_DOME_LEVEL_MODE]            = MULTICHOICE(MultichoiceList_DomeLevelMode),
     [MULTI_MECHADOLL1_Q1]              = MULTICHOICE(MultichoiceList_Mechadoll1_Q1),
     [MULTI_MECHADOLL1_Q2]              = MULTICHOICE(MultichoiceList_Mechadoll1_Q2),
     [MULTI_MECHADOLL1_Q3]              = MULTICHOICE(MultichoiceList_Mechadoll1_Q3),

@@ -29,6 +29,7 @@
 #include "load_save.h"
 #include "battle_dome.h"
 #include "constants/battle_frontier.h"
+#include "constants/battle_dome.h"
 #include "constants/battle_pike.h"
 #include "constants/frontier_util.h"
 #include "constants/trainers.h"
@@ -93,6 +94,158 @@ static const u8 sFrontierBrainStreakAppearances[NUM_FRONTIER_FACILITIES][4] =
     [FRONTIER_FACILITY_PIKE]    = {28, 140, 56, 1},
     [FRONTIER_FACILITY_PYRAMID] = {21,  70, 35, 0},
 };
+
+static u8 GetFrontierBrainStreakAppearance(u8 facility, u8 index)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+    {
+        static const u8 sHardStreakAppearances[NUM_FRONTIER_FACILITIES][4] =
+        {
+            [FRONTIER_FACILITY_TOWER] = {21, 35, 21, 1},
+            [FRONTIER_FACILITY_DOME]  = { 2,  4,  2, 0},
+            [FRONTIER_FACILITY_PALACE] = {14, 21, 14, 1},
+            [FRONTIER_FACILITY_ARENA] = {14, 28, 14, 1},
+            [FRONTIER_FACILITY_FACTORY] = {14, 21, 14, 1},
+            [FRONTIER_FACILITY_PIKE] = {14, 70, 28, 1},
+            [FRONTIER_FACILITY_PYRAMID] = {14, 35, 21, 0},
+        };
+
+        if (facility == FRONTIER_FACILITY_TOWER || facility == FRONTIER_FACILITY_DOME
+            || facility == FRONTIER_FACILITY_PALACE || facility == FRONTIER_FACILITY_ARENA
+            || facility == FRONTIER_FACILITY_FACTORY || facility == FRONTIER_FACILITY_PIKE
+            || facility == FRONTIER_FACILITY_PYRAMID)
+            return sHardStreakAppearances[facility][index];
+    }
+    return sFrontierBrainStreakAppearances[facility][index];
+}
+
+static u16 *GetCurrentDomeWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock2Ptr->frontier.domeHardWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentTowerWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+        && battleMode <= FRONTIER_MODE_DOUBLES)
+        return &gSaveBlock1Ptr->frontierHardMode.towerWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentTowerRecordWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+        && battleMode <= FRONTIER_MODE_DOUBLES)
+        return &gSaveBlock1Ptr->frontierHardMode.towerRecordWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.towerRecordWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentPalaceWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.palaceWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentPalaceRecordWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.palaceRecordWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.palaceRecordWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentArenaWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.arenaWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
+}
+
+static u16 *GetCurrentArenaRecordWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.arenaRecordWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.arenaRecordStreaks[lvlMode];
+}
+
+static u16 *GetCurrentFactoryWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentFactoryRecordWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryRecordWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryRecordWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentFactoryRentsCountPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryRentsCount[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentFactoryRecordRentsCountPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryRecordRentsCount[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryRecordRentsCount[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentPikeWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+}
+
+static u16 *GetCurrentPikeRecordStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeRecordStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeRecordStreaks[lvlMode];
+}
+
+static u16 *GetCurrentPikeTotalStreaksPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pikeTotalStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pikeTotalStreaks[lvlMode];
+}
+
+static u16 *GetCurrentPyramidWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pyramidWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+}
+
+static u16 *GetCurrentPyramidRecordStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pyramidRecordStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode];
+}
+
+static u16 *GetCurrentDomeRecordWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock2Ptr->frontier.domeHardRecordWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.domeRecordWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetCurrentDomeTotalChampionshipsPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock2Ptr->frontier.domeHardTotalChampionships[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][lvlMode];
+}
 
 static const struct FrontierBrainMon sFrontierBrainsMons[][2][FRONTIER_PARTY_SIZE] =
 {
@@ -846,6 +999,9 @@ static void GetFrontierData(void)
     case FRONTIER_DATA_HEARD_BRAIN_SPEECH:
         gSpecialVar_Result = gSaveBlock2Ptr->frontier.battledBrainFlags & sBattledBrainBitFlags[facility][hasSymbol];
         break;
+    case FRONTIER_DATA_CHALLENGE_MODE:
+        gSpecialVar_Result = gSaveBlock2Ptr->frontier.frontierChallengeMode;
+        break;
     }
 }
 
@@ -880,6 +1036,9 @@ static void SetFrontierData(void)
         break;
     case FRONTIER_DATA_HEARD_BRAIN_SPEECH:
         gSaveBlock2Ptr->frontier.battledBrainFlags |= sBattledBrainBitFlags[facility][hasSymbol];
+        break;
+    case FRONTIER_DATA_CHALLENGE_MODE:
+        gSaveBlock2Ptr->frontier.frontierChallengeMode = gSpecialVar_0x8006;
         break;
     }
 }
@@ -990,13 +1149,13 @@ static void TowerPrintStreak(const u8 *str, u16 num, u8 x1, u8 x2, u8 y)
 
 static void TowerPrintRecordStreak(u8 battleMode, u8 lvlMode, u8 x1, u8 x2, u8 y)
 {
-    u16 num = gSaveBlock2Ptr->frontier.towerRecordWinStreaks[battleMode][lvlMode];
+    u16 num = *GetCurrentTowerRecordWinStreakPtr(battleMode, lvlMode);
     TowerPrintStreak(gText_Record, num, x1, x2, y);
 }
 
 static u16 TowerGetWinStreak(u8 battleMode, u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+    u16 winStreak = *GetCurrentTowerWinStreakPtr(battleMode, lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1150,13 +1309,13 @@ static void PalacePrintStreak(const u8 *str, u16 num, u8 x1, u8 x2, u8 y)
 
 static void PalacePrintRecordStreak(u8 battleMode, u8 lvlMode, u8 x1, u8 x2, u8 y)
 {
-    u16 num = gSaveBlock2Ptr->frontier.palaceRecordWinStreaks[battleMode][lvlMode];
+    u16 num = *GetCurrentPalaceRecordWinStreakPtr(battleMode, lvlMode);
     PalacePrintStreak(gText_Record, num, x1, x2, y);
 }
 
 static u16 PalaceGetWinStreak(u8 battleMode, u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode];
+    u16 winStreak = *GetCurrentPalaceWinStreakPtr(battleMode, lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1214,7 +1373,7 @@ static void ShowPalaceResultsWindow(u8 battleMode)
 // Battle Pike records.
 static u16 PikeGetWinStreak(u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+    u16 winStreak = *GetCurrentPikeWinStreakPtr(lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1235,9 +1394,13 @@ static void PikePrintPrevOrCurrentStreak(u8 lvlMode, u8 x1, u8 x2, u8 y)
     u16 winStreak = PikeGetWinStreak(lvlMode);
 
     if (lvlMode != FRONTIER_LVL_50)
-        isCurrent = IsWinStreakActive(STREAK_PIKE_OPEN);
+        isCurrent = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                  ? (gSaveBlock1Ptr->frontierHardMode.pikeWinStreakActiveFlags & STREAK_PIKE_OPEN) != 0
+                  : IsWinStreakActive(STREAK_PIKE_OPEN);
     else
-        isCurrent = IsWinStreakActive(STREAK_PIKE_50);
+        isCurrent = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                  ? (gSaveBlock1Ptr->frontierHardMode.pikeWinStreakActiveFlags & STREAK_PIKE_50) != 0
+                  : IsWinStreakActive(STREAK_PIKE_50);
 
     if (isCurrent == TRUE)
         PrintTwoStrings(gText_Current, gText_RoomsCleared, winStreak, x1, x2, y);
@@ -1256,11 +1419,11 @@ static void ShowPikeResultsWindow(void)
     AddTextPrinterParameterized(gRecordsWindowId, FONT_NORMAL, gText_OpenLv, 8, 97, TEXT_SKIP_DRAW, NULL);
     PrintHyphens(10);
     PikePrintPrevOrCurrentStreak(FRONTIER_LVL_50, 64, 114, 33);
-    PikePrintCleared(gText_Record, gText_RoomsCleared, gSaveBlock2Ptr->frontier.pikeRecordStreaks[FRONTIER_LVL_50], 64, 114, 49);
-    PikePrintCleared(gText_Total, gText_TimesCleared, gSaveBlock2Ptr->frontier.pikeTotalStreaks[FRONTIER_LVL_50], 64, 114, 65);
+    PikePrintCleared(gText_Record, gText_RoomsCleared, *GetCurrentPikeRecordStreakPtr(FRONTIER_LVL_50), 64, 114, 49);
+    PikePrintCleared(gText_Total, gText_TimesCleared, *GetCurrentPikeTotalStreaksPtr(FRONTIER_LVL_50), 64, 114, 65);
     PikePrintPrevOrCurrentStreak(FRONTIER_LVL_OPEN, 64, 114, 97);
-    PikePrintCleared(gText_Record, gText_RoomsCleared, gSaveBlock2Ptr->frontier.pikeRecordStreaks[FRONTIER_LVL_OPEN], 64, 114, 113);
-    PikePrintCleared(gText_Total, gText_TimesCleared, gSaveBlock2Ptr->frontier.pikeTotalStreaks[FRONTIER_LVL_OPEN], 64, 114, 129);
+    PikePrintCleared(gText_Record, gText_RoomsCleared, *GetCurrentPikeRecordStreakPtr(FRONTIER_LVL_OPEN), 64, 114, 113);
+    PikePrintCleared(gText_Total, gText_TimesCleared, *GetCurrentPikeTotalStreaksPtr(FRONTIER_LVL_OPEN), 64, 114, 129);
     PutWindowTilemap(gRecordsWindowId);
     CopyWindowToVram(gRecordsWindowId, COPYWIN_FULL);
 }
@@ -1278,13 +1441,13 @@ static void ArenaPrintStreak(const u8 *str, u16 num, u8 x1, u8 x2, u8 y)
 
 static void ArenaPrintRecordStreak(u8 lvlMode, u8 x1, u8 x2, u8 y)
 {
-    u16 num = gSaveBlock2Ptr->frontier.arenaRecordStreaks[lvlMode];
+    u16 num = *GetCurrentArenaRecordWinStreakPtr(lvlMode);
     ArenaPrintStreak(gText_Record, num, x1, x2, y);
 }
 
 static u16 ArenaGetWinStreak(u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
+    u16 winStreak = *GetCurrentArenaWinStreakPtr(lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1342,14 +1505,14 @@ static void FactoryPrintStreak(const u8 *str, u16 num1, u16 num2, u8 x1, u8 x2, 
 
 static void FactoryPrintRecordStreak(u8 battleMode, u8 lvlMode, u8 x1, u8 x2, u8 x3, u8 y)
 {
-    u16 num1 = gSaveBlock2Ptr->frontier.factoryRecordWinStreaks[battleMode][lvlMode];
-    u16 num2 = gSaveBlock2Ptr->frontier.factoryRecordRentsCount[battleMode][lvlMode];
+    u16 num1 = *GetCurrentFactoryRecordWinStreakPtr(battleMode, lvlMode);
+    u16 num2 = *GetCurrentFactoryRecordRentsCountPtr(battleMode, lvlMode);
     FactoryPrintStreak(gText_Record, num1, num2, x1, x2, x3, y);
 }
 
 static u16 FactoryGetWinStreak(u8 battleMode, u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
+    u16 winStreak = *GetCurrentFactoryWinStreakPtr(battleMode, lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1358,7 +1521,7 @@ static u16 FactoryGetWinStreak(u8 battleMode, u8 lvlMode)
 
 static u16 FactoryGetRentsCount(u8 battleMode, u8 lvlMode)
 {
-    u16 rents = gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
+    u16 rents = *GetCurrentFactoryRentsCountPtr(battleMode, lvlMode);
     if (rents > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1429,13 +1592,13 @@ static void PyramidPrintStreak(const u8 *str, u16 num, u8 x1, u8 x2, u8 y)
 
 static void PyramidPrintRecordStreak(u8 lvlMode, u8 x1, u8 x2, u8 y)
 {
-    u16 num = gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode];
+    u16 num = *GetCurrentPyramidRecordStreakPtr(lvlMode);
     PyramidPrintStreak(gText_Record, num, x1, x2, y);
 }
 
 static u16 PyramidGetWinStreak(u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+    u16 winStreak = *GetCurrentPyramidWinStreakPtr(lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1448,9 +1611,13 @@ static void PyramidPrintPrevOrCurrentStreak(u8 lvlMode, u8 x1, u8 x2, u8 y)
     u16 winStreak = PyramidGetWinStreak(lvlMode);
 
     if (lvlMode != FRONTIER_LVL_50)
-        isCurrent = IsWinStreakActive(STREAK_PYRAMID_OPEN);
+        isCurrent = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                  ? (gSaveBlock1Ptr->frontierHardMode.pyramidWinStreakActiveFlags & STREAK_PYRAMID_OPEN) != 0
+                  : IsWinStreakActive(STREAK_PYRAMID_OPEN);
     else
-        isCurrent = IsWinStreakActive(STREAK_PYRAMID_50);
+        isCurrent = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                  ? (gSaveBlock1Ptr->frontierHardMode.pyramidWinStreakActiveFlags & STREAK_PYRAMID_50) != 0
+                  : IsWinStreakActive(STREAK_PYRAMID_50);
 
     if (isCurrent == TRUE)
         PyramidPrintStreak(gText_Current, winStreak, x1, x2, y);
@@ -1537,9 +1704,9 @@ static void CheckPutFrontierTVShowOnAir(void)
     switch (facility)
     {
     case FRONTIER_FACILITY_TOWER:
-        if (gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] > gSaveBlock2Ptr->frontier.towerRecordWinStreaks[battleMode][lvlMode])
+        if (*GetCurrentTowerWinStreakPtr(battleMode, lvlMode) > *GetCurrentTowerRecordWinStreakPtr(battleMode, lvlMode))
         {
-            gSaveBlock2Ptr->frontier.towerRecordWinStreaks[battleMode][lvlMode] = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+            *GetCurrentTowerRecordWinStreakPtr(battleMode, lvlMode) = *GetCurrentTowerWinStreakPtr(battleMode, lvlMode);
             if (battleMode == FRONTIER_MODE_LINK_MULTIS)
             {
                 StringCopy(name, gLinkPlayers[gBattleScripting.multiplayerId ^ 1].name);
@@ -1547,100 +1714,100 @@ static void CheckPutFrontierTVShowOnAir(void)
                 StringCopy(gSaveBlock2Ptr->frontier.opponentNames[lvlMode], name);
                 SetTrainerId(gLinkPlayers[gBattleScripting.multiplayerId ^ 1].trainerId, gSaveBlock2Ptr->frontier.opponentTrainerIds[lvlMode]);
             }
-            if (gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] > 1
+            if (*GetCurrentTowerWinStreakPtr(battleMode, lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
                 switch (battleMode)
                 {
                 case FRONTIER_MODE_SINGLES:
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_TOWER_SINGLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentTowerWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_TOWER_SINGLES);
                     break;
                 case FRONTIER_MODE_DOUBLES:
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_TOWER_DOUBLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentTowerWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_TOWER_DOUBLES);
                     break;
                 case FRONTIER_MODE_MULTIS:
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_TOWER_MULTIS);
+                    TryPutFrontierTVShowOnAir(*GetCurrentTowerWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_TOWER_MULTIS);
                     break;
                 case FRONTIER_MODE_LINK_MULTIS:
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_TOWER_LINK_MULTIS);
+                    TryPutFrontierTVShowOnAir(*GetCurrentTowerWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_TOWER_LINK_MULTIS);
                     break;
                 }
             }
         }
         break;
     case FRONTIER_FACILITY_DOME:
-        if (gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode] > gSaveBlock2Ptr->frontier.domeRecordWinStreaks[battleMode][lvlMode])
+        if (*GetCurrentDomeWinStreakPtr(battleMode, lvlMode) > *GetCurrentDomeRecordWinStreakPtr(battleMode, lvlMode))
         {
-            gSaveBlock2Ptr->frontier.domeRecordWinStreaks[battleMode][lvlMode] = gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode];
-            if (gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode] > 1
+            *GetCurrentDomeRecordWinStreakPtr(battleMode, lvlMode) = *GetCurrentDomeWinStreakPtr(battleMode, lvlMode);
+            if (*GetCurrentDomeWinStreakPtr(battleMode, lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
                 if (battleMode == FRONTIER_MODE_SINGLES)
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_DOME_SINGLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentDomeWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_DOME_SINGLES);
                 else
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_DOME_DOUBLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentDomeWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_DOME_DOUBLES);
             }
         }
         break;
     case FRONTIER_FACILITY_PALACE:
-        if (gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode] > gSaveBlock2Ptr->frontier.palaceRecordWinStreaks[battleMode][lvlMode])
+        if (*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode) > *GetCurrentPalaceRecordWinStreakPtr(battleMode, lvlMode))
         {
-            gSaveBlock2Ptr->frontier.palaceRecordWinStreaks[battleMode][lvlMode] = gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode];
-            if (gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode] > 1
+            *GetCurrentPalaceRecordWinStreakPtr(battleMode, lvlMode) = *GetCurrentPalaceWinStreakPtr(battleMode, lvlMode);
+            if (*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
                 if (battleMode == FRONTIER_MODE_SINGLES)
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_PALACE_SINGLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_PALACE_SINGLES);
                 else
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_PALACE_DOUBLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_PALACE_DOUBLES);
             }
         }
         break;
     case FRONTIER_FACILITY_ARENA:
-        if (gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] > gSaveBlock2Ptr->frontier.arenaRecordStreaks[lvlMode])
+        if (*GetCurrentArenaWinStreakPtr(lvlMode) > *GetCurrentArenaRecordWinStreakPtr(lvlMode))
         {
-            gSaveBlock2Ptr->frontier.arenaRecordStreaks[lvlMode] = gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
-            if (gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] > 1
+            *GetCurrentArenaRecordWinStreakPtr(lvlMode) = *GetCurrentArenaWinStreakPtr(lvlMode);
+            if (*GetCurrentArenaWinStreakPtr(lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
-                TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode], FRONTIER_SHOW_ARENA);
+                TryPutFrontierTVShowOnAir(*GetCurrentArenaWinStreakPtr(lvlMode), FRONTIER_SHOW_ARENA);
             }
         }
         break;
     case FRONTIER_FACILITY_FACTORY:
-        if (gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] > gSaveBlock2Ptr->frontier.factoryRecordWinStreaks[battleMode][lvlMode])
+        if (*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode) > *GetCurrentFactoryRecordWinStreakPtr(battleMode, lvlMode))
         {
-            gSaveBlock2Ptr->frontier.factoryRecordWinStreaks[battleMode][lvlMode] = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
-            gSaveBlock2Ptr->frontier.factoryRecordRentsCount[battleMode][lvlMode] = gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
-            if (gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] > 1
+            *GetCurrentFactoryRecordWinStreakPtr(battleMode, lvlMode) = *GetCurrentFactoryWinStreakPtr(battleMode, lvlMode);
+            *GetCurrentFactoryRecordRentsCountPtr(battleMode, lvlMode) = *GetCurrentFactoryRentsCountPtr(battleMode, lvlMode);
+            if (*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
                 if (battleMode == FRONTIER_MODE_SINGLES)
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_FACTORY_SINGLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_FACTORY_SINGLES);
                 else
-                    TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode], FRONTIER_SHOW_FACTORY_DOUBLES);
+                    TryPutFrontierTVShowOnAir(*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode), FRONTIER_SHOW_FACTORY_DOUBLES);
             }
         }
         break;
     case FRONTIER_FACILITY_PIKE:
-        if (gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] > gSaveBlock2Ptr->frontier.pikeRecordStreaks[lvlMode])
+        if (*GetCurrentPikeWinStreakPtr(lvlMode) > *GetCurrentPikeRecordStreakPtr(lvlMode))
         {
-            gSaveBlock2Ptr->frontier.pikeRecordStreaks[lvlMode] = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
-            if (gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] > 1
+            *GetCurrentPikeRecordStreakPtr(lvlMode) = *GetCurrentPikeWinStreakPtr(lvlMode);
+            if (*GetCurrentPikeWinStreakPtr(lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
-                TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode], FRONTIER_SHOW_PIKE);
+                TryPutFrontierTVShowOnAir(*GetCurrentPikeWinStreakPtr(lvlMode), FRONTIER_SHOW_PIKE);
             }
         }
         break;
     case FRONTIER_FACILITY_PYRAMID:
-        if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] > gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode])
+        if (*GetCurrentPyramidWinStreakPtr(lvlMode) > *GetCurrentPyramidRecordStreakPtr(lvlMode))
         {
-            gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode] = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
-            if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] > 1
+            *GetCurrentPyramidRecordStreakPtr(lvlMode) = *GetCurrentPyramidWinStreakPtr(lvlMode);
+            if (*GetCurrentPyramidWinStreakPtr(lvlMode) > 1
                 && ShouldAirFrontierTVShow())
             {
-                TryPutFrontierTVShowOnAir(gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode], FRONTIER_SHOW_PYRAMID);
+                TryPutFrontierTVShowOnAir(*GetCurrentPyramidWinStreakPtr(lvlMode), FRONTIER_SHOW_PYRAMID);
             }
         }
         break;
@@ -1659,7 +1826,7 @@ u8 GetFrontierBrainStatus(void)
     s32 facility = VarGet(VAR_FRONTIER_FACILITY);
     s32 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
     u16 winStreakNoModifier = GetCurrentFacilityWinStreak();
-    s32 winStreak = winStreakNoModifier + sFrontierBrainStreakAppearances[facility][3];
+    s32 winStreak = winStreakNoModifier + GetFrontierBrainStreakAppearance(facility, 3);
     s32 symbolsCount;
 
     if (battleMode != FRONTIER_MODE_SINGLES)
@@ -1671,20 +1838,20 @@ u8 GetFrontierBrainStatus(void)
     // Missing a symbol
     case 0:
     case 1:
-        if (winStreak == sFrontierBrainStreakAppearances[facility][symbolsCount])
+        if (winStreak == GetFrontierBrainStreakAppearance(facility, symbolsCount))
             status = symbolsCount + 1; // FRONTIER_BRAIN_SILVER and FRONTIER_BRAIN_GOLD
         break;
     // Already received both symbols
     case 2:
     default:
         // Silver streak is reached
-        if (winStreak == sFrontierBrainStreakAppearances[facility][0])
+        if (winStreak == GetFrontierBrainStreakAppearance(facility, 0))
             status = FRONTIER_BRAIN_STREAK;
         // Gold streak is reached
-        else if (winStreak == sFrontierBrainStreakAppearances[facility][1])
+        else if (winStreak == GetFrontierBrainStreakAppearance(facility, 1))
             status = FRONTIER_BRAIN_STREAK_LONG;
         // Some increment of the gold streak is reached
-        else if (winStreak > sFrontierBrainStreakAppearances[facility][1] && (winStreak - sFrontierBrainStreakAppearances[facility][1]) % sFrontierBrainStreakAppearances[facility][2] == 0)
+        else if (winStreak > GetFrontierBrainStreakAppearance(facility, 1) && (winStreak - GetFrontierBrainStreakAppearance(facility, 1)) % GetFrontierBrainStreakAppearance(facility, 2) == 0)
             status = FRONTIER_BRAIN_STREAK_LONG;
         break;
     }
@@ -1778,6 +1945,12 @@ void ResetWinStreaks(void)
     s32 battleMode, lvlMode;
 
     gSaveBlock2Ptr->frontier.winStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.arenaWinStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.factoryWinStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.pikeWinStreakActiveFlags = 0;
+    gSaveBlock1Ptr->frontierHardMode.pyramidWinStreakActiveFlags = 0;
     for (battleMode = 0; battleMode < FRONTIER_MODE_COUNT; battleMode++)
     {
         for (lvlMode = 0; lvlMode < FRONTIER_LVL_TENT; lvlMode++)
@@ -1785,7 +1958,13 @@ void ResetWinStreaks(void)
             gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] = 0;
             if (battleMode < FRONTIER_MODE_MULTIS)
             {
+                gSaveBlock1Ptr->frontierHardMode.towerWinStreaks[battleMode][lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.palaceWinStreaks[battleMode][lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.arenaWinStreaks[lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.factoryWinStreaks[battleMode][lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.factoryRentsCount[battleMode][lvlMode] = 0;
                 gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode] = 0;
+                gSaveBlock2Ptr->frontier.domeHardWinStreaks[battleMode][lvlMode] = 0;
                 gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode] = 0;
                 gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] = 0;
             }
@@ -1793,7 +1972,9 @@ void ResetWinStreaks(void)
             {
                 gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] = 0;
                 gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.pikeWinStreaks[lvlMode] = 0;
                 gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] = 0;
+                gSaveBlock1Ptr->frontierHardMode.pyramidWinStreaks[lvlMode] = 0;
             }
         }
     }
@@ -1810,19 +1991,19 @@ u32 GetCurrentFacilityWinStreak(void)
     switch (facility)
     {
     case FRONTIER_FACILITY_TOWER:
-        return gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+        return *GetCurrentTowerWinStreakPtr(battleMode, lvlMode);
     case FRONTIER_FACILITY_DOME:
-        return gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode];
+        return *GetCurrentDomeWinStreakPtr(battleMode, lvlMode);
     case FRONTIER_FACILITY_PALACE:
-        return gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode];
+        return *GetCurrentPalaceWinStreakPtr(battleMode, lvlMode);
     case FRONTIER_FACILITY_ARENA:
-        return gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
+        return *GetCurrentArenaWinStreakPtr(lvlMode);
     case FRONTIER_FACILITY_FACTORY:
-        return gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
+        return *GetCurrentFactoryWinStreakPtr(battleMode, lvlMode);
     case FRONTIER_FACILITY_PIKE:
-        return gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode];
+        return *GetCurrentPikeWinStreakPtr(lvlMode);
     case FRONTIER_FACILITY_PYRAMID:
-        return gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+        return *GetCurrentPyramidWinStreakPtr(lvlMode);
     default:
         return 0;
     }
@@ -1861,25 +2042,25 @@ static void GiveBattlePoints(void)
     switch (facility)
     {
     case FRONTIER_FACILITY_TOWER:
-        challengeNum = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        challengeNum = *GetCurrentTowerWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
         break;
     case FRONTIER_FACILITY_DOME:
-        challengeNum = gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode];
+        challengeNum = *GetCurrentDomeWinStreakPtr(battleMode, lvlMode);
         break;
     case FRONTIER_FACILITY_PALACE:
-        challengeNum = gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        challengeNum = *GetCurrentPalaceWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
         break;
     case FRONTIER_FACILITY_ARENA:
-        challengeNum = gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        challengeNum = *GetCurrentArenaWinStreakPtr(lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
         break;
     case FRONTIER_FACILITY_FACTORY:
-        challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        challengeNum = *GetCurrentFactoryWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
         break;
     case FRONTIER_FACILITY_PIKE:
-        challengeNum = gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] / NUM_PIKE_ROOMS;
+        challengeNum = *GetCurrentPikeWinStreakPtr(lvlMode) / NUM_PIKE_ROOMS;
         break;
     case FRONTIER_FACILITY_PYRAMID:
-        challengeNum = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        challengeNum = *GetCurrentPyramidWinStreakPtr(lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
         break;
     }
 
@@ -2117,41 +2298,41 @@ static void IncrementWinStreak(void)
     switch (facility)
     {
     case FRONTIER_FACILITY_TOWER:
-        if (gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] < MAX_STREAK)
+        if (*GetCurrentTowerWinStreakPtr(battleMode, lvlMode) < MAX_STREAK)
         {
-            gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode]++;
+            (*GetCurrentTowerWinStreakPtr(battleMode, lvlMode))++;
             if (battleMode == FRONTIER_MODE_SINGLES)
             {
-                SetGameStat(GAME_STAT_BATTLE_TOWER_SINGLES_STREAK, gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode]);
-                gSaveBlock2Ptr->frontier.towerSinglesStreak = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+                SetGameStat(GAME_STAT_BATTLE_TOWER_SINGLES_STREAK, *GetCurrentTowerWinStreakPtr(battleMode, lvlMode));
+                gSaveBlock2Ptr->frontier.towerSinglesStreak = *GetCurrentTowerWinStreakPtr(battleMode, lvlMode);
             }
         }
         break;
     case FRONTIER_FACILITY_DOME:
-        if (gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode]++;
-        if (gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][lvlMode]++;
+        if (*GetCurrentDomeWinStreakPtr(battleMode, lvlMode) < MAX_STREAK)
+            (*GetCurrentDomeWinStreakPtr(battleMode, lvlMode))++;
+        if (*GetCurrentDomeTotalChampionshipsPtr(battleMode, lvlMode) < MAX_STREAK)
+            (*GetCurrentDomeTotalChampionshipsPtr(battleMode, lvlMode))++;
         break;
     case FRONTIER_FACILITY_PALACE:
-        if (gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.palaceWinStreaks[battleMode][lvlMode]++;
+        if (*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode) < MAX_STREAK)
+            (*GetCurrentPalaceWinStreakPtr(battleMode, lvlMode))++;
         break;
     case FRONTIER_FACILITY_ARENA:
-        if (gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode]++;
+        if (*GetCurrentArenaWinStreakPtr(lvlMode) < MAX_STREAK)
+            (*GetCurrentArenaWinStreakPtr(lvlMode))++;
         break;
     case FRONTIER_FACILITY_FACTORY:
-        if (gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode]++;
+        if (*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode) < MAX_STREAK)
+            (*GetCurrentFactoryWinStreakPtr(battleMode, lvlMode))++;
         break;
     case FRONTIER_FACILITY_PIKE:
-        if (gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.pikeWinStreaks[lvlMode]++;
+        if (*GetCurrentPikeWinStreakPtr(lvlMode) < MAX_STREAK)
+            (*GetCurrentPikeWinStreakPtr(lvlMode))++;
         break;
     case FRONTIER_FACILITY_PYRAMID:
-        if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] < MAX_STREAK)
-            gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode]++;
+        if (*GetCurrentPyramidWinStreakPtr(lvlMode) < MAX_STREAK)
+            (*GetCurrentPyramidWinStreakPtr(lvlMode))++;
         break;
     }
 }
@@ -2592,12 +2773,12 @@ s32 GetFronterBrainSymbol(void)
     if (symbol == 2)
     {
         u16 winStreak = GetCurrentFacilityWinStreak();
-        if (winStreak + sFrontierBrainStreakAppearances[facility][3] == sFrontierBrainStreakAppearances[facility][0])
+        if (winStreak + GetFrontierBrainStreakAppearance(facility, 3) == GetFrontierBrainStreakAppearance(facility, 0))
             symbol = 0;
-        else if (winStreak + sFrontierBrainStreakAppearances[facility][3] == sFrontierBrainStreakAppearances[facility][1])
+        else if (winStreak + GetFrontierBrainStreakAppearance(facility, 3) == GetFrontierBrainStreakAppearance(facility, 1))
             symbol = 1;
-        else if (winStreak + sFrontierBrainStreakAppearances[facility][3] > sFrontierBrainStreakAppearances[facility][1]
-                 && (winStreak + sFrontierBrainStreakAppearances[facility][3] - sFrontierBrainStreakAppearances[facility][1]) % sFrontierBrainStreakAppearances[facility][2] == 0)
+        else if (winStreak + GetFrontierBrainStreakAppearance(facility, 3) > GetFrontierBrainStreakAppearance(facility, 1)
+                 && (winStreak + GetFrontierBrainStreakAppearance(facility, 3) - GetFrontierBrainStreakAppearance(facility, 1)) % GetFrontierBrainStreakAppearance(facility, 2) == 0)
             symbol = 1;
     }
     return symbol;

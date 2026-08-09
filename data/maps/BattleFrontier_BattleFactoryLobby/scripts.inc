@@ -137,10 +137,31 @@ BattleFrontier_BattleFactoryLobby_EventScript_AskTakeChallenge::
 BattleFrontier_BattleFactoryLobby_EventScript_TryEnterChallenge::
 	message BattleFrontier_BattleFactoryLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattleFactoryLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattleFactoryLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattleFactoryLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattleFactoryLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattleFactoryLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattleFactoryLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattleFactoryLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattleFactoryLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleFactoryLobby_EventScript_LevelSelected
+BattleFrontier_BattleFactoryLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattleFactoryLobby_EventScript_LevelSelected
+BattleFrontier_BattleFactoryLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleFactoryLobby_EventScript_LevelSelected
+BattleFrontier_BattleFactoryLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+BattleFrontier_BattleFactoryLobby_EventScript_LevelSelected::
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
 	msgbox BattleFrontier_BattleFactoryLobby_Text_OkayToSaveBeforeChallenge, MSGBOX_YESNO
 	switch VAR_RESULT
@@ -346,7 +367,12 @@ BattleFrontier_BattleFactoryLobby_Text_ExplainSinglesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "challenge, please save the game.\p"
 	.string "If you don't save, you will be\n"
-	.string "disqualified from your challenge.$"
+	.string "disqualified from your challenge.\p"
+	.string "HARD challenges use the strongest\n"
+	.string "rental POKéMON and TRAINERS from\l"
+	.string "the very beginning.\p"
+	.string "In SINGLE BATTLES, the FACTORY HEAD\n"
+	.string "appears earlier.$"
 
 BattleFrontier_BattleFactoryLobby_Text_LookForwardToNextVisit:
 	.string "We look forward to your next visit.$"
@@ -442,7 +468,10 @@ BattleFrontier_BattleFactoryLobby_Text_ExplainDoublesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "challenge, please save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD challenges use the strongest\n"
+	.string "rental POKéMON and TRAINERS from\l"
+	.string "the very beginning.$"
 
 BattleFrontier_BattleFactoryLobby_Text_CongratsForDefeatingHead:
 	.string "Congratulations for defeating\n"

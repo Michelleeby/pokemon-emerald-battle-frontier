@@ -835,6 +835,21 @@ static const u32 sWinStreakMasks[][2] =
     {~(STREAK_TOWER_LINK_MULTIS_50), ~(STREAK_TOWER_LINK_MULTIS_OPEN)},
 };
 
+static u16 *GetTowerWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+        && battleMode <= FRONTIER_MODE_DOUBLES)
+        return &gSaveBlock1Ptr->frontierHardMode.towerWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+}
+
+static u32 *GetTowerWinStreakActiveFlagsPtr(void)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags;
+    return &gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+}
+
 // The challenge number at which an Apprentice can appear, depending on how many of their questions were answered
 static const u8 sApprenticeChallengeThreshold[MAX_APPRENTICE_QUESTIONS] =
 {
@@ -913,8 +928,8 @@ static void InitTowerChallenge(void)
     gSaveBlock2Ptr->frontier.challengePaused = FALSE;
     gSaveBlock2Ptr->frontier.disableRecordBattle = FALSE;
     ResetFrontierTrainerIds();
-    if (!(gSaveBlock2Ptr->frontier.winStreakActiveFlags & sWinStreakFlags[battleMode][lvlMode]))
-        gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] = 0;
+    if (!(*GetTowerWinStreakActiveFlagsPtr() & sWinStreakFlags[battleMode][lvlMode]))
+        *GetTowerWinStreakPtr(battleMode, lvlMode) = 0;
 
     ValidateBattleTowerRecordChecksums();
     SetDynamicWarp(0, gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum, WARP_ID_NONE);
@@ -934,7 +949,7 @@ static void GetTowerData(void)
         gSpecialVar_Result = GetCurrentBattleTowerWinStreak(lvlMode, battleMode);
         break;
     case TOWER_DATA_WIN_STREAK_ACTIVE:
-        gSpecialVar_Result = ((gSaveBlock2Ptr->frontier.winStreakActiveFlags & sWinStreakFlags[battleMode][lvlMode]) != 0);
+        gSpecialVar_Result = ((*GetTowerWinStreakActiveFlagsPtr() & sWinStreakFlags[battleMode][lvlMode]) != 0);
         break;
     case TOWER_DATA_LVL_MODE:
         gSaveBlock2Ptr->frontier.towerLvlMode = gSaveBlock2Ptr->frontier.lvlMode;
@@ -952,13 +967,13 @@ static void SetTowerData(void)
     case 0:
         break;
     case TOWER_DATA_WIN_STREAK:
-        gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode] = gSpecialVar_0x8006;
+        *GetTowerWinStreakPtr(battleMode, lvlMode) = gSpecialVar_0x8006;
         break;
     case TOWER_DATA_WIN_STREAK_ACTIVE:
         if (gSpecialVar_0x8006)
-            gSaveBlock2Ptr->frontier.winStreakActiveFlags |= sWinStreakFlags[battleMode][lvlMode];
+            *GetTowerWinStreakActiveFlagsPtr() |= sWinStreakFlags[battleMode][lvlMode];
         else
-            gSaveBlock2Ptr->frontier.winStreakActiveFlags &= sWinStreakMasks[battleMode][lvlMode];
+            *GetTowerWinStreakActiveFlagsPtr() &= sWinStreakMasks[battleMode][lvlMode];
         break;
     case TOWER_DATA_LVL_MODE:
         gSaveBlock2Ptr->frontier.towerLvlMode = gSaveBlock2Ptr->frontier.lvlMode;
@@ -1061,6 +1076,9 @@ static void SetNextFacilityOpponent(void)
         u32 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
         u16 winStreak = GetCurrentFacilityWinStreak();
         u32 challengeNum = winStreak / FRONTIER_STAGES_PER_CHALLENGE;
+
+        if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+            challengeNum = 8;
         SetFacilityPtrsGetLevel();
 
         if (battleMode == FRONTIER_MODE_MULTIS || battleMode == FRONTIER_MODE_LINK_MULTIS)
@@ -2741,7 +2759,7 @@ static void ClearBattleTowerRecord(struct EmeraldBattleTowerRecord *record)
 
 u16 GetCurrentBattleTowerWinStreak(u8 lvlMode, u8 battleMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.towerWinStreaks[battleMode][lvlMode];
+    u16 winStreak = *GetTowerWinStreakPtr(battleMode, lvlMode);
 
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;

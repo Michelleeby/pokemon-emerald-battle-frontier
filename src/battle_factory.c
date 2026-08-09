@@ -190,6 +190,27 @@ static const u16 sInitialRentalMonRanges[][2] =
 };
 
 // code
+static u16 *GetFactoryWinStreakPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryWinStreaks[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
+}
+
+static u16 *GetFactoryRentsCountPtr(u8 battleMode, u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryRentsCount[battleMode][lvlMode];
+    return &gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
+}
+
+static u32 *GetFactoryWinStreakActiveFlagsPtr(void)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.factoryWinStreakActiveFlags;
+    return &gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+}
+
 void CallBattleFactoryFunction(void)
 {
     sBattleFactoryFunctions[gSpecialVar_0x8004]();
@@ -205,10 +226,10 @@ static void InitFactoryChallenge(void)
     gSaveBlock2Ptr->frontier.curChallengeBattleNum = 0;
     gSaveBlock2Ptr->frontier.challengePaused = FALSE;
     gSaveBlock2Ptr->frontier.disableRecordBattle = FALSE;
-    if (!(gSaveBlock2Ptr->frontier.winStreakActiveFlags & sWinStreakFlags[battleMode][lvlMode]))
+    if (!(*GetFactoryWinStreakActiveFlagsPtr() & sWinStreakFlags[battleMode][lvlMode]))
     {
-        gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] = 0;
-        gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode] = 0;
+        *GetFactoryWinStreakPtr(battleMode, lvlMode) = 0;
+        *GetFactoryRentsCountPtr(battleMode, lvlMode) = 0;
     }
 
     sPerformedRentalSwap = FALSE;
@@ -229,13 +250,13 @@ static void GetBattleFactoryData(void)
     switch (gSpecialVar_0x8005)
     {
     case FACTORY_DATA_WIN_STREAK:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
+        gSpecialVar_Result = *GetFactoryWinStreakPtr(battleMode, lvlMode);
         break;
     case FACTORY_DATA_WIN_STREAK_ACTIVE:
-        gSpecialVar_Result = ((gSaveBlock2Ptr->frontier.winStreakActiveFlags & sWinStreakFlags[battleMode][lvlMode]) != 0);
+        gSpecialVar_Result = ((*GetFactoryWinStreakActiveFlagsPtr() & sWinStreakFlags[battleMode][lvlMode]) != 0);
         break;
     case FACTORY_DATA_WIN_STREAK_SWAPS:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
+        gSpecialVar_Result = *GetFactoryRentsCountPtr(battleMode, lvlMode);
         break;
     }
 }
@@ -248,18 +269,18 @@ static void SetBattleFactoryData(void)
     switch (gSpecialVar_0x8005)
     {
     case FACTORY_DATA_WIN_STREAK:
-        gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] = gSpecialVar_0x8006;
+        *GetFactoryWinStreakPtr(battleMode, lvlMode) = gSpecialVar_0x8006;
         break;
     case FACTORY_DATA_WIN_STREAK_ACTIVE:
         if (gSpecialVar_0x8006)
-            gSaveBlock2Ptr->frontier.winStreakActiveFlags |= sWinStreakFlags[battleMode][lvlMode];
+            *GetFactoryWinStreakActiveFlagsPtr() |= sWinStreakFlags[battleMode][lvlMode];
         else
-            gSaveBlock2Ptr->frontier.winStreakActiveFlags &= sWinStreakMasks[battleMode][lvlMode];
+            *GetFactoryWinStreakActiveFlagsPtr() &= sWinStreakMasks[battleMode][lvlMode];
         break;
     case FACTORY_DATA_WIN_STREAK_SWAPS:
         if (sPerformedRentalSwap == TRUE)
         {
-            gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode] = gSpecialVar_0x8006;
+            *GetFactoryRentsCountPtr(battleMode, lvlMode) = gSpecialVar_0x8006;
             sPerformedRentalSwap = FALSE;
         }
         break;
@@ -309,8 +330,9 @@ static void GenerateOpponentMons(void)
     u16 trainerId = 0;
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     u32 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
-    u32 winStreak = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode];
-    u32 challengeNum = winStreak / FRONTIER_STAGES_PER_CHALLENGE;
+    u32 winStreak = *GetFactoryWinStreakPtr(battleMode, lvlMode);
+    u32 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                     ? 7 : winStreak / FRONTIER_STAGES_PER_CHALLENGE;
     gFacilityTrainers = gBattleFrontierTrainers;
 
     do
@@ -531,7 +553,8 @@ static void GenerateInitialRentalMons(void)
     }
     lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
-    challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+    challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                 ? 7 : *GetFactoryWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
     if (VarGet(VAR_FRONTIER_BATTLE_MODE) == FRONTIER_MODE_DOUBLES)
         factoryBattleMode = FRONTIER_MODE_DOUBLES;
     else
@@ -768,7 +791,8 @@ void FillFactoryBrainParty(void)
 
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     u8 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
-    u8 challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+    u8 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                    ? 7 : *GetFactoryWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
     fixedIV = GetFactoryMonFixedIV(challengeNum + 2, FALSE);
     monLevel = SetFacilityPtrsGetLevel();
     i = 0;
@@ -868,7 +892,7 @@ static u16 GetFactoryMonId(u8 lvlMode, u8 challengeNum, bool8 useBetterRange)
 u8 GetNumPastRentalsRank(u8 battleMode, u8 lvlMode)
 {
     u8 ret;
-    u8 rents = gSaveBlock2Ptr->frontier.factoryRentsCount[battleMode][lvlMode];
+    u8 rents = *GetFactoryRentsCountPtr(battleMode, lvlMode);
 
     if (rents < 15)
         ret = 0;
@@ -897,7 +921,8 @@ u32 GetAiScriptsInBattleFactory(void)
     else
     {
         int battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
-        int challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+        int challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                         ? 7 : *GetFactoryWinStreakPtr(battleMode, lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
 
         if (gTrainerBattleOpponent_A == TRAINER_FRONTIER_BRAIN)
             return AI_SCRIPT_CHECK_BAD_MOVE | AI_SCRIPT_TRY_TO_FAINT | AI_SCRIPT_CHECK_VIABILITY;

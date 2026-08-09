@@ -148,10 +148,35 @@ BattleFrontier_BattleDomeLobby_EventScript_AskTakeChallenge::
 BattleFrontier_BattleDomeLobby_EventScript_TryEnterChallenge::
 	message BattleFrontier_BattleDomeLobby_Text_WhichLevelMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattleDomeLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattleDomeLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattleDomeLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattleDomeLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattleDomeLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattleDomeLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattleDomeLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattleDomeLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleDomeLobby_EventScript_CheckEligibility
+
+BattleFrontier_BattleDomeLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattleDomeLobby_EventScript_CheckEligibility
+
+BattleFrontier_BattleDomeLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattleDomeLobby_EventScript_CheckEligibility
+
+BattleFrontier_BattleDomeLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+
+BattleFrontier_BattleDomeLobby_EventScript_CheckEligibility::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattleDomeLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -461,7 +486,11 @@ BattleFrontier_BattleDomeLobby_Text_ExplainSinglesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "tournament, please save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD tournaments feature the strongest\n"
+	.string "TRAINERS from the very beginning.\p"
+	.string "In SINGLE BATTLES, their DOME ACE\n"
+	.string "streaks are shorter.$"
 
 BattleFrontier_BattleDomeLobby_Text_OkayToSaveBeforeChallenge:
 	.string "Before I show you to the BATTLE DOME,\n"
@@ -569,7 +598,9 @@ BattleFrontier_BattleDomeLobby_Text_ExplainDoublesChallenge:
 	.string "If you want to interrupt your\n"
 	.string "tournament, please save the game.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD tournaments feature the strongest\n"
+	.string "TRAINERS from the very beginning.$"
 
 BattleFrontier_BattleDomeLobby_Text_PrevTourneyResultsSinglesLv50:
 	.string "They're the results of the last\n"

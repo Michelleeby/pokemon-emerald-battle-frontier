@@ -660,6 +660,20 @@ static void UNUSED UpdateHPAtStart(u8 battler)
         hpAtStart[BATTLE_OPPOSITE(battler)] = gBattleMons[BATTLE_OPPOSITE(battler)].hp;
 }
 
+static u16 *GetArenaWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.arenaWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
+}
+
+static u32 *GetArenaWinStreakActiveFlagsPtr(void)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.arenaWinStreakActiveFlags;
+    return &gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+}
+
 static void InitArenaChallenge(void)
 {
     bool32 isCurrent;
@@ -670,12 +684,12 @@ static void InitArenaChallenge(void)
     gSaveBlock2Ptr->frontier.challengePaused = FALSE;
     gSaveBlock2Ptr->frontier.disableRecordBattle = FALSE;
     if (lvlMode != FRONTIER_LVL_50)
-        isCurrent = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_ARENA_OPEN;
+        isCurrent = *GetArenaWinStreakActiveFlagsPtr() & STREAK_ARENA_OPEN;
     else
-        isCurrent = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_ARENA_50;
+        isCurrent = *GetArenaWinStreakActiveFlagsPtr() & STREAK_ARENA_50;
 
     if (!isCurrent)
-        gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] = 0;
+        *GetArenaWinStreakPtr(lvlMode) = 0;
 
     SetDynamicWarp(0, gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum, WARP_ID_NONE);
     gTrainerBattleOpponent_A = 0;
@@ -691,13 +705,13 @@ static void GetArenaData(void)
         gSpecialVar_Result = gSaveBlock2Ptr->frontier.arenaPrize;
         break;
     case ARENA_DATA_WIN_STREAK:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode];
+        gSpecialVar_Result = *GetArenaWinStreakPtr(lvlMode);
         break;
     case ARENA_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_ARENA_OPEN;
+            gSpecialVar_Result = *GetArenaWinStreakActiveFlagsPtr() & STREAK_ARENA_OPEN;
         else
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_ARENA_50;
+            gSpecialVar_Result = *GetArenaWinStreakActiveFlagsPtr() & STREAK_ARENA_50;
         break;
     }
 }
@@ -712,22 +726,22 @@ static void SetArenaData(void)
         gSaveBlock2Ptr->frontier.arenaPrize = gSpecialVar_0x8006;
         break;
     case ARENA_DATA_WIN_STREAK:
-        gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] = gSpecialVar_0x8006;
+        *GetArenaWinStreakPtr(lvlMode) = gSpecialVar_0x8006;
         break;
     case ARENA_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_ARENA_OPEN;
+                *GetArenaWinStreakActiveFlagsPtr() |= STREAK_ARENA_OPEN;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_ARENA_OPEN);
+                *GetArenaWinStreakActiveFlagsPtr() &= ~(STREAK_ARENA_OPEN);
         }
         else
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_ARENA_50;
+                *GetArenaWinStreakActiveFlagsPtr() |= STREAK_ARENA_50;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_ARENA_50);
+                *GetArenaWinStreakActiveFlagsPtr() &= ~(STREAK_ARENA_50);
         }
         break;
     }
@@ -745,7 +759,7 @@ static void SetArenaPrize(void)
 {
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
 
-    if (gSaveBlock2Ptr->frontier.arenaWinStreaks[lvlMode] > 41)
+    if (*GetArenaWinStreakPtr(lvlMode) > 41)
         gSaveBlock2Ptr->frontier.arenaPrize = sLongStreakPrizeItems[Random() % ARRAY_COUNT(sLongStreakPrizeItems)];
     else
         gSaveBlock2Ptr->frontier.arenaPrize = sShortStreakPrizeItems[Random() % ARRAY_COUNT(sShortStreakPrizeItems)];

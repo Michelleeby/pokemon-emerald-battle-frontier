@@ -21,6 +21,8 @@ extern const u8 gText_FromSpace[];
 
 extern const u8 gText_Lv50[];
 extern const u8 gText_OpenLevel[];
+extern const u8 gText_HardLv50[];
+extern const u8 gText_HardOpen[];
 
 extern const u8 gText_Mom[];
 extern const u8 gText_Dad[];

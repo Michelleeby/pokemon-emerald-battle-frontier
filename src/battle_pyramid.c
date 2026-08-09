@@ -832,6 +832,27 @@ static const u8 sBorderedSquareIds[][4] =
 static const u8 sPickupPercentages[PICKUP_ITEMS_PER_ROUND] = {30, 40, 50, 60, 70, 80, 85, 90, 95, 100};
 
 // code
+static u16 *GetPyramidWinStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pyramidWinStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+}
+
+static u16 *GetPyramidRecordStreakPtr(u8 lvlMode)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pyramidRecordStreaks[lvlMode];
+    return &gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode];
+}
+
+static u32 *GetPyramidWinStreakActiveFlagsPtr(void)
+{
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+        return &gSaveBlock1Ptr->frontierHardMode.pyramidWinStreakActiveFlags;
+    return &gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+}
+
 void CallBattlePyramidFunction(void)
 {
     sBattlePyramidFunctions[gSpecialVar_0x8004]();
@@ -846,13 +867,13 @@ static void InitPyramidChallenge(void)
     gSaveBlock2Ptr->frontier.curChallengeBattleNum = 0;
     gSaveBlock2Ptr->frontier.challengePaused = FALSE;
     if (lvlMode != FRONTIER_LVL_50)
-        isCurrent = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_OPEN;
+        isCurrent = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_OPEN;
     else
-        isCurrent = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_50;
+        isCurrent = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_50;
 
     if (!isCurrent)
     {
-        gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] = 0;
+        *GetPyramidWinStreakPtr(lvlMode) = 0;
         InitPyramidBagItems(lvlMode);
     }
 
@@ -871,25 +892,25 @@ static void GetBattlePyramidData(void)
         gSpecialVar_Result = gSaveBlock2Ptr->frontier.pyramidPrize;
         break;
     case PYRAMID_DATA_WIN_STREAK:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+        gSpecialVar_Result = *GetPyramidWinStreakPtr(lvlMode);
         break;
     case PYRAMID_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_OPEN;
+            gSpecialVar_Result = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_OPEN;
         else
-            gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_50;
+            gSpecialVar_Result = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_50;
         break;
     case PYRAMID_DATA_WIN_STREAK_50:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pyramidWinStreaks[FRONTIER_LVL_50];
+        gSpecialVar_Result = *GetPyramidWinStreakPtr(FRONTIER_LVL_50);
         break;
     case PYRAMID_DATA_WIN_STREAK_OPEN:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.pyramidWinStreaks[FRONTIER_LVL_OPEN];
+        gSpecialVar_Result = *GetPyramidWinStreakPtr(FRONTIER_LVL_OPEN);
         break;
     case PYRAMID_DATA_WIN_STREAK_ACTIVE_50:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_50;
+        gSpecialVar_Result = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_50;
         break;
     case PYRAMID_DATA_WIN_STREAK_ACTIVE_OPEN:
-        gSpecialVar_Result = gSaveBlock2Ptr->frontier.winStreakActiveFlags & STREAK_PYRAMID_OPEN;
+        gSpecialVar_Result = *GetPyramidWinStreakActiveFlagsPtr() & STREAK_PYRAMID_OPEN;
         break;
     }
 }
@@ -904,22 +925,22 @@ static void SetBattlePyramidData(void)
         gSaveBlock2Ptr->frontier.pyramidPrize = gSpecialVar_0x8006;
         break;
     case PYRAMID_DATA_WIN_STREAK:
-        gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] = gSpecialVar_0x8006;
+        *GetPyramidWinStreakPtr(lvlMode) = gSpecialVar_0x8006;
         break;
     case PYRAMID_DATA_WIN_STREAK_ACTIVE:
         if (lvlMode != FRONTIER_LVL_50)
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PYRAMID_OPEN;
+                *GetPyramidWinStreakActiveFlagsPtr() |= STREAK_PYRAMID_OPEN;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_PYRAMID_OPEN);
+                *GetPyramidWinStreakActiveFlagsPtr() &= ~(STREAK_PYRAMID_OPEN);
         }
         else
         {
             if (gSpecialVar_0x8006)
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PYRAMID_50;
+                *GetPyramidWinStreakActiveFlagsPtr() |= STREAK_PYRAMID_50;
             else
-                gSaveBlock2Ptr->frontier.winStreakActiveFlags &= ~(STREAK_PYRAMID_50);
+                *GetPyramidWinStreakActiveFlagsPtr() &= ~(STREAK_PYRAMID_50);
         }
         break;
     case PYRAMID_DATA_TRAINER_FLAGS:
@@ -939,7 +960,7 @@ static void SavePyramidChallenge(void)
 
 static void SetBattlePyramidPrize(void)
 {
-    if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[gSaveBlock2Ptr->frontier.lvlMode] > 41)
+    if (*GetPyramidWinStreakPtr(gSaveBlock2Ptr->frontier.lvlMode) > 41)
         gSaveBlock2Ptr->frontier.pyramidPrize = sLongStreakRewardItems[Random() % ARRAY_COUNT(sLongStreakRewardItems)];
     else
         gSaveBlock2Ptr->frontier.pyramidPrize = sShortStreakRewardItems[Random() % ARRAY_COUNT(sShortStreakRewardItems)];
@@ -977,7 +998,7 @@ static void SetPickupItem(void)
     u8 id;
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
     u32 floor = gSaveBlock2Ptr->frontier.curChallengeBattleNum;
-    u32 round = (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] / FRONTIER_STAGES_PER_CHALLENGE) % TOTAL_PYRAMID_ROUNDS;
+    u32 round = (*GetPyramidWinStreakPtr(lvlMode) / FRONTIER_STAGES_PER_CHALLENGE) % TOTAL_PYRAMID_ROUNDS;
 
     if (round >= TOTAL_PYRAMID_ROUNDS)
         round = TOTAL_PYRAMID_ROUNDS - 1;
@@ -1104,10 +1125,10 @@ static void UpdatePyramidWinStreak(void)
 {
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
 
-    if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] < 999)
-        gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode]++;
-    if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] > gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode])
-        gSaveBlock2Ptr->frontier.pyramidRecordStreaks[lvlMode] = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode];
+    if (*GetPyramidWinStreakPtr(lvlMode) < 999)
+        (*GetPyramidWinStreakPtr(lvlMode))++;
+    if (*GetPyramidWinStreakPtr(lvlMode) > *GetPyramidRecordStreakPtr(lvlMode))
+        *GetPyramidRecordStreakPtr(lvlMode) = *GetPyramidWinStreakPtr(lvlMode);
 }
 
 static void GetCurrentBattlePyramidLocation(void)
@@ -1348,7 +1369,7 @@ void GenerateBattlePyramidWildMon(void)
     const struct PyramidWildMon *wildMons;
     u32 id;
     u32 lvl = gSaveBlock2Ptr->frontier.lvlMode;
-    u16 round = (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvl] / FRONTIER_STAGES_PER_CHALLENGE) % TOTAL_PYRAMID_ROUNDS;
+    u16 round = (*GetPyramidWinStreakPtr(lvl) / FRONTIER_STAGES_PER_CHALLENGE) % TOTAL_PYRAMID_ROUNDS;
 
     if (round >= TOTAL_PYRAMID_ROUNDS)
         round = TOTAL_PYRAMID_ROUNDS - 1;
@@ -1402,9 +1423,9 @@ void GenerateBattlePyramidWildMon(void)
 
     // UB: Reading outside the array as lvl was used for mon level instead of frontier lvl mode.
     #ifndef UBFIX
-    if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvl] >= 140)
+    if (*GetPyramidWinStreakPtr(lvl) >= 140)
     #else
-    if (gSaveBlock2Ptr->frontier.pyramidWinStreaks[gSaveBlock2Ptr->frontier.lvlMode] >= 140)
+    if (*GetPyramidWinStreakPtr(gSaveBlock2Ptr->frontier.lvlMode) >= 140)
     #endif
     {
         id = (Random() % 17) + 15;
@@ -1490,7 +1511,8 @@ static u16 GetUniqueTrainerId(u8 objectEventId)
     int i;
     u16 trainerId;
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    u32 challengeNum = gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
+    u32 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                     ? 7 : *GetPyramidWinStreakPtr(lvlMode) / FRONTIER_STAGES_PER_CHALLENGE;
     u32 floor = gSaveBlock2Ptr->frontier.curChallengeBattleNum;
     if (floor == FRONTIER_STAGES_PER_CHALLENGE)
     {
@@ -1960,7 +1982,7 @@ u16 GetBattlePyramidPickupItemId(void)
     int rand;
     u32 i;
     u32 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    int round = (gSaveBlock2Ptr->frontier.pyramidWinStreaks[lvlMode] / FRONTIER_STAGES_PER_CHALLENGE);
+    int round = (*GetPyramidWinStreakPtr(lvlMode) / FRONTIER_STAGES_PER_CHALLENGE);
 
     if (round >= TOTAL_PYRAMID_ROUNDS)
         round = TOTAL_PYRAMID_ROUNDS - 1;

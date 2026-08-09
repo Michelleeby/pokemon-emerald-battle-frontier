@@ -108,10 +108,31 @@ BattleFrontier_BattlePikeLobby_EventScript_AskTakeChallenge::
 BattleFrontier_BattlePikeLobby_EventScript_TryEnterChallenge::
 	message BattleFrontier_BattlePikeLobby_Text_WhichChallengeMode
 	waitmessage
-	multichoice 17, 6, MULTI_LEVEL_MODE, FALSE
+	multichoice 17, 4, MULTI_DOME_LEVEL_MODE, FALSE
 	switch VAR_RESULT
-	case FRONTIER_LVL_TENT, BattleFrontier_BattlePikeLobby_EventScript_CancelChallenge
+	case 0, BattleFrontier_BattlePikeLobby_EventScript_SelectNormalLv50
+	case 1, BattleFrontier_BattlePikeLobby_EventScript_SelectNormalOpen
+	case 2, BattleFrontier_BattlePikeLobby_EventScript_SelectHardLv50
+	case 3, BattleFrontier_BattlePikeLobby_EventScript_SelectHardOpen
+	case 4, BattleFrontier_BattlePikeLobby_EventScript_CancelChallenge
 	case MULTI_B_PRESSED, BattleFrontier_BattlePikeLobby_EventScript_CancelChallenge
+
+BattleFrontier_BattlePikeLobby_EventScript_SelectNormalLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattlePikeLobby_EventScript_LevelSelected
+BattleFrontier_BattlePikeLobby_EventScript_SelectNormalOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_NORMAL
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+	goto BattleFrontier_BattlePikeLobby_EventScript_LevelSelected
+BattleFrontier_BattlePikeLobby_EventScript_SelectHardLv50::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_50
+	goto BattleFrontier_BattlePikeLobby_EventScript_LevelSelected
+BattleFrontier_BattlePikeLobby_EventScript_SelectHardOpen::
+	frontier_set FRONTIER_DATA_CHALLENGE_MODE, FRONTIER_CHALLENGE_HARD
+	setvar VAR_RESULT, FRONTIER_LVL_OPEN
+BattleFrontier_BattlePikeLobby_EventScript_LevelSelected::
 	frontier_checkineligible
 	goto_if_eq VAR_0x8004, TRUE, BattleFrontier_BattlePikeLobby_EventScript_NotEnoughValidMons
 	frontier_set FRONTIER_DATA_LVL_MODE, VAR_RESULT
@@ -290,16 +311,20 @@ BattleFrontier_BattlePikeLobby_Text_ExplainBattlePike:
 	.string "challenge, please have a word with\l"
 	.string "our staff in the big rooms on the way.\p"
 	.string "If you don't save before interrupting,\n"
-	.string "you will be disqualified.$"
+	.string "you will be disqualified.\p"
+	.string "HARD challenges use the strongest\n"
+	.string "TRAINERS from the very beginning.\p"
+	.string "The room choices and healing rules\n"
+	.string "remain unchanged. The PIKE QUEEN\l"
+	.string "appears earlier.$"
 
 BattleFrontier_BattlePikeLobby_Text_LookForwardToSeeingYou:
 	.string "We look forward to seeing you\n"
 	.string "on another occasion…$"
 
 BattleFrontier_BattlePikeLobby_Text_WhichChallengeMode:
-	.string "You have the choice of two courses,\n"
-	.string "Level 50 and Open Level.\l"
-	.string "Which will you challenge?$"
+	.string "Which level and challenge mode\n"
+	.string "will you choose?$"
 
 BattleFrontier_BattlePikeLobby_Text_NotEnoughValidMonsLv50:
 	.string "I beg your pardon, but…\p"
@@ -426,4 +451,3 @@ BattleFrontier_BattlePikeLobby_Text_ExplainMonOrderRules:
 	.string "changed.\p"
 	.string "The sequence must be set before\n"
 	.string "starting your challenge.$"
-
