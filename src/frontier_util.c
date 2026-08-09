@@ -1077,8 +1077,12 @@ static void SaveSelectedParty(void)
 
 static void ShowFacilityResultsWindow(void)
 {
+    u8 challengeMode = gSaveBlock2Ptr->frontier.frontierChallengeMode;
+
     if (gSpecialVar_0x8006 >= FRONTIER_MODE_COUNT)
         gSpecialVar_0x8006 = 0;
+    if (gSpecialVar_0x8007 <= FRONTIER_CHALLENGE_HARD)
+        gSaveBlock2Ptr->frontier.frontierChallengeMode = gSpecialVar_0x8007;
     switch (gSpecialVar_0x8005)
     {
     case FRONTIER_FACILITY_TOWER:
@@ -1106,11 +1110,33 @@ static void ShowFacilityResultsWindow(void)
         ShowLinkContestResultsWindow();
         break;
     }
+    gSaveBlock2Ptr->frontier.frontierChallengeMode = challengeMode;
 }
 
 static bool8 IsWinStreakActive(u32 challenge)
 {
-    if (gSaveBlock2Ptr->frontier.winStreakActiveFlags & challenge)
+    u32 flags = gSaveBlock2Ptr->frontier.winStreakActiveFlags;
+
+    if (gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD)
+    {
+        switch (gSpecialVar_0x8005)
+        {
+        case FRONTIER_FACILITY_TOWER:
+            flags = gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags;
+            break;
+        case FRONTIER_FACILITY_PALACE:
+            flags = gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags;
+            break;
+        case FRONTIER_FACILITY_ARENA:
+            flags = gSaveBlock1Ptr->frontierHardMode.arenaWinStreakActiveFlags;
+            break;
+        case FRONTIER_FACILITY_FACTORY:
+            flags = gSaveBlock1Ptr->frontierHardMode.factoryWinStreakActiveFlags;
+            break;
+        }
+    }
+
+    if (flags & challenge)
         return TRUE;
     else
         return FALSE;
@@ -1230,7 +1256,7 @@ static void ShowTowerResultsWindow(u8 battleMode)
 // Battle Dome records.
 static u16 DomeGetWinStreak(u8 battleMode, u8 lvlMode)
 {
-    u16 winStreak = gSaveBlock2Ptr->frontier.domeWinStreaks[battleMode][lvlMode];
+    u16 winStreak = *GetCurrentDomeWinStreakPtr(battleMode, lvlMode);
     if (winStreak > MAX_STREAK)
         return MAX_STREAK;
     else
@@ -1248,23 +1274,20 @@ static void PrintTwoStrings(const u8 *str1, const u8 *str2, u16 num, u8 x1, u8 x
 static void DomePrintPrevOrCurrentStreak(u8 battleMode, u8 lvlMode, u8 x1, u8 x2, u8 y)
 {
     bool8 isCurrent;
-    u16 winStreak = DomeGetWinStreak(battleMode, lvlMode);
-    switch (battleMode)
+    static const u32 sWinStreakFlags[2][FRONTIER_LVL_MODE_COUNT][2] =
     {
-    default:
-    case FRONTIER_MODE_SINGLES:
-        if (lvlMode != FRONTIER_LVL_50)
-            isCurrent = IsWinStreakActive(STREAK_DOME_SINGLES_OPEN);
-        else
-            isCurrent = IsWinStreakActive(STREAK_DOME_SINGLES_50);
-        break;
-    case FRONTIER_MODE_DOUBLES:
-        if (lvlMode != FRONTIER_LVL_50)
-            isCurrent = IsWinStreakActive(STREAK_DOME_DOUBLES_OPEN);
-        else
-            isCurrent = IsWinStreakActive(STREAK_DOME_DOUBLES_50);
-        break;
-    }
+        {
+            {STREAK_DOME_SINGLES_50, STREAK_DOME_HARD_SINGLES_50},
+            {STREAK_DOME_SINGLES_OPEN, STREAK_DOME_HARD_SINGLES_OPEN},
+        },
+        {
+            {STREAK_DOME_DOUBLES_50, STREAK_DOME_HARD_DOUBLES_50},
+            {STREAK_DOME_DOUBLES_OPEN, STREAK_DOME_HARD_DOUBLES_OPEN},
+        },
+    };
+    u16 winStreak = DomeGetWinStreak(battleMode, lvlMode);
+
+    isCurrent = IsWinStreakActive(sWinStreakFlags[battleMode][lvlMode][gSaveBlock2Ptr->frontier.frontierChallengeMode]);
 
     if (isCurrent == TRUE)
         PrintTwoStrings(gText_Current, gText_ClearStreak, winStreak, x1, x2, y);
@@ -1287,11 +1310,11 @@ static void ShowDomeResultsWindow(u8 battleMode)
     AddTextPrinterParameterized(gRecordsWindowId, FONT_NORMAL, gText_OpenLv, 8, 97, TEXT_SKIP_DRAW, NULL);
     PrintHyphens(10);
     DomePrintPrevOrCurrentStreak(battleMode, FRONTIER_LVL_50, 64, 121, 33);
-    PrintTwoStrings(gText_Record, gText_ClearStreak, gSaveBlock2Ptr->frontier.domeRecordWinStreaks[battleMode][FRONTIER_LVL_50], 64, 121, 49);
-    PrintTwoStrings(gText_Total, gText_Championships, gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][FRONTIER_LVL_50], 64, 112, 65);
+    PrintTwoStrings(gText_Record, gText_ClearStreak, *GetCurrentDomeRecordWinStreakPtr(battleMode, FRONTIER_LVL_50), 64, 121, 49);
+    PrintTwoStrings(gText_Total, gText_Championships, *GetCurrentDomeTotalChampionshipsPtr(battleMode, FRONTIER_LVL_50), 64, 112, 65);
     DomePrintPrevOrCurrentStreak(battleMode, FRONTIER_LVL_OPEN, 64, 121, 97);
-    PrintTwoStrings(gText_Record, gText_ClearStreak, gSaveBlock2Ptr->frontier.domeRecordWinStreaks[battleMode][FRONTIER_LVL_OPEN], 64, 121, 113);
-    PrintTwoStrings(gText_Total, gText_Championships, gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][FRONTIER_LVL_OPEN], 64, 112, 129);
+    PrintTwoStrings(gText_Record, gText_ClearStreak, *GetCurrentDomeRecordWinStreakPtr(battleMode, FRONTIER_LVL_OPEN), 64, 121, 113);
+    PrintTwoStrings(gText_Total, gText_Championships, *GetCurrentDomeTotalChampionshipsPtr(battleMode, FRONTIER_LVL_OPEN), 64, 112, 129);
     PutWindowTilemap(gRecordsWindowId);
     CopyWindowToVram(gRecordsWindowId, COPYWIN_FULL);
 }

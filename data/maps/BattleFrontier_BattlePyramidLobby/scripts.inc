@@ -376,9 +376,27 @@ BattleFrontier_BattlePyramidLobby_EventScript_HintNormal::
 
 BattleFrontier_BattlePyramidLobby_EventScript_ShowResults::
 	lockall
+	multichoice 17, 6, MULTI_FRONTIER_RECORD_MODE, FALSE
+	switch VAR_RESULT
+	case 0, BattleFrontier_BattlePyramidLobby_EventScript_ShowRegularResults
+	case 1, BattleFrontier_BattlePyramidLobby_EventScript_ShowHardResults
+	goto BattleFrontier_BattlePyramidLobby_EventScript_CancelResults
+
+BattleFrontier_BattlePyramidLobby_EventScript_ShowRegularResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_NORMAL
+	goto BattleFrontier_BattlePyramidLobby_EventScript_ShowSelectedResults
+
+BattleFrontier_BattlePyramidLobby_EventScript_ShowHardResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_HARD
+
+BattleFrontier_BattlePyramidLobby_EventScript_ShowSelectedResults::
 	frontier_results FRONTIER_FACILITY_PYRAMID
 	waitbuttonpress
 	special RemoveRecordsWindow
+	releaseall
+	end
+
+BattleFrontier_BattlePyramidLobby_EventScript_CancelResults::
 	releaseall
 	end
 

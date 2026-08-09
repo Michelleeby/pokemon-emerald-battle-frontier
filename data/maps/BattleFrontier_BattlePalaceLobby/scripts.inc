@@ -316,17 +316,36 @@ BattleFrontier_BattlePalaceLobby_Movement_PlayerEnterDoor:
 
 BattleFrontier_BattlePalaceLobby_EventScript_ShowSinglesResults::
 	lockall
-	frontier_results FRONTIER_FACILITY_PALACE, FRONTIER_MODE_SINGLES
+	setvar VAR_0x8006, FRONTIER_MODE_SINGLES
+	goto BattleFrontier_BattlePalaceLobby_EventScript_SelectRecordsMode
+
+BattleFrontier_BattlePalaceLobby_EventScript_ShowDoublesResults::
+	lockall
+	setvar VAR_0x8006, FRONTIER_MODE_DOUBLES
+	goto BattleFrontier_BattlePalaceLobby_EventScript_SelectRecordsMode
+
+BattleFrontier_BattlePalaceLobby_EventScript_SelectRecordsMode::
+	multichoice 17, 6, MULTI_FRONTIER_RECORD_MODE, FALSE
+	switch VAR_RESULT
+	case 0, BattleFrontier_BattlePalaceLobby_EventScript_ShowRegularResults
+	case 1, BattleFrontier_BattlePalaceLobby_EventScript_ShowHardResults
+	goto BattleFrontier_BattlePalaceLobby_EventScript_CancelResults
+
+BattleFrontier_BattlePalaceLobby_EventScript_ShowRegularResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_NORMAL
+	goto BattleFrontier_BattlePalaceLobby_EventScript_ShowSelectedResults
+
+BattleFrontier_BattlePalaceLobby_EventScript_ShowHardResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_HARD
+
+BattleFrontier_BattlePalaceLobby_EventScript_ShowSelectedResults::
+	frontier_results FRONTIER_FACILITY_PALACE
 	waitbuttonpress
 	special RemoveRecordsWindow
 	releaseall
 	end
 
-BattleFrontier_BattlePalaceLobby_EventScript_ShowDoublesResults::
-	lockall
-	frontier_results FRONTIER_FACILITY_PALACE, FRONTIER_MODE_DOUBLES
-	waitbuttonpress
-	special RemoveRecordsWindow
+BattleFrontier_BattlePalaceLobby_EventScript_CancelResults::
 	releaseall
 	end
 

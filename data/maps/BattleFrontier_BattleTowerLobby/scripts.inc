@@ -529,22 +529,42 @@ BattleFrontier_BattleTowerLobby_EventScript_Boy::
 
 BattleFrontier_BattleTowerLobby_EventScript_ShowSinglesResults::
 	lockall
-	frontier_results FRONTIER_FACILITY_TOWER, FRONTIER_MODE_SINGLES
+	setvar VAR_0x8006, FRONTIER_MODE_SINGLES
+	goto BattleFrontier_BattleTowerLobby_EventScript_SelectRecordsMode
+
+BattleFrontier_BattleTowerLobby_EventScript_ShowDoublesResults::
+	lockall
+	setvar VAR_0x8006, FRONTIER_MODE_DOUBLES
+	goto BattleFrontier_BattleTowerLobby_EventScript_SelectRecordsMode
+
+BattleFrontier_BattleTowerLobby_EventScript_SelectRecordsMode::
+	multichoice 17, 6, MULTI_FRONTIER_RECORD_MODE, FALSE
+	switch VAR_RESULT
+	case 0, BattleFrontier_BattleTowerLobby_EventScript_ShowRegularResults
+	case 1, BattleFrontier_BattleTowerLobby_EventScript_ShowHardResults
+	goto BattleFrontier_BattleTowerLobby_EventScript_CancelResults
+
+BattleFrontier_BattleTowerLobby_EventScript_ShowRegularResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_NORMAL
+	goto BattleFrontier_BattleTowerLobby_EventScript_ShowSelectedResults
+
+BattleFrontier_BattleTowerLobby_EventScript_ShowHardResults::
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_HARD
+
+BattleFrontier_BattleTowerLobby_EventScript_ShowSelectedResults::
+	frontier_results FRONTIER_FACILITY_TOWER
 	waitbuttonpress
 	special RemoveRecordsWindow
 	releaseall
 	end
 
-BattleFrontier_BattleTowerLobby_EventScript_ShowDoublesResults::
-	lockall
-	frontier_results FRONTIER_FACILITY_TOWER, FRONTIER_MODE_DOUBLES
-	waitbuttonpress
-	special RemoveRecordsWindow
+BattleFrontier_BattleTowerLobby_EventScript_CancelResults::
 	releaseall
 	end
 
 BattleFrontier_BattleTowerLobby_EventScript_ShowMultisResults::
 	lockall
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_NORMAL
 	frontier_results FRONTIER_FACILITY_TOWER, FRONTIER_MODE_MULTIS
 	waitbuttonpress
 	special RemoveRecordsWindow
@@ -553,6 +573,7 @@ BattleFrontier_BattleTowerLobby_EventScript_ShowMultisResults::
 
 BattleFrontier_BattleTowerLobby_EventScript_ShowLinkMultisResults::
 	lockall
+	setvar VAR_0x8007, FRONTIER_CHALLENGE_NORMAL
 	frontier_results FRONTIER_FACILITY_TOWER, FRONTIER_MODE_LINK_MULTIS
 	waitbuttonpress
 	special RemoveRecordsWindow
