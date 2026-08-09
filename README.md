@@ -5,6 +5,8 @@ the main story, build your ideal team, and take on the Battle Frontier immediate
 
 ## Pokémon Lab
 
+![Pokémon Lab Editor](assets/pokemon-lab-editor-tutorial.gif)
+
 The Pokémon Lab is an in-game party editor for quickly creating and refining
 Battle Frontier teams. It can create a new Pokémon in an open party slot or
 edit an existing party member.
