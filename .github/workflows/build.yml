@@ -37,6 +37,12 @@ jobs:
           ref: ${{ env.AGBCC_REVISION }}
           path: agbcc
 
+      - name: Install agbcc dependencies
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-arm-none-eabi
+
       - name: Install agbcc
         if: steps.agbcc-cache.outputs.cache-hit != 'true'
         working-directory: agbcc
