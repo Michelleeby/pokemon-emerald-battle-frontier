@@ -17,7 +17,7 @@ class E2ESelectionTests(unittest.TestCase):
     def test_empty_selection_runs_all_scenarios(self) -> None:
         self.assertEqual(
             selected_scenarios([]),
-            ["tower-lobby-cancel", "tower-save-restart"],
+            ["tower-lobby-cancel", "tower-save-restart", "tower-seven-win"],
         )
 
     def test_named_selection_is_preserved(self) -> None:

@@ -4,40 +4,24 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .session import E2EError, Session
+from .session import Session
 from .symbols import load_symbols, require_symbols
-from .tower_lobby_cancel import (
-    FIXTURE_ELF,
-    FIXTURE_ROM,
-    FIXTURE_SAVED,
-    MAP_GROUP_TOWER_LOBBY,
+from .tower import (
+    CHALLENGE_STATUS_PAUSED,
+    CHALLENGE_STATUS_SAVING,
     MAP_NUM_TOWER_LOBBY,
     RELEASE_ELF,
     RELEASE_ROM,
-    _advance_until,
-    _wait_for_tower_lobby,
-    _wait_for_value,
+    STREAK_TOWER_SINGLES_50,
+    TowerScenarioFailure as ScenarioFailure,
+    advance_until,
+    create_tower_lobby_save,
+    frontier_addresses,
+    map_id,
+    start_singles_level_50,
+    wait_for_tower_lobby,
+    wait_for_value,
 )
-
-
-CHALLENGE_STATUS_SAVING = 1
-CHALLENGE_STATUS_PAUSED = 2
-STREAK_TOWER_SINGLES_50 = 1 << 0
-
-
-class ScenarioFailure(E2EError):
-    """The game did not satisfy a scenario predicate."""
-
-
-def _frontier_addresses(save_block2: int) -> dict[str, int]:
-    return {
-        "challenge_status": save_block2 + 0xCA8,
-        "lvl_mode": save_block2 + 0xCA9,
-        "selected_party": save_block2 + 0xCAA,
-        "battle_num": save_block2 + 0xCB2,
-        "active_flags": save_block2 + 0xCDC,
-        "challenge_mode": save_block2 + 0xD09,
-    }
 
 
 def _assert_saved_tower_state(game: Session, addresses: dict[str, int]) -> None:
@@ -72,50 +56,6 @@ def _assert_saved_tower_state(game: Session, addresses: dict[str, int]) -> None:
         raise ScenarioFailure("saved Tower Singles Lv. 50 streak is not active")
 
 
-def _select_first_three_party_members(
-    game: Session, selected_order: int
-) -> None:
-    _wait_for_value(game, selected_order, 0, width=8, max_frames=600)
-    for index in range(3):
-        game.press("A", held_frames=1, released_frames=29)
-        game.press("A", held_frames=1, released_frames=29)
-        _wait_for_value(game, selected_order + index, index + 1, width=8)
-        if index != 2:
-            game.press("DOWN", held_frames=1, released_frames=29)
-    game.press("A", held_frames=1, released_frames=60)
-
-
-def _start_singles_level_50(
-    game: Session,
-    special_result: int,
-    lock_field_controls: int,
-    selected_order: int,
-    main: int,
-    party_menu_callback: int,
-) -> None:
-    game.press("A", held_frames=1, released_frames=2)
-    _wait_for_value(game, lock_field_controls, 1)
-    _advance_until(game, special_result, 0xFF, "A")
-
-    game.press("A", held_frames=1, released_frames=29)
-    _wait_for_value(game, special_result, 0, width=16)
-    _advance_until(game, special_result, 0xFF, "A")
-    game.press("A", held_frames=1, released_frames=29)
-
-    for _ in range(30):
-        if game.read(main + 4) == party_menu_callback | 1:
-            break
-        game.press("A", held_frames=1, released_frames=29)
-    else:
-        raise ScenarioFailure("party selection did not open")
-
-    game.run_frames(120)
-    _select_first_three_party_members(game, selected_order)
-
-    _advance_until(game, special_result, 0xFF, "A")
-    game.press("A", held_frames=1, released_frames=29)
-
-
 def _wait_until_tower_save_completes(
     game: Session,
     save_block2_ptr: int,
@@ -126,7 +66,7 @@ def _wait_until_tower_save_completes(
     for _ in range(700):
         save_block2 = game.read(save_block2_ptr)
         if 0x02000000 <= save_block2 < 0x02040000:
-            addresses = _frontier_addresses(save_block2)
+            addresses = frontier_addresses(save_block2)
             if game.read(addresses["challenge_status"], width=8) == CHALLENGE_STATUS_PAUSED:
                 return addresses
             if (
@@ -136,8 +76,8 @@ def _wait_until_tower_save_completes(
                 game.press("DOWN", held_frames=1, released_frames=29)
                 game.press("DOWN", held_frames=1, released_frames=29)
                 game.press("A", held_frames=1, released_frames=29)
-                _wait_for_value(game, special_result, 2, width=16)
-                _advance_until(game, special_result, 0xFF, "A")
+                wait_for_value(game, special_result, 2, width=16)
+                advance_until(game, special_result, 0xFF, "A")
                 game.press("A", held_frames=1, released_frames=29)
         if game.read(main + 4) == party_menu_callback | 1:
             game.press("DOWN", held_frames=1, released_frames=29)
@@ -153,7 +93,7 @@ def _continue_and_observe_saved_status(
     for _ in range(180):
         save_block2 = game.read(save_block2_ptr)
         if 0x02000000 <= save_block2 < 0x02040000:
-            addresses = _frontier_addresses(save_block2)
+            addresses = frontier_addresses(save_block2)
             if game.read(addresses["challenge_status"], width=8) == CHALLENGE_STATUS_PAUSED:
                 return save_block2, addresses
         game.press("START", held_frames=1, released_frames=9)
@@ -165,7 +105,6 @@ def run(artifact_dir: Path) -> None:
     artifact_dir = Path(artifact_dir).resolve()
     save = artifact_dir / "tower-save-restart.sav"
     save.unlink(missing_ok=True)
-    fixture_symbols = require_symbols(load_symbols(FIXTURE_ELF), "gE2EFixtureStatus")
     release_symbols = require_symbols(
         load_symbols(RELEASE_ELF),
         "gMapHeader",
@@ -181,16 +120,10 @@ def run(artifact_dir: Path) -> None:
         "sLockFieldControls",
     )
 
-    with Session(FIXTURE_ROM, artifact_dir / "fixture", save=save) as fixture:
-        _wait_for_value(
-            fixture,
-            fixture_symbols["gE2EFixtureStatus"],
-            FIXTURE_SAVED,
-            width=32,
-        )
+    create_tower_lobby_save(artifact_dir, save)
 
     with Session(RELEASE_ROM, artifact_dir / "scenario", save=save) as game:
-        save_block1 = _wait_for_tower_lobby(
+        save_block1 = wait_for_tower_lobby(
             game,
             release_symbols["gSaveBlock1Ptr"],
             release_symbols["gMapHeader"],
@@ -199,11 +132,11 @@ def run(artifact_dir: Path) -> None:
             release_symbols["gObjectEvents"],
         )
         game.run_frames(120)
-        _wait_for_value(game, release_symbols["sLockFieldControls"], 0)
+        wait_for_value(game, release_symbols["sLockFieldControls"], 0)
 
         save_block2 = game.read(release_symbols["gSaveBlock2Ptr"])
-        addresses = _frontier_addresses(save_block2)
-        _start_singles_level_50(
+        addresses = frontier_addresses(save_block2)
+        start_singles_level_50(
             game,
             release_symbols["gSpecialVar_Result"],
             release_symbols["sLockFieldControls"],
@@ -227,7 +160,7 @@ def run(artifact_dir: Path) -> None:
         )
         _assert_saved_tower_state(game, loaded_addresses)
 
-        loaded_save_block1 = _wait_for_tower_lobby(
+        loaded_save_block1 = wait_for_tower_lobby(
             game,
             release_symbols["gSaveBlock1Ptr"],
             release_symbols["gMapHeader"],
@@ -235,11 +168,11 @@ def run(artifact_dir: Path) -> None:
             release_symbols["gPlayerAvatar"],
             release_symbols["gObjectEvents"],
         )
-        lobby_map = (MAP_NUM_TOWER_LOBBY << 8) | MAP_GROUP_TOWER_LOBBY
+        lobby_map = map_id(MAP_NUM_TOWER_LOBBY)
         for _ in range(60):
             current_save_block1 = game.read(release_symbols["gSaveBlock1Ptr"])
             current_save_block2 = game.read(release_symbols["gSaveBlock2Ptr"])
-            current_addresses = _frontier_addresses(current_save_block2)
+            current_addresses = frontier_addresses(current_save_block2)
             if (
                 game.read(current_save_block1 + 4, width=16) != lobby_map
                 and game.read(current_addresses["challenge_status"], width=8)

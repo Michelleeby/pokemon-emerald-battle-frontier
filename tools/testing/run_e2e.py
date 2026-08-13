@@ -16,6 +16,7 @@ from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
 from e2e.tower_lobby_cancel import run as run_tower_lobby_cancel
+from e2e.tower_seven_win import run as run_tower_seven_win
 from e2e.tower_save_restart import run as run_tower_save_restart
 
 
@@ -32,6 +33,7 @@ ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
     "tower-lobby-cancel": run_tower_lobby_cancel,
     "tower-save-restart": run_tower_save_restart,
+    "tower-seven-win": run_tower_seven_win,
 }
 
 
