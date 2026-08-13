@@ -110,3 +110,20 @@ python3 -m unittest discover -s tools/testing -p 'test_*.py' -v
 python3 tools/testing/select_suites.py --files src/battle_tower.c
 python3 tools/testing/select_suites.py --base main --head HEAD
 ```
+
+## Stage 5 CI verification
+
+Stage 5 was completed on August 13, 2026 after verification with real GitHub
+pull-request runs:
+
+- [PR #3 full-suite run](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/actions/runs/31697145243): all twelve gameplay suites and `Tests / required` passed; cleanup left zero artifacts.
+- [Documentation-only run](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/actions/runs/31698917663): the gameplay build and matrix were skipped, the no-suites path passed, and `Tests / required` passed.
+- [Deliberate suite-failure run](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/actions/runs/31699192842): `frontier-tower` failed, the other eleven suites passed, cleanup ran, and `Tests / required` failed.
+- [Concurrency-cancellation run](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/actions/runs/31699690805): the superseded build and matrix were canceled, cleanup ran, and `Tests / required` failed.
+- [Deliberate job-timeout run](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/actions/runs/31699843463): only `frontier-tower` timed out, the other eleven suites passed, cleanup left zero artifacts, and `Tests / required` failed.
+
+Per-facility mutation checks were intentionally skipped in the completion
+audit because representative regressions were introduced and detected while
+the suites were developed. The deliberate Tower assertion above separately
+verified end-to-end failure propagation. No temporary verification mutation,
+workflow timeout, PR, or branch remains in the Stage 5 implementation.
