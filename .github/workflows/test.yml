@@ -175,6 +175,12 @@ jobs:
           ref: ${{ env.MGBA_REVISION }}
           path: mgba
 
+      - name: Checkout legacy compiler
+        uses: actions/checkout@v6
+        with:
+          repository: pret/agbcc
+          path: agbcc
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -186,6 +192,12 @@ jobs:
             -DBUILD_QT=OFF -DBUILD_SDL=OFF -DBUILD_GLES2=OFF \
             -DBUILD_GL=OFF -DBUILD_EGL=OFF
           cmake --build mgba/build -j"$(nproc)"
+
+      - name: Build and install legacy compiler
+        run: |
+          cd agbcc
+          ./build.sh
+          ./install.sh ..
 
       - name: Run selected E2E scenario
         env:
