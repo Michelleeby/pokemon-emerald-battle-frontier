@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "suites": {
+    "frontier-common": {"dependencies": ["save-load", "battle-shared"]},
+    "team-lab": {"dependencies": ["save-load"]},
+    "new-game-tutorial": {"dependencies": ["save-load"]},
+    "save-load": {"dependencies": []},
+    "battle-shared": {"dependencies": []},
+    "frontier-tower": {"dependencies": ["frontier-common"]},
+    "frontier-factory": {"dependencies": ["frontier-common", "team-lab"]},
+    "frontier-dome": {"dependencies": ["frontier-common"]},
+    "frontier-arena": {"dependencies": ["frontier-common"]},
+    "frontier-palace": {"dependencies": ["frontier-common"]},
+    "frontier-pike": {"dependencies": ["frontier-common"]},
+    "frontier-pyramid": {"dependencies": ["frontier-common"]}
+  },
+  "rules": [
+    {
+      "name": "test infrastructure",
+      "paths": ["Makefile", "make_tools.mk", "*.mk", "ld_script*.ld", ".github/workflows/test*.yml", "tests/**", "tools/testing/**"],
+      "suites": "all"
+    },
+    {
+      "name": "Battle Tower",
+      "paths": ["src/battle_tower.c", "include/battle_tower.h", "include/constants/battle_tower.h", "asm/macros/battle_frontier/battle_tower.inc", "data/maps/BattleFrontier_BattleTower*/**"],
+      "suites": ["frontier-tower"]
+    },
+    {
+      "name": "Battle Dome",
+      "paths": ["src/battle_dome.c", "include/battle_dome.h", "include/constants/battle_dome.h", "asm/macros/battle_frontier/battle_dome.inc", "data/maps/BattleFrontier_BattleDome*/**"],
+      "suites": ["frontier-dome"]
+    },
+    {
+      "name": "Battle Factory",
+      "paths": ["src/battle_factory.c", "src/battle_factory_screen.c", "include/battle_factory*.h", "include/constants/battle_factory.h", "asm/macros/battle_frontier/battle_factory.inc", "data/maps/BattleFrontier_BattleFactory*/**"],
+      "suites": ["frontier-factory"]
+    },
+    {
+      "name": "Battle Palace",
+      "paths": ["src/battle_palace.c", "include/constants/battle_palace.h", "asm/macros/battle_frontier/battle_palace.inc", "data/maps/BattleFrontier_BattlePalace*/**"],
+      "suites": ["frontier-palace"]
+    },
+    {
+      "name": "Battle Arena",
+      "paths": ["src/battle_arena.c", "include/battle_arena.h", "include/constants/battle_arena.h", "asm/macros/battle_frontier/battle_arena.inc", "data/maps/BattleFrontier_BattleArena*/**"],
+      "suites": ["frontier-arena"]
+    },
+    {
+      "name": "Battle Pike",
+      "paths": ["src/battle_pike.c", "data/scripts/battle_pike.inc", "include/battle_pike.h", "include/constants/battle_pike.h", "asm/macros/battle_frontier/battle_pike.inc", "data/maps/BattleFrontier_BattlePike*/**"],
+      "suites": ["frontier-pike"]
+    },
+    {
+      "name": "Battle Pyramid",
+      "paths": ["src/battle_pyramid*.c", "include/battle_pyramid*.h", "include/constants/battle_pyramid.h", "asm/macros/battle_frontier/battle_pyramid.inc", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "suites": ["frontier-pyramid"]
+    },
+    {
+      "name": "shared Frontier logic",
+      "paths": ["src/frontier_util.c", "include/frontier_util.h", "include/constants/frontier*.h", "src/data/battle_frontier/**", "asm/macros/battle_frontier/frontier_util.inc"],
+      "suites": ["frontier-common", "frontier-tower", "frontier-factory", "frontier-dome", "frontier-arena", "frontier-palace", "frontier-pike", "frontier-pyramid"]
+    },
+    {
+      "name": "Team Lab",
+      "paths": ["src/team_lab*.c", "include/team_lab.h"],
+      "suites": ["team-lab"]
+    },
+    {
+      "name": "new game and tutorial",
+      "paths": ["src/new_game.c", "src/frontier_intro_tutorial.c", "include/new_game.h", "include/frontier_intro_tutorial.h", "data/scripts/new_game.inc"],
+      "suites": ["new-game-tutorial"]
+    },
+    {
+      "name": "save system",
+      "paths": ["src/save*.c", "src/load_save.c", "src/reload_save.c", "include/global.h", "include/save*.h", "include/load_save.h", "include/reload_save.h"],
+      "suites": "all"
+    },
+    {
+      "name": "shared battle controllers",
+      "paths": ["src/battle_controllers.c", "src/battle_controller*.c", "include/battle_controllers.h", "src/battle_transition_frontier.c", "include/battle_transition_frontier.h"],
+      "suites": ["battle-shared", "frontier-common", "frontier-tower", "frontier-factory", "frontier-dome", "frontier-arena", "frontier-palace", "frontier-pike", "frontier-pyramid"]
+    }
+  ],
+  "relevant_paths": ["src/**", "include/**", "data/**", "asm/**"],
+  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes"]
+}

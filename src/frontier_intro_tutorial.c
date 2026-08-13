@@ -249,6 +249,30 @@ void StartFrontierIntroTutorial(void)
     OpenPokenavFromOverworld();
 }
 
+#ifdef TESTING
+void FrontierIntroTutorial_TestStart(void)
+{
+    sTutorial.active = TRUE;
+    sTutorial.step = 0;
+    sTutorial.phase = INPUT_PHASE_WAIT;
+    sTutorial.timer = 0;
+    sTutorial.button = 0;
+    sTutorial.skipTapTimer = 0;
+    sTutorial.skipping = FALSE;
+    sTutorial.skipTerminal = FALSE;
+}
+
+bool8 FrontierIntroTutorial_TestIsActive(void)
+{
+    return sTutorial.active;
+}
+
+u8 FrontierIntroTutorial_TestGetStep(void)
+{
+    return sTutorial.step;
+}
+#endif
+
 void FrontierIntroTutorial_NotifyReady(u8 checkpoint)
 {
     if (!sTutorial.active || sTutorial.phase != INPUT_PHASE_WAIT)

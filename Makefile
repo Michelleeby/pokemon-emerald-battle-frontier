@@ -5,10 +5,22 @@ MAKER_CODE  := 01
 REVISION    := 0
 MODERN      ?= 0
 KEEP_TEMPS  ?= 0
+TESTING     ?= 0
+TEST_SUITE  ?=
+TEST_MIN_EWRAM_FREE ?= 8192
+TEST_MIN_IWRAM_STACK ?= 1536
 
 # `File name`.gba ('_modern' will be appended to the modern builds)
 FILE_NAME := pokeemerald
 BUILD_DIR := build
+
+ifeq ($(TESTING),1)
+  ifeq ($(strip $(TEST_SUITE)),)
+    $(error TEST_SUITE is required when TESTING=1)
+  endif
+  MODERN := 1
+  FILE_NAME := build/test/roms/$(TEST_SUITE)
+endif
 
 # Builds the ROM using a modern compiler
 MODERN      ?= 0
@@ -78,6 +90,12 @@ MAP_NAME := $(ROM_NAME:.gba=.map)
 MODERN_ELF_NAME := $(MODERN_ROM_NAME:.gba=.elf)
 MODERN_MAP_NAME := $(MODERN_ROM_NAME:.gba=.map)
 
+ifeq ($(TESTING),1)
+  MODERN_ROM_NAME := $(FILE_NAME).gba
+  MODERN_ELF_NAME := $(FILE_NAME).elf
+  MODERN_MAP_NAME := $(FILE_NAME).map
+endif
+
 # Pick our active variables
 ifeq ($(MODERN),0)
   ROM := $(ROM_NAME)
@@ -113,6 +131,9 @@ INCLUDE_SCANINC_ARGS := $(INCLUDE_DIRS:%=-I %)
 
 O_LEVEL ?= 2
 CPPFLAGS := $(INCLUDE_CPP_ARGS) -Wno-trigraphs -DMODERN=$(MODERN)
+ifeq ($(TESTING),1)
+  CPPFLAGS += -DTESTING=1 -DTEST_GAME=1 -iquote tests/include
+endif
 ifeq ($(MODERN),0)
   CPPFLAGS += -I tools/agbcc/include -I tools/agbcc -nostdinc -undef -std=gnu89
   CC1 := tools/agbcc/bin/agbcc$(EXE)
@@ -159,8 +180,8 @@ MAKEFLAGS += --no-print-directory
 # Delete files that weren't built properly
 .DELETE_ON_ERROR:
 
-RULES_NO_SCAN += libagbsyscall clean clean-assets tidy tidymodern tidynonmodern generated clean-generated
-.PHONY: all rom modern compare retroid
+RULES_NO_SCAN += libagbsyscall clean clean-assets clean-test tidy tidymodern tidynonmodern generated clean-generated list-tests
+.PHONY: all rom modern compare retroid check check-all list-tests test-roms
 .PHONY: $(RULES_NO_SCAN)
 
 infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
@@ -211,6 +232,20 @@ MID_SRCS := $(wildcard $(MID_SUBDIR)/*.mid)
 MID_OBJS := $(patsubst $(MID_SUBDIR)/%.mid,$(MID_BUILDDIR)/%.o,$(MID_SRCS))
 
 OBJS     := $(C_OBJS) $(C_ASM_OBJS) $(ASM_OBJS) $(DATA_ASM_OBJS) $(MID_OBJS)
+ifeq ($(TESTING),1)
+  OBJ_DIR := build/test
+  C_BUILDDIR := $(OBJ_DIR)/$(C_SUBDIR)
+  ASM_BUILDDIR := $(OBJ_DIR)/$(ASM_SUBDIR)
+  DATA_ASM_BUILDDIR := $(OBJ_DIR)/$(DATA_ASM_SUBDIR)
+  MID_BUILDDIR := $(OBJ_DIR)/$(MID_SUBDIR)
+  C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
+  C_ASM_OBJS := $(patsubst $(C_SUBDIR)/%.s,$(C_BUILDDIR)/%.o,$(C_ASM_SRCS))
+  ASM_OBJS := $(patsubst $(ASM_SUBDIR)/%.s,$(ASM_BUILDDIR)/%.o,$(ASM_SRCS))
+  DATA_ASM_OBJS := $(patsubst $(DATA_ASM_SUBDIR)/%.s,$(DATA_ASM_BUILDDIR)/%.o,$(DATA_ASM_SRCS))
+  MID_OBJS := $(patsubst $(MID_SUBDIR)/%.mid,$(MID_BUILDDIR)/%.o,$(MID_SRCS))
+  TEST_GAME_OBJS := $(OBJ_DIR)/tests/runner/test_exit.o $(OBJ_DIR)/tests/runner/test_report.o $(OBJ_DIR)/tests/runner/test_fixture.o $(OBJ_DIR)/tests/unit/$(TEST_SUITE).o
+  OBJS := $(C_OBJS) $(C_ASM_OBJS) $(ASM_OBJS) $(DATA_ASM_OBJS) $(MID_OBJS) $(TEST_GAME_OBJS)
+endif
 OBJS_REL := $(patsubst $(OBJ_DIR)/%,%,$(OBJS))
 
 SUBDIRS  := $(sort $(dir $(OBJS)))
@@ -240,7 +275,7 @@ clean-assets:
 	find . \( -iname '*.1bpp' -o -iname '*.4bpp' -o -iname '*.8bpp' -o -iname '*.gbapal' -o -iname '*.lz' -o -iname '*.rl' -o -iname '*.latfont' -o -iname '*.hwjpnfont' -o -iname '*.fwjpnfont' \) -exec rm {} +
 	find $(DATA_ASM_SUBDIR)/maps \( -iname 'connections.inc' -o -iname 'events.inc' -o -iname 'header.inc' \) -exec rm {} +
 
-tidy: tidynonmodern tidymodern
+tidy: tidynonmodern tidymodern clean-test
 
 tidynonmodern:
 	rm -f $(ROM_NAME) $(ELF_NAME) $(MAP_NAME)
@@ -249,6 +284,9 @@ tidynonmodern:
 tidymodern:
 	rm -f $(MODERN_ROM_NAME) $(MODERN_ELF_NAME) $(MODERN_MAP_NAME)
 	rm -rf $(MODERN_OBJ_DIR_NAME)
+
+clean-test:
+	rm -rf $(BUILD_DIR)/test
 
 # Other rules
 include graphics_file_rules.mk
@@ -374,10 +412,17 @@ libagbsyscall:
 
 # Elf from object files
 LDFLAGS = -Map ../../$(MAP)
-$(ELF): $(LD_SCRIPT) $(LD_SCRIPT_DEPS) $(OBJS) libagbsyscall
+$(ELF): $(LD_SCRIPT) $(LD_SCRIPT_DEPS) $(OBJS) libagbsyscall tools/testing/check_memory_headroom.py
 	@cd $(OBJ_DIR) && $(LD) $(LDFLAGS) -T ../../$< --print-memory-usage -o ../../$@ $(OBJS_REL) $(LIB) | cat
 	@echo "cd $(OBJ_DIR) && $(LD) $(LDFLAGS) -T ../../$< --print-memory-usage -o ../../$@ <objs> <libs> | cat"
 	$(FIX) $@ -t"$(TITLE)" -c$(GAME_CODE) -m$(MAKER_CODE) -r$(REVISION) --silent
+ifeq ($(TESTING),1)
+	python3 tools/testing/check_memory_headroom.py \
+		--elf $@ \
+		--objdump $(OBJDUMP) \
+		--min-ewram-free $(TEST_MIN_EWRAM_FREE) \
+		--min-iwram-stack $(TEST_MIN_IWRAM_STACK)
+endif
 
 # Builds the rom from the elf file
 $(ROM): $(ELF)
@@ -391,3 +436,81 @@ retroid: rom
 # Symbol file (`make syms`)
 $(SYM): $(ELF)
 	$(OBJDUMP) -t $< | sort -u | grep -E "^0[2389]" | $(PERL) -p -e 's/^(\w{8}) (\w).{6} \S+\t(\w{8}) (\S+)$$/\1 \2 \3 \4/g' > $@
+
+# Stage 2 test-runner spike. These small ROMs are intentionally isolated from
+# the release object graph so TESTING=1 can never contaminate a normal build.
+TEST_BUILD_DIR := $(BUILD_DIR)/test
+TEST_ROM_DIR := $(TEST_BUILD_DIR)/roms
+TEST_COMMON_OBJS := $(TEST_BUILD_DIR)/runner/start.o $(TEST_BUILD_DIR)/runner/test_report.o
+CORE_TEST_NAMES := frontier-common team-lab new-game-tutorial save-load battle-shared frontier-tower frontier-factory frontier-dome frontier-arena frontier-palace frontier-pike frontier-pyramid
+DIAGNOSTIC_TEST_NAMES := spike-pass spike-fail spike-hang
+TEST_NAMES := $(CORE_TEST_NAMES)
+TEST_ROMS := $(TEST_NAMES:%=$(TEST_ROM_DIR)/%.gba)
+
+$(TEST_BUILD_DIR)/runner/%.o: tests/runner/%.s
+	@mkdir -p $(dir $@)
+	$(AS) -mcpu=arm7tdmi -o $@ $<
+
+$(TEST_BUILD_DIR)/runner/%.o: tests/runner/%.c
+	@mkdir -p $(dir $@)
+	$(PREFIX)gcc -mthumb -mthumb-interwork -mcpu=arm7tdmi -ffreestanding -fno-builtin -Os -g \
+		-DTESTING=1 -I tests/include -c $< -o $@
+
+$(TEST_BUILD_DIR)/fixtures/%.o: tests/fixtures/%.c
+	@mkdir -p $(dir $@)
+	$(PREFIX)gcc -mthumb -mthumb-interwork -mcpu=arm7tdmi -ffreestanding -fno-builtin -Os -g \
+		-DTESTING=1 -I tests/include -c $< -o $@
+
+$(TEST_BUILD_DIR)/rom_header.o: src/rom_header.s
+	@mkdir -p $(dir $@)
+	$(PREPROC) $< charmap.txt | $(CPP) $(INCLUDE_SCANINC_ARGS) - | \
+		$(PREPROC) -ie $< charmap.txt | $(AS) -mcpu=arm7tdmi --defsym MODERN=1 -o $@ -
+
+$(TEST_ROM_DIR)/%.elf: $(TEST_BUILD_DIR)/rom_header.o $(TEST_COMMON_OBJS) $(TEST_BUILD_DIR)/fixtures/%.o ld_script_test.ld
+	@mkdir -p $(dir $@)
+	$(LD) -Map $(@:.elf=.map) -T ld_script_test.ld -o $@ $(filter %.o,$^)
+	$(FIX) $@ -t"TEST RUNNER" -cBPEE -m01 -r0 --silent
+
+$(TEST_ROM_DIR)/%.gba: $(TEST_ROM_DIR)/%.elf
+	$(OBJCOPY) -O binary $< $@
+	$(FIX) $@ -p --silent
+	$(OBJDUMP) -t $(<) | sort -u > $(@:.gba=.sym)
+
+test-roms:
+	@mkdir -p $(TEST_ROM_DIR)
+	@for suite in $(CORE_TEST_NAMES); do \
+		$(MAKE) TESTING=1 TEST_SUITE=$$suite rom || exit $$?; \
+	done
+
+$(TEST_BUILD_DIR)/tests/runner/%.o: tests/runner/%.c
+	@mkdir -p $(dir $@)
+	@$(CPP) $(CPPFLAGS) $< | $(PREPROC) -i $< charmap.txt | $(CC1) $(CFLAGS) -o - - | cat - <(echo -e ".text\n\t.align\t2, 0") | $(AS) $(ASFLAGS) -o $@ -
+
+$(TEST_BUILD_DIR)/tests/runner/%.o: tests/runner/%.s
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) -o $@ $<
+
+$(TEST_BUILD_DIR)/tests/unit/%.o: tests/unit/%.c
+	@mkdir -p $(dir $@)
+	@$(CPP) $(CPPFLAGS) $< | $(PREPROC) -i $< charmap.txt | $(CC1) $(CFLAGS) -o - - | cat - <(echo -e ".text\n\t.align\t2, 0") | $(AS) $(ASFLAGS) -o $@ -
+
+list-tests:
+	@printf '%s\n' $(TEST_NAMES)
+
+check: test-roms
+	python3 tools/testing/run_tests.py --tests "$(or $(TESTS),team-lab)"
+
+check-all: test-roms
+	python3 tools/testing/run_tests.py --tests "$(TEST_NAMES)"
+
+check-runner:
+	@$(MAKE) $(DIAGNOSTIC_TEST_NAMES:%=$(TEST_ROM_DIR)/%.gba)
+	@python3 tools/testing/run_tests.py --diagnostics --tests spike-pass
+	@if python3 tools/testing/run_tests.py --diagnostics --tests spike-fail; then \
+		echo "The intentional failure unexpectedly passed" >&2; exit 1; \
+	fi
+	@grep -q 'TEST_FAIL' $(TEST_BUILD_DIR)/artifacts/spike-fail/emulator.log
+	@if TEST_TIMEOUT=1 python3 tools/testing/run_tests.py --diagnostics --tests spike-hang; then \
+		echo "The intentional hang unexpectedly passed" >&2; exit 1; \
+	fi
+	@grep -q '"status": "timed-out"' $(TEST_BUILD_DIR)/artifacts/spike-hang/report.json

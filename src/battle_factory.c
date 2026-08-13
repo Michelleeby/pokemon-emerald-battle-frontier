@@ -292,6 +292,11 @@ static void SaveFactoryChallenge(void)
     gSaveBlock2Ptr->frontier.challengeStatus = gSpecialVar_0x8005;
     VarSet(VAR_TEMP_CHALLENGE_STATUS, 0);
     gSaveBlock2Ptr->frontier.challengePaused = TRUE;
+#ifdef TESTING
+    // Gameplay tests inspect the prepared resume state without invoking the
+    // flash-backed save machinery, which requires the full runtime.
+    return;
+#endif
     SaveGameFrontier();
 }
 

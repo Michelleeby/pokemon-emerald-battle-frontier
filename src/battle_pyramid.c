@@ -954,6 +954,9 @@ static void SavePyramidChallenge(void)
     gSaveBlock2Ptr->frontier.challengeStatus = gSpecialVar_0x8005;
     VarSet(VAR_TEMP_CHALLENGE_STATUS, 0);
     gSaveBlock2Ptr->frontier.challengePaused = TRUE;
+#ifdef TESTING
+    return;
+#endif
     SaveMapView();
     TrySavingData(SAVE_LINK);
 }
@@ -1421,12 +1424,7 @@ void GenerateBattlePyramidWildMon(void)
     for (i = 0; i < MAX_MON_MOVES; i++)
         SetMonMoveSlot(&gEnemyParty[0], wildMons[id].moves[i], i);
 
-    // UB: Reading outside the array as lvl was used for mon level instead of frontier lvl mode.
-    #ifndef UBFIX
-    if (*GetPyramidWinStreakPtr(lvl) >= 140)
-    #else
     if (*GetPyramidWinStreakPtr(gSaveBlock2Ptr->frontier.lvlMode) >= 140)
-    #endif
     {
         id = (Random() % 17) + 15;
         for (i = 0; i < NUM_STATS; i++)
