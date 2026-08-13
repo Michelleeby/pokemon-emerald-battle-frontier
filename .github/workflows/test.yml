@@ -99,6 +99,8 @@ jobs:
           cmake -S mgba -B mgba/build \
             -DBUILD_ROM_TEST=ON -DBUILD_QT=OFF -DBUILD_SDL=OFF
           cmake --build mgba/build --target mgba-rom-test -j"$(nproc)"
+          mkdir -p build/test/runtime
+          cp -L mgba/build/libmgba.so.0.10 build/test/runtime/
 
       - name: Upload test bundle
         uses: actions/upload-artifact@v7
@@ -106,6 +108,7 @@ jobs:
           name: gameplay-test-bundle
           path: |
             build/test/roms/
+            build/test/runtime/
             mgba/build/test/mgba-rom-test
           retention-days: 7
 
@@ -130,6 +133,7 @@ jobs:
       - name: Run selected suite
         env:
           MGBA_ROM_TEST: ${{ github.workspace }}/mgba/build/test/mgba-rom-test
+          LD_LIBRARY_PATH: ${{ github.workspace }}/build/test/runtime
         run: |
           chmod +x "$MGBA_ROM_TEST"
           python3 tools/testing/run_tests.py --tests "${{ matrix.suite }}"
