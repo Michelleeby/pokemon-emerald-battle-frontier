@@ -133,11 +133,11 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaises(ManifestError):
             validate_manifest(manifest)
 
-    def test_tower_change_selects_both_e2e_scenarios(self) -> None:
+    def test_tower_change_selects_all_tower_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(["src/battle_tower.c"], self.e2e_manifest)
         self.assertEqual(
             result["scenarios"],
-            ["tower-lobby-cancel", "tower-save-restart"],
+            ["tower-lobby-cancel", "tower-save-restart", "tower-seven-win"],
         )
 
     def test_save_change_selects_only_restart_scenario(self) -> None:

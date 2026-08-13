@@ -2,7 +2,8 @@
   "version": 1,
   "scenarios": [
     "tower-lobby-cancel",
-    "tower-save-restart"
+    "tower-save-restart",
+    "tower-seven-win"
   ],
   "rules": [
     {
