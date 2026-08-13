@@ -45,6 +45,8 @@ SECTIONS {
         src/crt0.o(.text);
         src/main.o(.text);
         src/*.o(.text*);
+        tests/*.o(.text*);
+        tests/*/*.o(.text*);
         asm/*.o(.text*);
     } > ROM =0
 
@@ -79,6 +81,8 @@ SECTIONS {
     ALIGN(4)
     {
         src/*.o(.rodata*);
+        tests/*.o(.rodata*);
+        tests/*/*.o(.rodata*);
         data/*.o(.rodata*);
     } > ROM =0
 

@@ -24,4 +24,10 @@ void FrontierIntroTutorial_NotifyReady(u8 checkpoint);
 bool8 FrontierIntroTutorial_IsSkipping(void);
 void FrontierIntroTutorial_CompleteSkip(void);
 
+#ifdef TESTING
+void FrontierIntroTutorial_TestStart(void);
+bool8 FrontierIntroTutorial_TestIsActive(void);
+u8 FrontierIntroTutorial_TestGetStep(void);
+#endif
+
 #endif // GUARD_FRONTIER_INTRO_TUTORIAL_H

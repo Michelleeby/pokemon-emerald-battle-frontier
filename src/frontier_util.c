@@ -247,6 +247,23 @@ static u16 *GetCurrentDomeTotalChampionshipsPtr(u8 battleMode, u8 lvlMode)
     return &gSaveBlock2Ptr->frontier.domeTotalChampionships[battleMode][lvlMode];
 }
 
+#ifdef TESTING
+u16 *FrontierTest_GetTowerWinStreak(u8 battleMode, u8 lvlMode)
+{
+    return GetCurrentTowerWinStreakPtr(battleMode, lvlMode);
+}
+
+u16 *FrontierTest_GetTowerRecordWinStreak(u8 battleMode, u8 lvlMode)
+{
+    return GetCurrentTowerRecordWinStreakPtr(battleMode, lvlMode);
+}
+
+u8 FrontierTest_GetBrainStreakAppearance(u8 facility, u8 index)
+{
+    return GetFrontierBrainStreakAppearance(facility, index);
+}
+#endif
+
 static const struct FrontierBrainMon sFrontierBrainsMons[][2][FRONTIER_PARTY_SIZE] =
 {
     [FRONTIER_FACILITY_TOWER] =

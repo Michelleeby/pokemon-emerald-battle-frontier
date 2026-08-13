@@ -1,0 +1,56 @@
+name: Test runner spike
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  MGBA_REVISION: 26b7884bc25a5933960f3cdcd98bac1ae14d42e2
+
+jobs:
+  spike:
+    name: Tests / spike (unrequired)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout mGBA
+        uses: actions/checkout@v6
+        with:
+          repository: mgba-emu/mgba
+          ref: ${{ env.MGBA_REVISION }}
+          path: mgba
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev cmake
+
+      - name: Build mGBA ROM runner
+        run: |
+          cmake -S mgba -B mgba/build \
+            -DBUILD_ROM_TEST=ON -DBUILD_QT=OFF -DBUILD_SDL=OFF
+          cmake --build mgba/build --target mgba-rom-test -j"$(nproc)"
+
+      - name: Verify runner diagnostics
+        env:
+          MGBA_ROM_TEST: ${{ github.workspace }}/mgba/build/test/mgba-rom-test
+        run: make check-runner
+
+      - name: Upload spike diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-runner-spike-diagnostics
+          path: |
+            build/test/artifacts/
+            build/test/roms/*.elf
+            build/test/roms/*.map
+            build/test/roms/*.sym
+          retention-days: 7

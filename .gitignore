@@ -36,6 +36,7 @@ build/
 porymap.*.cfg
 prefabs.json
 .vscode/
+__pycache__/
 *.a
 .fuse_hidden*
 *.sna

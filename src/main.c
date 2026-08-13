@@ -89,6 +89,10 @@ void EnableVCountIntrAtLine150(void);
 
 void AgbMain(void)
 {
+#ifdef TESTING
+    extern void TestMain(void);
+    TestMain();
+#endif
     // Modern compilers are liberal with the stack on entry to this function,
     // so RegisterRamReset may crash if it resets IWRAM.
 #if !MODERN

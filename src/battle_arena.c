@@ -465,7 +465,9 @@ u8 BattleArena_ShowJudgmentWindow(u8 *state)
         result = ARENA_RESULT_STEP_DONE;
         break;
     case 7:
+#ifndef TESTING
         PlaySE(SE_ARENA_TIMEUP2);
+#endif
         if (gBattleTextBuff1[0] > gBattleTextBuff2[0])
         {
             result = ARENA_RESULT_PLAYER_WON;
@@ -752,6 +754,9 @@ static void SaveArenaChallenge(void)
     gSaveBlock2Ptr->frontier.challengeStatus = gSpecialVar_0x8005;
     VarSet(VAR_TEMP_CHALLENGE_STATUS, 0);
     gSaveBlock2Ptr->frontier.challengePaused = TRUE;
+#ifdef TESTING
+    return;
+#endif
     SaveGameFrontier();
 }
 

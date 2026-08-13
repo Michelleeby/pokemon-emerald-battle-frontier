@@ -27,4 +27,10 @@ s32 GetFronterBrainSymbol(void);
 
 extern const u16 gFrontierBannedSpecies[];
 
+#ifdef TESTING
+u16 *FrontierTest_GetTowerWinStreak(u8 battleMode, u8 lvlMode);
+u16 *FrontierTest_GetTowerRecordWinStreak(u8 battleMode, u8 lvlMode);
+u8 FrontierTest_GetBrainStreakAppearance(u8 facility, u8 index);
+#endif
+
 #endif // GUARD_FRONTIER_UTIL_H
