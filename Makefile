@@ -6,6 +6,7 @@ REVISION    := 0
 MODERN      ?= 0
 KEEP_TEMPS  ?= 0
 TESTING     ?= 0
+E2E_TESTING ?= 0
 TEST_SUITE  ?=
 TEST_MIN_EWRAM_FREE ?= 8192
 TEST_MIN_IWRAM_STACK ?= 1536
@@ -20,6 +21,14 @@ ifeq ($(TESTING),1)
   endif
   MODERN := 1
   FILE_NAME := build/test/roms/$(TEST_SUITE)
+endif
+
+ifeq ($(E2E_TESTING),1)
+  ifeq ($(TESTING),1)
+    $(error TESTING and E2E_TESTING are mutually exclusive)
+  endif
+  MODERN := 1
+  FILE_NAME := build/e2e/fixtures/tower-lobby
 endif
 
 # Builds the ROM using a modern compiler
@@ -95,6 +104,12 @@ ifeq ($(TESTING),1)
   MODERN_ELF_NAME := $(FILE_NAME).elf
   MODERN_MAP_NAME := $(FILE_NAME).map
 endif
+ifeq ($(E2E_TESTING),1)
+  MODERN_ROM_NAME := $(FILE_NAME).gba
+  MODERN_ELF_NAME := $(FILE_NAME).elf
+  MODERN_MAP_NAME := $(FILE_NAME).map
+  MODERN_OBJ_DIR_NAME := build/e2e-fixture-obj
+endif
 
 # Pick our active variables
 ifeq ($(MODERN),0)
@@ -133,6 +148,9 @@ O_LEVEL ?= 2
 CPPFLAGS := $(INCLUDE_CPP_ARGS) -Wno-trigraphs -DMODERN=$(MODERN)
 ifeq ($(TESTING),1)
   CPPFLAGS += -DTESTING=1 -DTEST_GAME=1 -iquote tests/include
+endif
+ifeq ($(E2E_TESTING),1)
+  CPPFLAGS += -DE2E_TESTING=1
 endif
 ifeq ($(MODERN),0)
   CPPFLAGS += -I tools/agbcc/include -I tools/agbcc -nostdinc -undef -std=gnu89
@@ -181,7 +199,7 @@ MAKEFLAGS += --no-print-directory
 .DELETE_ON_ERROR:
 
 RULES_NO_SCAN += libagbsyscall clean clean-assets clean-test tidy tidymodern tidynonmodern generated clean-generated list-tests
-.PHONY: all rom modern compare retroid check check-all list-tests test-roms
+.PHONY: all rom modern compare retroid clean-e2e check check-all list-tests test-roms e2e e2e-runner check-e2e-runner e2e-fixture-rom
 .PHONY: $(RULES_NO_SCAN)
 
 infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
@@ -217,6 +235,9 @@ endif
 # Collect sources
 C_SRCS_IN := $(wildcard $(C_SUBDIR)/*.c $(C_SUBDIR)/*/*.c $(C_SUBDIR)/*/*/*.c)
 C_SRCS := $(foreach src,$(C_SRCS_IN),$(if $(findstring .inc.c,$(src)),,$(src)))
+ifneq ($(E2E_TESTING),1)
+  C_SRCS := $(filter-out src/e2e_fixture.c,$(C_SRCS))
+endif
 C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
 
 C_ASM_SRCS := $(wildcard $(C_SUBDIR)/*.s $(C_SUBDIR)/*/*.s $(C_SUBDIR)/*/*/*.s)
@@ -275,7 +296,7 @@ clean-assets:
 	find . \( -iname '*.1bpp' -o -iname '*.4bpp' -o -iname '*.8bpp' -o -iname '*.gbapal' -o -iname '*.lz' -o -iname '*.rl' -o -iname '*.latfont' -o -iname '*.hwjpnfont' -o -iname '*.fwjpnfont' \) -exec rm {} +
 	find $(DATA_ASM_SUBDIR)/maps \( -iname 'connections.inc' -o -iname 'events.inc' -o -iname 'header.inc' \) -exec rm {} +
 
-tidy: tidynonmodern tidymodern clean-test
+tidy: tidynonmodern tidymodern clean-test clean-e2e
 
 tidynonmodern:
 	rm -f $(ROM_NAME) $(ELF_NAME) $(MAP_NAME)
@@ -287,6 +308,10 @@ tidymodern:
 
 clean-test:
 	rm -rf $(BUILD_DIR)/test
+
+clean-e2e:
+	rm -rf $(BUILD_DIR)/e2e
+	rm -rf $(BUILD_DIR)/e2e-fixture-obj
 
 # Other rules
 include graphics_file_rules.mk
@@ -445,6 +470,29 @@ TEST_COMMON_OBJS := $(TEST_BUILD_DIR)/runner/start.o $(TEST_BUILD_DIR)/runner/te
 CORE_TEST_NAMES := frontier-common team-lab new-game-tutorial save-load battle-shared frontier-tower frontier-factory frontier-dome frontier-arena frontier-palace frontier-pike frontier-pyramid
 DIAGNOSTIC_TEST_NAMES := spike-pass spike-fail spike-hang
 TEST_NAMES := $(CORE_TEST_NAMES)
+
+MGBA_DIR ?= ../mgba
+E2E_BUILD_DIR := $(BUILD_DIR)/e2e
+E2E_RUNNER := $(E2E_BUILD_DIR)/mgba-e2e
+HOSTCC ?= cc
+
+$(E2E_RUNNER): tools/testing/e2e/mgba_driver.c
+	@mkdir -p $(dir $@)
+	$(HOSTCC) -std=c11 -Wall -Wextra -Werror \
+		-I$(MGBA_DIR)/include -I$(MGBA_DIR)/build/include \
+		$< -L$(MGBA_DIR)/build -lmgba -o $@
+
+e2e-runner: $(E2E_RUNNER)
+
+e2e-fixture-rom:
+	@mkdir -p build/e2e/fixtures
+	$(MAKE) E2E_TESTING=1 rom
+
+e2e: rom e2e-runner e2e-fixture-rom
+	python3 tools/testing/run_e2e.py $(TESTS)
+
+check-e2e-runner: rom e2e-runner
+	E2E_INTEGRATION=1 python3 -m unittest discover -s tools/testing -p 'test_e2e_session.py' -v
 TEST_ROMS := $(TEST_NAMES:%=$(TEST_ROM_DIR)/%.gba)
 
 $(TEST_BUILD_DIR)/runner/%.o: tests/runner/%.s

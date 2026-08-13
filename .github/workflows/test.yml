@@ -24,6 +24,9 @@ jobs:
       suites: ${{ steps.selection.outputs.suites }}
       full: ${{ steps.selection.outputs.full }}
       has_suites: ${{ steps.selection.outputs.has_suites }}
+      e2e_matrix: ${{ steps.selection.outputs.e2e_matrix }}
+      e2e_scenarios: ${{ steps.selection.outputs.e2e_scenarios }}
+      has_e2e_scenarios: ${{ steps.selection.outputs.has_e2e_scenarios }}
     steps:
       - name: Checkout comparison history
         uses: actions/checkout@v6
@@ -60,7 +63,7 @@ jobs:
               ;;
             workflow_dispatch)
               python3 tools/testing/select_suites.py \
-                --files tests/manifest.json \
+                --files tests/manifest.json tests/e2e_manifest.json \
                 --github-output "$GITHUB_OUTPUT"
               ;;
             *)
@@ -150,10 +153,71 @@ jobs:
             build/test/roms/${{ matrix.suite }}.sym
           retention-days: 1
 
+  run-e2e:
+    name: Tests / E2E / ${{ matrix.scenario }}
+    needs: [select]
+    if: ${{ needs.select.result == 'success' && needs.select.outputs.has_e2e_scenarios == 'true' }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.select.outputs.e2e_matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MGBA_REVISION: 26b7884bc25a5933960f3cdcd98bac1ae14d42e2
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Checkout pinned mGBA
+        uses: actions/checkout@v6
+        with:
+          repository: mgba-emu/mgba
+          ref: ${{ env.MGBA_REVISION }}
+          path: mgba
+
+      - name: Checkout legacy compiler
+        uses: actions/checkout@v6
+        with:
+          repository: pret/agbcc
+          path: agbcc
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev cmake
+
+      - name: Build pinned mGBA library
+        run: |
+          cmake -S mgba -B mgba/build \
+            -DBUILD_QT=OFF -DBUILD_SDL=OFF -DBUILD_GLES2=OFF \
+            -DBUILD_GL=OFF -DBUILD_EGL=OFF
+          cmake --build mgba/build -j"$(nproc)"
+
+      - name: Build and install legacy compiler
+        run: |
+          cd agbcc
+          ./build.sh
+          ./install.sh ..
+
+      - name: Run selected E2E scenario
+        env:
+          E2E_COMMIT_SHA: ${{ github.sha }}
+          LD_LIBRARY_PATH: ${{ github.workspace }}/mgba/build
+        run: make -j"$(nproc)" e2e MGBA_DIR=mgba TESTS="${{ matrix.scenario }}"
+
+      - name: Upload filtered E2E diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-failure-${{ matrix.scenario }}
+          path: build/e2e/upload/${{ matrix.scenario }}/
+          if-no-files-found: error
+          retention-days: 1
+
   cleanup-artifacts:
     name: Tests / delete test artifacts
     if: ${{ always() }}
-    needs: [build-tests, run-suites]
+    needs: [build-tests, run-suites, run-e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -188,13 +252,25 @@ jobs:
     steps:
       - run: echo "No gameplay suites selected; documentation-only gate passes."
 
-  required:
-    name: Tests / required
-    if: ${{ always() }}
-    needs: [select, build-tests, run-suites, no-suites, cleanup-artifacts]
+  no-e2e-scenarios:
+    name: Tests / no E2E scenarios
+    needs: [select]
+    if: ${{ needs.select.result == 'success' && needs.select.outputs.has_e2e_scenarios == 'false' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - run: echo "No E2E scenarios selected; E2E gate passes."
+
+  required:
+    name: Tests / required
+    if: ${{ always() }}
+    needs: [select, build-tests, run-suites, no-suites, run-e2e, no-e2e-scenarios, cleanup-artifacts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout gate verifier
+        uses: actions/checkout@v6
+
       - name: Verify test workflow results
         env:
           SELECT_RESULT: ${{ needs.select.result }}
@@ -202,24 +278,13 @@ jobs:
           RUN_RESULT: ${{ needs.run-suites.result }}
           NO_SUITES_RESULT: ${{ needs.no-suites.result }}
           CLEANUP_RESULT: ${{ needs.cleanup-artifacts.result }}
+          E2E_RESULT: ${{ needs.run-e2e.result }}
+          NO_E2E_RESULT: ${{ needs.no-e2e-scenarios.result }}
           HAS_SUITES: ${{ needs.select.outputs.has_suites }}
           SELECTED_SUITES: ${{ needs.select.outputs.suites }}
+          HAS_E2E_SCENARIOS: ${{ needs.select.outputs.has_e2e_scenarios }}
+          SELECTED_E2E_SCENARIOS: ${{ needs.select.outputs.e2e_scenarios }}
         run: |
-          if test "$SELECT_RESULT" != success; then
-            echo "Suite selection failed with result: $SELECT_RESULT" >&2
-            exit 1
-          fi
-          if test "$HAS_SUITES" = true; then
-            echo "Selected gameplay suites: $SELECTED_SUITES"
-            test "$BUILD_RESULT" = success || exit 1
-            test "$RUN_RESULT" = success || exit 1
-            test "$NO_SUITES_RESULT" = skipped || exit 1
-            test "$CLEANUP_RESULT" = success || exit 1
-          elif test "$HAS_SUITES" = false; then
-            test "$BUILD_RESULT" = skipped || exit 1
-            test "$RUN_RESULT" = skipped || exit 1
-            test "$NO_SUITES_RESULT" = success || exit 1
-          else
-            echo "Selector emitted invalid has_suites value: $HAS_SUITES" >&2
-            exit 1
-          fi
+          echo "Selected gameplay suites: $SELECTED_SUITES"
+          echo "Selected E2E scenarios: $SELECTED_E2E_SCENARIOS"
+          python3 tools/testing/verify_required.py

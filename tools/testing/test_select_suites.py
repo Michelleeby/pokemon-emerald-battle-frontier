@@ -6,13 +6,23 @@ import copy
 import unittest
 from unittest import mock
 
-from select_suites import ManifestError, changed_files, load_manifest, select_suites, validate_manifest
+from select_suites import (
+    ManifestError,
+    changed_files,
+    load_e2e_manifest,
+    load_manifest,
+    select_e2e_scenarios,
+    select_suites,
+    validate_e2e_manifest,
+    validate_manifest,
+)
 
 
 class SelectorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.manifest = load_manifest()
+        cls.e2e_manifest = load_e2e_manifest()
         cls.all_suites = sorted(cls.manifest["suites"])
 
     def select(self, *files: str) -> dict[str, object]:
@@ -122,6 +132,47 @@ class SelectorTests(unittest.TestCase):
         manifest["suites"]["save-load"]["dependencies"].append("frontier-common")
         with self.assertRaises(ManifestError):
             validate_manifest(manifest)
+
+    def test_tower_change_selects_both_e2e_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_tower.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"],
+            ["tower-lobby-cancel", "tower-save-restart"],
+        )
+
+    def test_save_change_selects_only_restart_scenario(self) -> None:
+        result = select_e2e_scenarios(["src/save.c"], self.e2e_manifest)
+        self.assertEqual(result["scenarios"], ["tower-save-restart"])
+
+    def test_other_facility_change_selects_no_current_e2e_scenario(self) -> None:
+        result = select_e2e_scenarios(
+            ["src/battle_factory.c"], self.e2e_manifest
+        )
+        self.assertEqual(result["scenarios"], [])
+        self.assertEqual(result["matrix"], {"scenario": ["no-scenarios"]})
+
+    def test_documentation_change_selects_no_e2e_scenario(self) -> None:
+        result = select_e2e_scenarios(["README.md"], self.e2e_manifest)
+        self.assertEqual(result["scenarios"], [])
+
+    def test_unknown_source_change_selects_all_e2e_scenarios(self) -> None:
+        result = select_e2e_scenarios(
+            ["src/unclassified_gameplay.c"], self.e2e_manifest
+        )
+        self.assertEqual(result["scenarios"], self.e2e_manifest["scenarios"])
+        self.assertTrue(result["full"])
+
+    def test_e2e_infrastructure_selects_all_scenarios(self) -> None:
+        result = select_e2e_scenarios(
+            ["tools/testing/e2e/session.py"], self.e2e_manifest
+        )
+        self.assertEqual(result["scenarios"], self.e2e_manifest["scenarios"])
+
+    def test_e2e_manifest_rejects_unknown_scenario(self) -> None:
+        manifest = copy.deepcopy(self.e2e_manifest)
+        manifest["rules"][0]["scenarios"] = ["missing"]
+        with self.assertRaisesRegex(ManifestError, "unknown scenarios"):
+            validate_e2e_manifest(manifest)
 
 
 if __name__ == "__main__":

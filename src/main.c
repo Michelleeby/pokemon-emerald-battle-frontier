@@ -118,6 +118,13 @@ void AgbMain(void)
     SetDefaultFontsPointer();
     InitHeap(gHeap, HEAP_SIZE);
 
+#ifdef E2E_TESTING
+    {
+        extern void E2E_CreateTowerLobbyFixture(void);
+        SetMainCallback2(E2E_CreateTowerLobbyFixture);
+    }
+#endif
+
     gSoftResetDisabled = FALSE;
 
     if (gFlashMemoryPresent != TRUE)

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "scenarios": [
+    "tower-lobby-cancel",
+    "tower-save-restart"
+  ],
+  "rules": [
+    {
+      "name": "E2E infrastructure",
+      "paths": ["Makefile", ".github/workflows/test*.yml", "tests/e2e_manifest.json", "tools/testing/run_e2e.py", "tools/testing/e2e/**", "src/e2e_fixture.c"],
+      "scenarios": "all"
+    },
+    {
+      "name": "Battle Tower",
+      "paths": ["src/battle_tower.c", "include/battle_tower.h", "include/constants/battle_tower.h", "asm/macros/battle_frontier/battle_tower.inc", "data/maps/BattleFrontier_BattleTower*/**"],
+      "scenarios": "all"
+    },
+    {
+      "name": "save system",
+      "paths": ["src/save*.c", "src/load_save.c", "src/reload_save.c", "include/global.h", "include/save*.h", "include/load_save.h", "include/reload_save.h"],
+      "scenarios": ["tower-save-restart"]
+    },
+    {
+      "name": "other facilities",
+      "paths": ["src/battle_factory*.c", "src/battle_dome.c", "src/battle_arena.c", "src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattleFactory*/**", "data/maps/BattleFrontier_BattleDome*/**", "data/maps/BattleFrontier_BattleArena*/**", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "scenarios": []
+    },
+    {
+      "name": "uncovered named flows",
+      "paths": ["src/team_lab*.c", "include/team_lab.h", "src/frontier_intro_tutorial.c", "include/frontier_intro_tutorial.h"],
+      "scenarios": []
+    }
+  ],
+  "relevant_paths": ["src/**", "include/**", "data/**", "asm/**", "tools/testing/**", ".github/workflows/test*.yml", "Makefile"],
+  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes", "tests/manifest.json"]
+}
