@@ -1,7 +1,7 @@
 #ifndef GUARD_GLOBAL_H
 #define GUARD_GLOBAL_H
 
-// Temporary Stage 5 concurrency-cancellation verification.
+// Temporary Stage 5 concurrency-cancellation verification (superseding run).
 
 #include <string.h>
 #include <limits.h>
