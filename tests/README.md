@@ -28,7 +28,7 @@ parties, and seeds both game RNGs explicitly.
 | Tutorial start, first action, double-tap skip, and completion | `new-game-tutorial` | Follow-up: complete onboarding, name/avatar UI, ferry transition, and all checkpoints require frame-driven tests. |
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
-| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, and pause/resume state | `frontier-tower` | Follow-up: full lobby cancel menus, input-driven retirement, seven actual battles, room warps, flash-backed restart, and multis partner interaction require frame-driven script/battle and initialized flash fixtures. |
+| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, and a flash-backed Singles save/restart after one actual battle | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart` E2E | Follow-up: input-driven retirement, seven actual battles, complete room-warp coverage, and multis partner interaction require additional frame-driven script/battle coverage. |
 | Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation | `frontier-factory` | Follow-up: lobby cancel, rental-selection and swap-screen input, retirement/disqualification scripts, seven actual battles, room warps, Noland battle presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Follow-up: lobby and tournament-tree cancel input, complete rendered previews, four actual battles, transition callbacks, room warps, Tucker presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Follow-up: lobby cancel input, three actual turns and seven actual battles, rendered Mind/Skill/Body judgment presentation, transition callbacks, room warps, Greta presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
@@ -39,6 +39,83 @@ parties, and seeds both game RNGs explicitly.
 The remaining follow-ups require frame-driven, presentation, or initialized
 flash fixtures beyond the current C-level state suites. Replace each follow-up
 with named coverage when the corresponding harness exists.
+
+## End-to-end harness development
+
+Stage 7 has a project-owned headless driver linked against the pinned sibling
+mGBA build. The first driver slice supports normal ROM boot, scenario-local
+save files, exact frame advancement, keypad input, memory reads, bounded memory
+predicates, PNG screenshots, and complete emulator-core restart. A Python
+session wrapper enforces wall-clock response timeouts, separates emulator logs
+from the command protocol, and records a replayable `input-trace.json`.
+
+Build the driver with:
+
+```sh
+make e2e-runner
+```
+
+Run named gameplay scenarios through the same headless session path with:
+
+```sh
+make e2e TESTS="tower-lobby-cancel tower-save-restart"
+```
+
+Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
+scenario names fail before execution. `tower-lobby-cancel` builds a dedicated
+`E2E_TESTING` fixture ROM, creates a checksummed flash save after production
+map initialization, destroys that emulator core, and starts the ordinary
+release ROM with the generated save. It selects Continue through real input,
+interacts with the Singles attendant, cancels the Challenge / Info / Cancel
+menu with B, and asserts the map, player control, and challenge state.
+`tower-save-restart` enters a Singles Lv. 50 challenge, completes one real
+battle, selects Rest, and exercises the production Frontier flash save. It
+destroys and recreates the emulator core with only the scenario-local save,
+selects Continue through real input, verifies the paused challenge data, and
+asserts that the Tower resumes the saved challenge.
+
+Run its host unit tests and live mGBA integration diagnostic with:
+
+```sh
+make check-e2e-runner
+```
+
+The live diagnostic uses the ordinary release ROM entry path. It verifies the
+physical keypad register, frame execution, memory predicates, screenshot
+output, isolated flash creation, protocol-error reporting, and destruction and
+recreation of the mGBA core. This diagnostic validates harness mechanics and
+is separate from the named gameplay coverage above.
+
+The driver is written to `build/e2e/mgba-e2e`; scenario reports, logs, traces,
+screenshots, and scenario-local saves are written below
+`build/e2e/artifacts/<scenario>/`. `make clean` removes the entire `build/e2e`
+directory and the isolated `build/e2e-fixture-obj` object tree. E2E failure
+artifacts must not include ROM, ELF, map, symbol, mGBA binary, or shared
+build-bundle output.
+
+`tests/e2e_manifest.json` owns E2E selection independently from the C-suite
+manifest. Tower changes select both current scenarios, save-system changes
+select `tower-save-restart`, E2E infrastructure changes select every scenario,
+and documentation-only or explicitly uncovered facility changes select none.
+Unknown relevant gameplay paths conservatively select every E2E scenario.
+
+CI runs selected scenarios in a `fail-fast: false` matrix. Each matrix job
+checks out and builds the pinned mGBA revision and builds its own release ROM,
+fixture ROM, and native driver in its transient workspace; these build outputs
+are never transferred between jobs or uploaded. A no-scenarios job preserves
+the documentation-only path. The stable `Tests / required` job requires either
+the complete selected E2E matrix or the no-scenarios job to pass, as well as
+successful artifact cleanup.
+
+Every scenario report records the commit SHA, release ROM SHA-256, pinned mGBA
+revision, scenario and fixture versions, fixed RNG seeds, RTC policy, driver
+response timeout, bounded-frame-wait policy, duration, status, and failed
+predicate. Failures are classified as assertion failures, driver timeouts, or
+runner crashes. The runner attempts a failure screenshot while the emulator is
+still responsive. Only JSON, logs, PNGs, and scenario-local saves are copied to
+the CI upload staging directory; ROM, ELF, map, symbol, and executable output
+is excluded. Workflow cleanup deletes both transient gameplay bundles and E2E
+diagnostics after matrix completion.
 
 ## Determinism and diagnostics
 

@@ -13,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MANIFEST = ROOT / "tests" / "manifest.json"
+DEFAULT_E2E_MANIFEST = ROOT / "tests" / "e2e_manifest.json"
 
 
 class ManifestError(ValueError):
@@ -31,6 +32,59 @@ def load_manifest(path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
         raise ManifestError(f"cannot read {path}: {error}") from error
     validate_manifest(manifest)
     return manifest
+
+
+def load_e2e_manifest(path: Path = DEFAULT_E2E_MANIFEST) -> dict[str, Any]:
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ManifestError(f"cannot read {path}: {error}") from error
+    validate_e2e_manifest(manifest)
+    return manifest
+
+
+def validate_e2e_manifest(manifest: dict[str, Any]) -> None:
+    if manifest.get("version") != 1:
+        raise ManifestError("E2E manifest version must be 1")
+    scenarios = manifest.get("scenarios")
+    if not isinstance(scenarios, list) or not scenarios or not all(
+        isinstance(item, str) and item for item in scenarios
+    ):
+        raise ManifestError("E2E scenarios must be a non-empty string array")
+    if len(scenarios) != len(set(scenarios)):
+        raise ManifestError("E2E scenarios must be unique")
+
+    rules = manifest.get("rules")
+    if not isinstance(rules, list) or not rules:
+        raise ManifestError("E2E rules must be a non-empty array")
+    rule_names: set[str] = set()
+    for rule in rules:
+        if not isinstance(rule, dict) or not isinstance(rule.get("name"), str):
+            raise ManifestError("every E2E rule must have a string name")
+        if rule["name"] in rule_names:
+            raise ManifestError(f"duplicate E2E rule name: {rule['name']}")
+        rule_names.add(rule["name"])
+        paths = rule.get("paths")
+        if not isinstance(paths, list) or not paths or not all(
+            isinstance(item, str) and item for item in paths
+        ):
+            raise ManifestError(
+                f"E2E rule {rule['name']!r} paths must be a non-empty string array"
+            )
+        selected = rule.get("scenarios")
+        if selected != "all" and (
+            not isinstance(selected, list) or set(selected) - set(scenarios)
+        ):
+            raise ManifestError(
+                f"E2E rule {rule['name']!r} refers to unknown scenarios"
+            )
+
+    for key in ("relevant_paths", "ignored_paths"):
+        value = manifest.get(key)
+        if not isinstance(value, list) or not all(
+            isinstance(item, str) and item for item in value
+        ):
+            raise ManifestError(f"E2E {key} must be a string array")
 
 
 def validate_manifest(manifest: dict[str, Any]) -> None:
@@ -128,6 +182,43 @@ def select_suites(files: list[str], manifest: dict[str, Any]) -> dict[str, Any]:
     return {"changed_files": normalized, "suites": suites, "matrix": {"suite": matrix_suites}, "full": full}
 
 
+def select_e2e_scenarios(
+    files: list[str], manifest: dict[str, Any]
+) -> dict[str, Any]:
+    all_scenarios = set(manifest["scenarios"])
+    selected: set[str] = set()
+    full = False
+    normalized = sorted(
+        {path.strip().replace("\\", "/").removeprefix("./") for path in files if path.strip()}
+    )
+    for path in normalized:
+        matched = False
+        for rule in manifest["rules"]:
+            if matches(path, rule["paths"]):
+                matched = True
+                scenarios = (
+                    all_scenarios
+                    if rule["scenarios"] == "all"
+                    else set(rule["scenarios"])
+                )
+                selected.update(scenarios)
+                full = full or rule["scenarios"] == "all"
+        if not matched and matches(path, manifest["relevant_paths"]):
+            selected.update(all_scenarios)
+            full = True
+        elif not matched and not matches(path, manifest["ignored_paths"]):
+            selected.update(all_scenarios)
+            full = True
+
+    scenarios = sorted(selected)
+    matrix_scenarios = scenarios if scenarios else ["no-scenarios"]
+    return {
+        "scenarios": scenarios,
+        "matrix": {"scenario": matrix_scenarios},
+        "full": full,
+    }
+
+
 def changed_files(base: str, head: str) -> list[str]:
     # GitHub uses an all-zero `before` SHA when a push creates a branch. There
     # is no pre-push tree to diff in that case, so conservatively select every
@@ -145,6 +236,7 @@ def changed_files(base: str, head: str) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
+    parser.add_argument("--e2e-manifest", type=Path, default=DEFAULT_E2E_MANIFEST)
     parser.add_argument("--base")
     parser.add_argument("--head", default="HEAD")
     parser.add_argument("--files", nargs="*")
@@ -154,8 +246,10 @@ def main() -> int:
         parser.error("provide --base or --files")
     try:
         manifest = load_manifest(args.manifest)
+        e2e_manifest = load_e2e_manifest(args.e2e_manifest)
         files = args.files if args.files is not None else changed_files(args.base, args.head)
         result = select_suites(files, manifest)
+        e2e_result = select_e2e_scenarios(files, e2e_manifest)
     except (ManifestError, RuntimeError) as error:
         parser.error(str(error))
 
@@ -175,6 +269,13 @@ def main() -> int:
     for path, names in reasons_by_file.items():
         print(f"  {path}: {', '.join(names) if names else 'ignored'}")
     print("Selected suites: " + (", ".join(result["suites"]) if result["suites"] else "none"))
+    print(
+        "Selected E2E scenarios: "
+        + (", ".join(e2e_result["scenarios"]) if e2e_result["scenarios"] else "none")
+    )
+    result["e2e_scenarios"] = e2e_result["scenarios"]
+    result["e2e_matrix"] = e2e_result["matrix"]
+    result["e2e_full"] = e2e_result["full"]
     print(json.dumps(result, sort_keys=True))
     if args.github_output:
         with args.github_output.open("a", encoding="utf-8") as output:
@@ -182,6 +283,10 @@ def main() -> int:
             output.write(f"suites={json.dumps(result['suites'], separators=(',', ':'))}\n")
             output.write(f"full={str(result['full']).lower()}\n")
             output.write(f"has_suites={str(bool(result['suites'])).lower()}\n")
+            output.write(f"e2e_matrix={json.dumps(e2e_result['matrix'], separators=(',', ':'))}\n")
+            output.write(f"e2e_scenarios={json.dumps(e2e_result['scenarios'], separators=(',', ':'))}\n")
+            output.write(f"e2e_full={str(e2e_result['full']).lower()}\n")
+            output.write(f"has_e2e_scenarios={str(bool(e2e_result['scenarios'])).lower()}\n")
     return 0
 
 
