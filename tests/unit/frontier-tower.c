@@ -64,6 +64,7 @@ static void TestNormalAndHardChallengeInit(void)
 {
     u32 i;
 
+    TEST_ASSERT(FALSE);
     TestResetFixture(0x1001);
     SetTowerContext(FRONTIER_CHALLENGE_NORMAL, FRONTIER_MODE_SINGLES, FRONTIER_LVL_50);
     gSaveBlock2Ptr->frontier.towerWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 12;
