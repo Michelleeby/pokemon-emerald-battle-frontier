@@ -164,22 +164,39 @@ void E2E_CreateFrontierLobbyFixture(void)
     }
     else if (JOY_HELD(B_BUTTON))
     {
-        map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_LOBBY;
-        x = 4;
-        y = 8;
         if (JOY_HELD(SELECT_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_PRE_BATTLE_ROOM;
+            x = 8;
+            y = 13;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_FACTORY,
+                FRONTIER_CHALLENGE_HARD);
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0xFAC1;
             gSaveBlock1Ptr->frontierHardMode.factoryWinStreakActiveFlags =
                 STREAK_FACTORY_SINGLES_50;
             gSaveBlock1Ptr->frontierHardMode
-                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 13;
+                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 12;
         }
         else if (JOY_HELD(START_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_PRE_BATTLE_ROOM;
+            x = 8;
+            y = 13;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_FACTORY,
+                FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0xFAC1;
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
                 STREAK_FACTORY_SINGLES_50;
             gSaveBlock2Ptr->frontier
-                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 20;
+                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 19;
+        }
+        else
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_LOBBY;
+            x = 4;
+            y = 8;
         }
     }
     else

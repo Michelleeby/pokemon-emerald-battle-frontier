@@ -187,6 +187,20 @@ def _decline_swap_and_continue(game: Session, special_result: int) -> None:
     game.press("B", held_frames=1, released_frames=29)
 
 
+def _decline_swap_before_brain(game: Session, special_result: int) -> None:
+    """Choose Go On and decline the otherwise optional pre-Brain swap."""
+
+    for _ in range(60):
+        if game.read(special_result, width=8) == 0xFF:
+            break
+        game.press("A", held_frames=1, released_frames=29)
+    else:
+        raise FactoryScenarioFailure("Factory Brain preparation menu did not open")
+    game.press("A", held_frames=1, released_frames=29)
+    advance_until(game, special_result, 0xFF, "A")
+    game.press("B", held_frames=1, released_frames=29)
+
+
 def complete_factory_route(
     game: Session,
     save_block1_ptr: int,
@@ -195,6 +209,7 @@ def complete_factory_route(
     lock_field_controls: int,
     *,
     expected_battles: int,
+    expected_pre_battle_visits: int | None = None,
     route_name: str,
 ) -> dict[str, int]:
     """Drive a Factory route until its completed challenge returns control."""
@@ -241,7 +256,10 @@ def complete_factory_route(
                 and battle_num not in handled_returns
                 and observed_map == map_id(MAP_NUM_FACTORY_PRE_BATTLE_ROOM)
             ):
-                _decline_swap_and_continue(game, special_result)
+                if expected_battles == 2:
+                    _decline_swap_before_brain(game, special_result)
+                else:
+                    _decline_swap_and_continue(game, special_result)
                 handled_returns.add(battle_num)
                 continue
 
@@ -251,9 +269,14 @@ def complete_factory_route(
                 and status == 0
                 and game.read(lock_field_controls, width=8) == 0
             ):
+                expected_pre_battle_visits = (
+                    expected_battles
+                    if expected_pre_battle_visits is None
+                    else expected_pre_battle_visits
+                )
                 if (
                     battle_room_visits != expected_battles
-                    or pre_battle_room_visits != expected_battles
+                    or pre_battle_room_visits != expected_pre_battle_visits
                 ):
                     raise FactoryScenarioFailure(
                         "Factory room route was incomplete "

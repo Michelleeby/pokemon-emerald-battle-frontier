@@ -144,6 +144,7 @@ class SelectorTests(unittest.TestCase):
                 "dome-normal-tucker",
                 "factory-hard-noland",
                 "factory-hard-setup",
+                "factory-normal-noland",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
             ],
@@ -179,11 +180,11 @@ class SelectorTests(unittest.TestCase):
         )
         self.assertEqual(
             result["scenarios"],
-            ["factory-hard-noland", "factory-hard-setup"],
+            ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"],
         )
         self.assertEqual(
             result["matrix"],
-            {"scenario": ["factory-hard-noland", "factory-hard-setup"]},
+            {"scenario": ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"]},
         )
 
     def test_documentation_change_selects_no_e2e_scenario(self) -> None:

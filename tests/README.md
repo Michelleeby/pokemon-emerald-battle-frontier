@@ -29,7 +29,7 @@ parties, and seeds both game RNGs explicitly.
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
 | Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, and pause/resume state; paired normal 33→35 and hard 19→21 Anabel boundaries with their expected ordinary trainer pools through production scripts | `frontier-tower`; `tower-normal-anabel`, `tower-hard-anabel` E2E | The paired E2E routes own the mode boundary difference; unchanged vanilla plumbing remains outside E2E scope. |
-| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation; hard 13→14 Noland boundary, 31-IV rentals, and hardest ordinary trainer pool through production scripts | `frontier-factory`; `factory-hard-noland`, `factory-hard-setup` E2E | The targeted E2E routes own the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
+| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation; paired normal 19→21 and hard 12→14 Noland boundaries plus separate hard setup coverage through production scripts | `frontier-factory`; `factory-normal-noland`, `factory-hard-noland`, `factory-hard-setup` E2E | The targeted E2E routes own the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation; paired normal championship 4→5 and hard championship 2→3 Tucker boundaries with their expected ordinary trainer pools through production scripts | `frontier-dome`; `dome-normal-tucker`, `dome-hard-tucker` E2E | The paired E2E routes own the mode boundary difference; unchanged tournament plumbing remains outside E2E scope. |
 | Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger; paired normal 26→28 and hard 12→14 Greta boundaries with their expected ordinary trainer pools through production scripts | `frontier-arena`; `arena-normal-greta`, `arena-hard-greta` E2E | The paired E2E routes own the mode boundary difference; unchanged Arena battle plumbing is out of scope. |
 | Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Spenser boundary through production scripts. Unchanged Palace battle plumbing is out of scope. |
@@ -60,7 +60,7 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker"
+make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-normal-noland factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
@@ -71,11 +71,11 @@ seeds streak 33 and verifies the normal 140–179 ordinary pool before Anabel at
 35; `tower-hard-anabel` seeds streak 19 and verifies the hardest 200–299 pool
 before Anabel at 21. Both start from a seeded active challenge, use exactly two
 assisted outcomes, and verify that the other mode's streak remains unchanged.
-`factory-hard-noland` seeds a hard Factory streak of 13, enters through the
-production challenge and rental-selection UI, verifies 31-IV rentals, defeats
-Noland once, and checks the final hard streak of 14 without changing the normal
-streak. Because the Brain branch does not increment the ordinary Factory
-challenge counter, the completed route retains a battle number of zero.
+The paired Factory scenarios share one configured route. They seed active
+challenges at normal streak 19 and hard streak 12 in the production pre-battle
+room, verify the 100–139 or 200–299 ordinary pool, then defeat Noland and finish
+at streak 21 or 14. A narrow E2E-only seam selects the first three valid
+generated rentals so host input remains reserved for production dialogue.
 `factory-hard-setup` enters a fresh hard Factory challenge only far enough to
 verify 31-IV rentals and an ordinary opponent from the hardest trainer pool;
 it does not replay the vanilla seven-battle route.
@@ -127,7 +127,7 @@ build-bundle output.
 `tests/e2e_manifest.json` owns E2E selection independently from the C-suite
 manifest. Tower changes select every scenario because the assisted gameplay
 seam is implemented in the shared special-battle dispatcher, Factory changes
-select both targeted Factory scenarios, Dome changes select both Tucker scenarios,
+select all three targeted Factory scenarios, Dome changes select both Tucker scenarios,
 Arena changes select both Greta scenarios,
 E2E infrastructure changes select every scenario, and
 documentation-only or explicitly uncovered facility changes select none.

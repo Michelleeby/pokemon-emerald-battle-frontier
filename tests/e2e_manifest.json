@@ -7,6 +7,7 @@
     "dome-normal-tucker",
     "factory-hard-noland",
     "factory-hard-setup",
+    "factory-normal-noland",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
@@ -24,7 +25,7 @@
     {
       "name": "Battle Factory",
       "paths": ["src/battle_factory*.c", "include/battle_factory*.h", "include/constants/battle_factory.h", "asm/macros/battle_frontier/battle_factory.inc", "data/maps/BattleFrontier_BattleFactory*/**"],
-      "scenarios": ["factory-hard-noland", "factory-hard-setup"]
+      "scenarios": ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"]
     },
     {
       "name": "Battle Dome",

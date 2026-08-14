@@ -21,6 +21,7 @@ from e2e.dome_hard_tucker import run as run_dome_hard_tucker
 from e2e.dome_normal_tucker import run as run_dome_normal_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
 from e2e.factory_hard_setup import run as run_factory_hard_setup
+from e2e.factory_normal_noland import run as run_factory_normal_noland
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
 from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
@@ -43,6 +44,7 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "dome-normal-tucker": run_dome_normal_tucker,
     "factory-hard-noland": run_factory_hard_noland,
     "factory-hard-setup": run_factory_hard_setup,
+    "factory-normal-noland": run_factory_normal_noland,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,
 }

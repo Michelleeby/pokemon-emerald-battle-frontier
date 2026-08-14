@@ -84,6 +84,11 @@ def run(artifact_dir: Path) -> None:
             raise ScenarioFailure("Factory hard setup did not enter the saving state")
 
         for index in range(3):
+            wait_for_value(
+                game,
+                addresses["rental_mons"] + index * 12 + 8,
+                HARD_RENTAL_IV,
+            )
             rental_ivs = game.read(addresses["rental_mons"] + index * 12 + 8, width=8)
             if rental_ivs != HARD_RENTAL_IV:
                 raise ScenarioFailure(
