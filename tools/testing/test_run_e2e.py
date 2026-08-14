@@ -23,6 +23,7 @@ class E2ESelectionTests(unittest.TestCase):
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "tower-hard-anabel",
+                "tower-normal-anabel",
             ],
         )
 

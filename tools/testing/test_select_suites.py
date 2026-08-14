@@ -143,6 +143,7 @@ class SelectorTests(unittest.TestCase):
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "tower-hard-anabel",
+                "tower-normal-anabel",
             ],
         )
 

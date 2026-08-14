@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from .session import Session
@@ -11,14 +12,14 @@ from .tower import (
     E2E_AUTO_WIN_COUNT_SYMBOL,
     GAMEPLAY_ELF,
     GAMEPLAY_ROM,
+    MAP_NUM_TOWER_BATTLE_ROOM,
     STREAK_TOWER_SINGLES_50,
     TowerScenarioFailure as ScenarioFailure,
     complete_tower_route,
     create_tower_lobby_save,
-    start_singles_level_50,
+    current_map,
+    map_id,
     tower_mode_addresses,
-    wait_for_tower_lobby,
-    wait_for_value,
 )
 
 
@@ -31,80 +32,86 @@ HARD_START_STREAK = 19
 HARD_COMPLETED_STREAK = 21
 
 
-def run_anabel_route(artifact_dir: Path, *, hard: bool) -> None:
-    mode = "hard" if hard else "normal"
-    start_streak = HARD_START_STREAK if hard else NORMAL_START_STREAK
-    completed_streak = HARD_COMPLETED_STREAK if hard else NORMAL_COMPLETED_STREAK
+@dataclass(frozen=True)
+class AnabelMode:
+    name: str
+    hard: bool
+    challenge_mode: int
+    start_streak: int
+    completed_streak: int
+    ordinary_pool: tuple[int, int]
+
+
+NORMAL_ANABEL = AnabelMode(
+    name="normal",
+    hard=False,
+    challenge_mode=FRONTIER_CHALLENGE_NORMAL,
+    start_streak=NORMAL_START_STREAK,
+    completed_streak=NORMAL_COMPLETED_STREAK,
+    ordinary_pool=(140, 179),
+)
+HARD_ANABEL = AnabelMode(
+    name="hard",
+    hard=True,
+    challenge_mode=FRONTIER_CHALLENGE_HARD,
+    start_streak=HARD_START_STREAK,
+    completed_streak=HARD_COMPLETED_STREAK,
+    ordinary_pool=(200, 299),
+)
+
+
+def run_anabel_route(artifact_dir: Path, mode: AnabelMode) -> None:
     artifact_dir = Path(artifact_dir).resolve()
-    save = artifact_dir / f"tower-{mode}-anabel.sav"
+    save = artifact_dir / f"tower-{mode.name}-anabel.sav"
     save.unlink(missing_ok=True)
     symbols = require_symbols(
         load_symbols(GAMEPLAY_ELF),
-        "gMain",
-        "gMapHeader",
-        "gObjectEvents",
-        "gPlayerAvatar",
         "gSaveBlock1Ptr",
         "gSaveBlock2Ptr",
-        "gSelectedOrderFromParty",
-        "gSpecialVar_Result",
         "gTrainerBattleOpponent_A",
-        "BattleFrontier_BattleTowerLobby_Layout",
-        "CB2_UpdatePartyMenu",
         "sLockFieldControls",
         E2E_AUTO_WIN_COUNT_SYMBOL,
     )
 
-    create_tower_lobby_save(artifact_dir, save, anabel_mode=mode)
+    create_tower_lobby_save(artifact_dir, save, anabel_mode=mode.name)
 
     with Session(GAMEPLAY_ROM, artifact_dir / "scenario", save=save) as game:
-        save_block1 = wait_for_tower_lobby(
-            game,
-            symbols["gSaveBlock1Ptr"],
-            symbols["gMapHeader"],
-            symbols["BattleFrontier_BattleTowerLobby_Layout"],
-            symbols["gPlayerAvatar"],
-            symbols["gObjectEvents"],
-        )
+        for _ in range(60):
+            if current_map(game, symbols["gSaveBlock1Ptr"]) == map_id(
+                MAP_NUM_TOWER_BATTLE_ROOM
+            ):
+                break
+            game.press("START", held_frames=1, released_frames=29)
+            game.press("A", held_frames=1, released_frames=29)
+        else:
+            raise ScenarioFailure("Continue did not reach the Tower battle room")
+        save_block1 = game.read(symbols["gSaveBlock1Ptr"])
         save_block2 = game.read(symbols["gSaveBlock2Ptr"])
         addresses = tower_mode_addresses(save_block1, save_block2)
         streak_address = (
-            addresses["hard_win_streak"] if hard else addresses["win_streak"]
+            addresses["hard_win_streak"] if mode.hard else addresses["win_streak"]
         )
-        if game.read(streak_address, width=16) != start_streak:
+        if game.read(streak_address, width=16) != mode.start_streak:
             raise ScenarioFailure(
-                f"{mode} Tower fixture did not start at streak {start_streak}"
+                f"{mode.name} Tower fixture did not start at streak {mode.start_streak}"
             )
-
-        game.run_frames(120)
-        wait_for_value(game, symbols["sLockFieldControls"], 0)
-        start_singles_level_50(
-            game,
-            symbols["gSpecialVar_Result"],
-            symbols["sLockFieldControls"],
-            symbols["gSelectedOrderFromParty"],
-            symbols["gMain"],
-            symbols["CB2_UpdatePartyMenu"],
-            hard=hard,
-        )
 
         save_block1 = game.read(symbols["gSaveBlock1Ptr"])
         save_block2 = game.read(symbols["gSaveBlock2Ptr"])
         addresses = tower_mode_addresses(save_block1, save_block2)
-        expected_mode = FRONTIER_CHALLENGE_HARD if hard else FRONTIER_CHALLENGE_NORMAL
         challenge_mode = game.read(addresses["challenge_mode"], width=8)
-        if challenge_mode != expected_mode:
+        if challenge_mode != mode.challenge_mode:
             raise ScenarioFailure(
-                f"Tower challenge mode is {challenge_mode}, expected {mode}"
+                f"Tower challenge mode is {challenge_mode}, expected {mode.name}"
             )
         streak_address = (
-            addresses["hard_win_streak"] if hard else addresses["win_streak"]
+            addresses["hard_win_streak"] if mode.hard else addresses["win_streak"]
         )
         preserved_streak = game.read(streak_address, width=16)
-        if preserved_streak != start_streak:
+        if preserved_streak != mode.start_streak:
             raise ScenarioFailure(
-                f"{mode} Tower streak became {preserved_streak} during entry, "
-                f"expected {start_streak}"
+                f"{mode.name} Tower streak became {preserved_streak} during entry, "
+                f"expected {mode.start_streak}"
             )
         if game.read(addresses["challenge_status"], width=8) != CHALLENGE_STATUS_SAVING:
             raise ScenarioFailure("Tower challenge did not enter the active saving state")
@@ -116,39 +123,42 @@ def run_anabel_route(artifact_dir: Path, *, hard: bool) -> None:
             symbols["sLockFieldControls"],
             symbols["gTrainerBattleOpponent_A"],
             symbols[E2E_AUTO_WIN_COUNT_SYMBOL],
-            route_name=f"{mode} Anabel",
+            route_name=f"{mode.name} Anabel",
+            ordinary_pool=mode.ordinary_pool,
         )
         if (
             game.read(symbols["gTrainerBattleOpponent_A"], width=16)
             != TRAINER_FRONTIER_BRAIN
         ):
-            raise ScenarioFailure(f"{mode} Tower boundary did not battle Anabel")
+            raise ScenarioFailure(f"{mode.name} Tower boundary did not battle Anabel")
 
         if game.read(addresses["battle_num"], width=16) != 1:
             raise ScenarioFailure(
-                f"{mode} Anabel route has unexpected challenge battle number"
+                f"{mode.name} Anabel route has unexpected challenge battle number"
             )
         streak_address = (
-            addresses["hard_win_streak"] if hard else addresses["win_streak"]
+            addresses["hard_win_streak"] if mode.hard else addresses["win_streak"]
         )
-        if game.read(streak_address, width=16) != completed_streak:
+        if game.read(streak_address, width=16) != mode.completed_streak:
             raise ScenarioFailure(
-                f"{mode} Tower streak did not reach {completed_streak}"
+                f"{mode.name} Tower streak did not reach {mode.completed_streak}"
             )
         active_address = (
-            addresses["hard_active_flags"] if hard else addresses["active_flags"]
+            addresses["hard_active_flags"] if mode.hard else addresses["active_flags"]
         )
         if not game.read(active_address, width=32) & STREAK_TOWER_SINGLES_50:
-            raise ScenarioFailure(f"{mode} Tower streak is not active")
+            raise ScenarioFailure(f"{mode.name} Tower streak is not active")
         isolated_address = (
-            addresses["win_streak"] if hard else addresses["hard_win_streak"]
+            addresses["win_streak"] if mode.hard else addresses["hard_win_streak"]
         )
         if game.read(isolated_address, width=16) != 0:
-            raise ScenarioFailure(f"{mode} Tower route changed the other mode's streak")
+            raise ScenarioFailure(
+                f"{mode.name} Tower route changed the other mode's streak"
+            )
 
         auto_wins = game.read(symbols[E2E_AUTO_WIN_COUNT_SYMBOL], width=32)
         if auto_wins != 2:
             raise ScenarioFailure(
-                f"{mode} Anabel route used {auto_wins} assisted outcomes, expected 2"
+                f"{mode.name} Anabel route used {auto_wins} assisted outcomes, expected 2"
             )
         game.screenshot("passed.png")

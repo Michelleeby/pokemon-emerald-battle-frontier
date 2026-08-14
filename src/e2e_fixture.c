@@ -1,4 +1,5 @@
 #include "global.h"
+#include "event_data.h"
 #include "load_save.h"
 #include "main.h"
 #include "new_game.h"
@@ -36,6 +37,23 @@ static void E2E_SaveFrontierLobbyFixture(void)
 
     gFieldCallback = NULL;
     SetMainCallback2(NULL);
+}
+
+static void E2E_SeedActiveFrontierChallenge(u8 facility, u8 challengeMode)
+{
+    u32 i;
+
+    VarSet(VAR_FRONTIER_FACILITY, facility);
+    VarSet(VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_SINGLES);
+    gSaveBlock2Ptr->frontier.challengeStatus = CHALLENGE_STATUS_SAVING;
+    gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_50;
+    gSaveBlock2Ptr->frontier.challengePaused = FALSE;
+    gSaveBlock2Ptr->frontier.disableRecordBattle = FALSE;
+    gSaveBlock2Ptr->frontier.curChallengeBattleNum = 0;
+    gSaveBlock2Ptr->frontier.frontierChallengeMode = challengeMode;
+    for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
+        gSaveBlock2Ptr->frontier.selectedPartyMons[i] = i + 1;
+    SavePlayerParty();
 }
 
 void E2E_CreateFrontierLobbyFixture(void)
@@ -119,11 +137,14 @@ void E2E_CreateFrontierLobbyFixture(void)
     }
     else
     {
-        map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_LOBBY;
-        x = 6;
-        y = 6;
         if (JOY_HELD(SELECT_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_BATTLE_ROOM;
+            x = 5;
+            y = 8;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_TOWER,
+                FRONTIER_CHALLENGE_HARD);
             gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags =
                 STREAK_TOWER_SINGLES_50;
             gSaveBlock1Ptr->frontierHardMode
@@ -131,10 +152,22 @@ void E2E_CreateFrontierLobbyFixture(void)
         }
         else if (JOY_HELD(START_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_BATTLE_ROOM;
+            x = 5;
+            y = 8;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_TOWER,
+                FRONTIER_CHALLENGE_NORMAL);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
                 STREAK_TOWER_SINGLES_50;
             gSaveBlock2Ptr->frontier
                 .towerWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 33;
+        }
+        else
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_LOBBY;
+            x = 6;
+            y = 6;
         }
     }
 
