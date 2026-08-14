@@ -85,6 +85,7 @@ class E2ESelectionTests(unittest.TestCase):
                 mock.patch.object(run_e2e, "ARTIFACT_ROOT", root / "artifacts"),
                 mock.patch.object(run_e2e, "UPLOAD_ROOT", root / "upload"),
                 mock.patch.object(run_e2e, "RELEASE_ROM", rom),
+                mock.patch.object(run_e2e, "GAMEPLAY_ROM", rom),
                 mock.patch.dict(run_e2e.SCENARIOS, {"tower-lobby-cancel": fail}, clear=True),
                 mock.patch.object(run_e2e, "commit_sha", return_value="abc123"),
             ):
@@ -101,6 +102,7 @@ class E2ESelectionTests(unittest.TestCase):
                 "mgba_revision",
                 "rng_seed",
                 "rom_sha256",
+                "gameplay_rom_sha256",
                 "rtc_value",
                 "scenario_version",
                 "timeout",
@@ -125,6 +127,7 @@ class E2ESelectionTests(unittest.TestCase):
                     mock.patch.object(run_e2e, "ARTIFACT_ROOT", root / "artifacts"),
                     mock.patch.object(run_e2e, "UPLOAD_ROOT", root / "upload"),
                     mock.patch.object(run_e2e, "RELEASE_ROM", rom),
+                    mock.patch.object(run_e2e, "GAMEPLAY_ROM", rom),
                     mock.patch.dict(
                         run_e2e.SCENARIOS,
                         {"tower-lobby-cancel": fail},
