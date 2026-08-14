@@ -28,7 +28,7 @@ parties, and seeds both game RNGs explicitly.
 | Tutorial start, first action, double-tap skip, and completion | `new-game-tutorial` | Follow-up: complete onboarding, name/avatar UI, ferry transition, and all checkpoints require frame-driven tests. |
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
-| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, a flash-backed Singles save/restart after one actual battle, and a complete seven-win Singles route through the lobby, elevator, corridor, battle room, reward/save completion, and return to field control | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart`, `tower-seven-win` E2E | Follow-up: input-driven retirement and multis partner interaction require additional frame-driven script/battle coverage. |
+| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, a flash-backed Singles save/restart after one assisted facility outcome, and normal 33→35 and hard 19→21 Anabel boundary routes with reciprocal streak isolation | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart`, `tower-normal-anabel`, `tower-hard-anabel` E2E | Follow-up: input-driven retirement and multis partner interaction require additional frame-driven script coverage. |
 | Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation | `frontier-factory` | Follow-up: lobby cancel, rental-selection and swap-screen input, retirement/disqualification scripts, seven actual battles, room warps, Noland battle presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Follow-up: lobby and tournament-tree cancel input, complete rendered previews, four actual battles, transition callbacks, room warps, Tucker presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Follow-up: lobby cancel input, three actual turns and seven actual battles, rendered Mind/Skill/Body judgment presentation, transition callbacks, room warps, Greta presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
@@ -58,27 +58,33 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-lobby-cancel tower-save-restart tower-seven-win"
+make e2e TESTS="tower-lobby-cancel tower-save-restart tower-normal-anabel tower-hard-anabel"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
-scenario names fail before execution. `tower-lobby-cancel` builds a dedicated
-`E2E_TESTING` fixture ROM, creates a checksummed flash save after production
-map initialization, destroys that emulator core, and starts the ordinary
-release ROM with the generated save. It selects Continue through real input,
+scenario names fail before execution. `tower-lobby-cancel` uses a dedicated
+`E2E_FIXTURE` ROM to create a checksummed flash save after production map
+initialization, destroys that emulator core, and starts the normal-entry
+E2E gameplay ROM with the generated save. It selects Continue through real input,
 interacts with the Singles attendant, cancels the Challenge / Info / Cancel
 menu with B, and asserts the map, player control, and challenge state.
-`tower-save-restart` enters a Singles Lv. 50 challenge, completes one real
-battle, selects Rest, and exercises the production Frontier flash save. It
+`tower-save-restart` enters a Singles Lv. 50 challenge, receives one assisted
+facility outcome, selects Rest, and exercises the production Frontier flash save. It
 destroys and recreates the emulator core with only the scenario-local save,
 selects Continue through real input, verifies the paused challenge data, and
-asserts that the Tower resumes the saved challenge. `tower-seven-win` enters
-the same challenge from a fresh fixture, observes the ordered lobby, elevator,
-corridor, battle-room, and lobby route, wins seven actual battles through GBA
-input, checks every battle-number increment, and verifies the final win streak,
-active flag, reward/save completion, and return to field control. A temporary
-one-win completion-boundary mutation was detected by its exact seven-battle
-assertion.
+asserts that the Tower resumes the saved challenge and that exactly one
+assisted outcome occurred. `tower-normal-anabel` seeds the preserved vanilla
+boundary at 33 wins, and `tower-hard-anabel` seeds the shortened hard boundary
+at 19. Each enters through the real lobby and party UI, wins one ordinary
+battle followed by Anabel, verifies the expected 35 or 21 final streak in the
+correct save block, and requires the other mode's streak to remain unchanged.
+
+The assistance seam exists only in the E2E gameplay build and is restricted to
+Tower and Factory special trainer battles. Production still constructs the
+facility opponent and enters the ordinary facility end-of-battle handling, so
+the scenarios cover the surrounding scripts, state progression, warps,
+rewards, and saves without repeatedly exercising vanilla battle strategy. The
+release ROM contains neither the assisted task nor its outcome counter.
 
 CI runs each E2E scenario in a separate matrix job with a 30-minute job
 timeout. The seven-win route also has its own 108,000-frame bound. Run long
@@ -97,10 +103,13 @@ output, isolated flash creation, protocol-error reporting, and destruction and
 recreation of the mGBA core. This diagnostic validates harness mechanics and
 is separate from the named gameplay coverage above.
 
-The driver is written to `build/e2e/mgba-e2e`; scenario reports, logs, traces,
+The driver is written to `build/e2e/mgba-e2e`; scenario reports include both
+the release and gameplay ROM SHA-256 values and disclose the assisted-outcome
+policy. Logs, traces,
 screenshots, and scenario-local saves are written below
 `build/e2e/artifacts/<scenario>/`. `make clean` removes the entire `build/e2e`
-directory and the isolated `build/e2e-fixture-obj` object tree. E2E failure
+directory and the isolated `build/e2e-fixture-obj` and
+`build/e2e-gameplay-obj` object trees. E2E failure
 artifacts must not include ROM, ELF, map, symbol, mGBA binary, or shared
 build-bundle output.
 

@@ -13,6 +13,9 @@
 #include "constants/moves.h"
 #include "constants/pokemon.h"
 #include "constants/species.h"
+#include "constants/battle_frontier.h"
+#include "constants/frontier_util.h"
+#include "constants/global.h"
 
 #ifdef E2E_TESTING
 
@@ -23,7 +26,7 @@
 // Read by the host harness to stop fixture generation deterministically.
 EWRAM_DATA volatile u32 gE2EFixtureStatus = E2E_FIXTURE_RUNNING;
 
-static void E2E_SaveTowerLobbyFixture(void)
+static void E2E_SaveFrontierLobbyFixture(void)
 {
     PlayerFaceDirection(DIR_NORTH);
     if (TrySavingData(SAVE_NORMAL) == SAVE_STATUS_OK)
@@ -35,9 +38,12 @@ static void E2E_SaveTowerLobbyFixture(void)
     SetMainCallback2(NULL);
 }
 
-void E2E_CreateTowerLobbyFixture(void)
+void E2E_CreateFrontierLobbyFixture(void)
 {
     static const u8 sPlayerName[] = _("E2ETEST");
+    u16 map;
+    s16 x;
+    s16 y;
 
     SetSaveBlocksPointers(0);
     Save_ResetSaveCounters();
@@ -63,14 +69,55 @@ void E2E_CreateTowerLobbyFixture(void)
     gPlayerParty[0].speed = gPlayerParty[0].spAttack = gPlayerParty[0].spDefense = 999;
     gPlayerPartyCount = 3;
 
-    SetWarpDestination(MAP_GROUP(MAP_BATTLE_FRONTIER_BATTLE_TOWER_LOBBY),
-                       MAP_NUM(MAP_BATTLE_FRONTIER_BATTLE_TOWER_LOBBY),
-                       WARP_ID_NONE, 6, 6);
+    // The fixture runner selects Factory with ordinary keypad input before
+    // advancing the first frame. No host memory mutation chooses the fixture.
+    if (JOY_HELD(B_BUTTON))
+    {
+        map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_LOBBY;
+        x = 4;
+        y = 8;
+        if (JOY_HELD(SELECT_BUTTON))
+        {
+            gSaveBlock1Ptr->frontierHardMode.factoryWinStreakActiveFlags =
+                STREAK_FACTORY_SINGLES_50;
+            gSaveBlock1Ptr->frontierHardMode
+                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 13;
+        }
+        else if (JOY_HELD(START_BUTTON))
+        {
+            gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
+                STREAK_FACTORY_SINGLES_50;
+            gSaveBlock2Ptr->frontier
+                .factoryWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 20;
+        }
+    }
+    else
+    {
+        map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_LOBBY;
+        x = 6;
+        y = 6;
+        if (JOY_HELD(SELECT_BUTTON))
+        {
+            gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags =
+                STREAK_TOWER_SINGLES_50;
+            gSaveBlock1Ptr->frontierHardMode
+                .towerWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 19;
+        }
+        else if (JOY_HELD(START_BUTTON))
+        {
+            gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
+                STREAK_TOWER_SINGLES_50;
+            gSaveBlock2Ptr->frontier
+                .towerWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 33;
+        }
+    }
+
+    SetWarpDestination(MAP_GROUP(map), MAP_NUM(map), WARP_ID_NONE, x, y);
     WarpIntoMap();
     ResetInitialPlayerAvatarState();
     ScriptContext_Init();
     UnlockPlayerFieldControls();
-    gFieldCallback = E2E_SaveTowerLobbyFixture;
+    gFieldCallback = E2E_SaveFrontierLobbyFixture;
     SetMainCallback2(CB2_LoadMap);
 }
 

@@ -11,8 +11,8 @@ from .symbols import load_symbols, require_symbols
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_ROM = ROOT / "build" / "e2e" / "fixtures" / "tower-lobby.gba"
 FIXTURE_ELF = FIXTURE_ROM.with_suffix(".elf")
-RELEASE_ROM = ROOT / "pokeemerald.gba"
-RELEASE_ELF = ROOT / "pokeemerald.elf"
+GAMEPLAY_ROM = ROOT / "build" / "e2e" / "gameplay" / "pokeemerald.gba"
+GAMEPLAY_ELF = GAMEPLAY_ROM.with_suffix(".elf")
 
 FIXTURE_SAVED = 0x45324532
 MAP_GROUP_TOWER = 0x1A
@@ -24,6 +24,7 @@ CHALLENGE_STATUS_SAVING = 1
 CHALLENGE_STATUS_PAUSED = 2
 CHALLENGE_STATUS_WON = 3
 STREAK_TOWER_SINGLES_50 = 1 << 0
+E2E_AUTO_WIN_COUNT_SYMBOL = "gE2EAutoWinCount"
 
 
 class TowerScenarioFailure(E2EError):
@@ -62,15 +63,27 @@ def advance_until(game: Session, address: int, expected: int, key: str) -> None:
     )
 
 
-def create_tower_lobby_save(artifact_dir: Path, save: Path) -> None:
+def create_tower_lobby_save(
+    artifact_dir: Path,
+    save: Path,
+    *,
+    anabel_mode: str | None = None,
+) -> None:
     fixture_symbols = require_symbols(load_symbols(FIXTURE_ELF), "gE2EFixtureStatus")
     with Session(FIXTURE_ROM, artifact_dir / "fixture", save=save) as fixture:
+        if anabel_mode == "normal":
+            fixture.set_keys("START")
+        elif anabel_mode == "hard":
+            fixture.set_keys("SELECT")
+        elif anabel_mode is not None:
+            raise ValueError(f"unknown Tower Anabel fixture mode: {anabel_mode}")
         wait_for_value(
             fixture,
             fixture_symbols["gE2EFixtureStatus"],
             FIXTURE_SAVED,
             width=32,
         )
+        fixture.set_keys()
 
 
 def wait_for_tower_lobby(
@@ -114,6 +127,17 @@ def frontier_addresses(save_block2: int) -> dict[str, int]:
     }
 
 
+def tower_mode_addresses(save_block1: int, save_block2: int) -> dict[str, int]:
+    addresses = frontier_addresses(save_block2)
+    addresses.update(
+        {
+            "hard_active_flags": save_block1 + 0x3598,
+            "hard_win_streak": save_block1 + 0x359C,
+        }
+    )
+    return addresses
+
+
 def select_first_three_party_members(game: Session, selected_order: int) -> None:
     wait_for_value(game, selected_order, 0, width=8, max_frames=600)
     for index in range(3):
@@ -132,6 +156,8 @@ def start_singles_level_50(
     selected_order: int,
     main: int,
     party_menu_callback: int,
+    *,
+    hard: bool = False,
 ) -> None:
     game.press("A", held_frames=1, released_frames=2)
     wait_for_value(game, lock_field_controls, 1)
@@ -140,6 +166,10 @@ def start_singles_level_50(
     game.press("A", held_frames=1, released_frames=29)
     wait_for_value(game, special_result, 0, width=16)
     advance_until(game, special_result, 0xFF, "A")
+    if hard:
+        game.run_frames(30)
+        game.press("DOWN", held_frames=1, released_frames=29)
+        game.press("DOWN", held_frames=1, released_frames=29)
     game.press("A", held_frames=1, released_frames=29)
 
     for _ in range(30):
@@ -154,3 +184,61 @@ def start_singles_level_50(
 
     advance_until(game, special_result, 0xFF, "A")
     game.press("A", held_frames=1, released_frames=29)
+
+
+def complete_tower_route(
+    game: Session,
+    save_block1_ptr: int,
+    save_block2_ptr: int,
+    lock_field_controls: int,
+    *,
+    route_name: str,
+) -> dict[str, int]:
+    expected_maps = [
+        map_id(MAP_NUM_TOWER_ELEVATOR),
+        map_id(MAP_NUM_TOWER_CORRIDOR),
+        map_id(MAP_NUM_TOWER_BATTLE_ROOM),
+        map_id(MAP_NUM_TOWER_LOBBY),
+    ]
+    next_map = 0
+    observed_battles = 0
+    saw_won_status = False
+
+    for _ in range(2400):
+        observed_map = current_map(game, save_block1_ptr)
+        if next_map < len(expected_maps) and observed_map == expected_maps[next_map]:
+            next_map += 1
+
+        save_block1 = game.read(save_block1_ptr)
+        save_block2 = game.read(save_block2_ptr)
+        if (
+            0x02000000 <= save_block1 < 0x02040000
+            and 0x02000000 <= save_block2 < 0x02040000
+        ):
+            addresses = tower_mode_addresses(save_block1, save_block2)
+            battle_num = game.read(addresses["battle_num"], width=16)
+            if battle_num > observed_battles:
+                if battle_num != observed_battles + 1 or battle_num > 1:
+                    raise TowerScenarioFailure(
+                        "Tower battle number jumped from "
+                        f"{observed_battles} to {battle_num}"
+                    )
+                observed_battles = battle_num
+
+            status = game.read(addresses["challenge_status"], width=8)
+            saw_won_status |= status == CHALLENGE_STATUS_WON
+            if (
+                saw_won_status
+                and next_map == len(expected_maps)
+                and status == 0
+                and game.read(lock_field_controls, width=8) == 0
+            ):
+                return addresses
+
+        game.press("A", held_frames=1, released_frames=29)
+
+    game.screenshot("route-timeout.png")
+    raise TowerScenarioFailure(
+        f"{route_name} Tower route did not finish within 72000 input-driven frames "
+        f"(challenge battles={observed_battles}, room transitions={next_map})"
+    )

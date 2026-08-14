@@ -1,9 +1,12 @@
 {
   "version": 1,
   "scenarios": [
+    "factory-hard-noland",
+    "factory-normal-noland",
+    "tower-hard-anabel",
     "tower-lobby-cancel",
-    "tower-save-restart",
-    "tower-seven-win"
+    "tower-normal-anabel",
+    "tower-save-restart"
   ],
   "rules": [
     {
@@ -22,8 +25,13 @@
       "scenarios": ["tower-save-restart"]
     },
     {
+      "name": "Battle Factory",
+      "paths": ["src/battle_factory*.c", "include/battle_factory*.h", "include/constants/battle_factory.h", "asm/macros/battle_frontier/battle_factory.inc", "data/maps/BattleFrontier_BattleFactory*/**"],
+      "scenarios": ["factory-hard-noland", "factory-normal-noland"]
+    },
+    {
       "name": "other facilities",
-      "paths": ["src/battle_factory*.c", "src/battle_dome.c", "src/battle_arena.c", "src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattleFactory*/**", "data/maps/BattleFrontier_BattleDome*/**", "data/maps/BattleFrontier_BattleArena*/**", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "paths": ["src/battle_dome.c", "src/battle_arena.c", "src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattleDome*/**", "data/maps/BattleFrontier_BattleArena*/**", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
       "scenarios": []
     },
     {

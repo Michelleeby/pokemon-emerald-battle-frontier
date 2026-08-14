@@ -137,19 +137,32 @@ class SelectorTests(unittest.TestCase):
         result = select_e2e_scenarios(["src/battle_tower.c"], self.e2e_manifest)
         self.assertEqual(
             result["scenarios"],
-            ["tower-lobby-cancel", "tower-save-restart", "tower-seven-win"],
+            [
+                "factory-hard-noland",
+                "factory-normal-noland",
+                "tower-hard-anabel",
+                "tower-lobby-cancel",
+                "tower-normal-anabel",
+                "tower-save-restart",
+            ],
         )
 
     def test_save_change_selects_only_restart_scenario(self) -> None:
         result = select_e2e_scenarios(["src/save.c"], self.e2e_manifest)
         self.assertEqual(result["scenarios"], ["tower-save-restart"])
 
-    def test_other_facility_change_selects_no_current_e2e_scenario(self) -> None:
+    def test_factory_change_selects_factory_noland_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(
             ["src/battle_factory.c"], self.e2e_manifest
         )
-        self.assertEqual(result["scenarios"], [])
-        self.assertEqual(result["matrix"], {"scenario": ["no-scenarios"]})
+        self.assertEqual(
+            result["scenarios"],
+            ["factory-hard-noland", "factory-normal-noland"],
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["factory-hard-noland", "factory-normal-noland"]},
+        )
 
     def test_documentation_change_selects_no_e2e_scenario(self) -> None:
         result = select_e2e_scenarios(["README.md"], self.e2e_manifest)
