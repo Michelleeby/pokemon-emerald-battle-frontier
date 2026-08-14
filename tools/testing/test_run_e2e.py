@@ -18,6 +18,7 @@ class E2ESelectionTests(unittest.TestCase):
         self.assertEqual(
             selected_scenarios([]),
             [
+                "arena-hard-greta",
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "tower-hard-anabel",

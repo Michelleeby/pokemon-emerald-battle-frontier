@@ -31,7 +31,7 @@ parties, and seeds both game RNGs explicitly.
 | Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, and pause/resume state; hard 19→21 Anabel boundary and hardest ordinary trainer pool through production scripts | `frontier-tower`; `tower-hard-anabel` E2E | The targeted E2E route owns the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
 | Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation; hard 13→14 Noland boundary, 31-IV rentals, and hardest ordinary trainer pool through production scripts | `frontier-factory`; `factory-hard-noland`, `factory-hard-setup` E2E | The targeted E2E routes own the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Tucker boundary through production scripts. Unchanged tournament plumbing is out of scope. |
-| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Greta boundary through production scripts. Unchanged Arena battle plumbing is out of scope. |
+| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger; hard 12→14 Greta boundary and hardest ordinary trainer pool through production scripts | `frontier-arena`; `arena-hard-greta` E2E | The targeted E2E route owns the modified hard-mode behavior; unchanged Arena battle plumbing is out of scope. |
 | Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Spenser boundary through production scripts. Unchanged Palace battle plumbing is out of scope. |
 | Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation | `frontier-pike` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Lucy boundary through production scripts. Unchanged room traversal is out of scope. |
 | Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Brandon boundary through production scripts. Unchanged floor traversal is out of scope. |
@@ -60,7 +60,7 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-hard-anabel factory-hard-noland factory-hard-setup"
+make e2e TESTS="tower-hard-anabel factory-hard-noland factory-hard-setup arena-hard-greta"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
@@ -78,9 +78,13 @@ challenge counter, the completed route retains a battle number of zero.
 `factory-hard-setup` enters a fresh hard Factory challenge only far enough to
 verify 31-IV rentals and an ordinary opponent from the hardest trainer pool;
 it does not replay the vanilla seven-battle route.
+`arena-hard-greta` seeds a hard Arena streak of 12, verifies that the first
+ordinary opponent comes from the hardest trainer pool, defeats that opponent
+and Greta, and checks the final hard streak of 14 without changing the normal
+streak.
 
 The assistance seam exists only in the E2E gameplay build and is restricted to
-Tower and Factory special trainer battles. Production still constructs the
+Tower, Factory, and Arena special trainer battles. Production still constructs the
 facility opponent and enters the ordinary facility end-of-battle handling, so
 the scenarios cover the surrounding scripts, state progression, warps,
 rewards, and saves without repeatedly exercising vanilla battle strategy. The
@@ -114,8 +118,9 @@ build-bundle output.
 
 `tests/e2e_manifest.json` owns E2E selection independently from the C-suite
 manifest. Tower changes select every scenario because the assisted gameplay
-seam is shared by Tower and Factory, Factory changes select both targeted
-Factory scenarios, E2E infrastructure changes select every scenario, and
+seam is implemented in the shared special-battle dispatcher, Factory changes
+select both targeted Factory scenarios, Arena changes select `arena-hard-greta`,
+E2E infrastructure changes select every scenario, and
 documentation-only or explicitly uncovered facility changes select none.
 Unknown relevant gameplay paths conservatively select every E2E scenario.
 
