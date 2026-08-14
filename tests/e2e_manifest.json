@@ -2,6 +2,7 @@
   "version": 1,
   "scenarios": [
     "arena-hard-greta",
+    "dome-hard-tucker",
     "factory-hard-noland",
     "factory-hard-setup",
     "tower-hard-anabel"
@@ -23,13 +24,18 @@
       "scenarios": ["factory-hard-noland", "factory-hard-setup"]
     },
     {
+      "name": "Battle Dome",
+      "paths": ["src/battle_dome.c", "include/battle_dome.h", "include/constants/battle_dome.h", "asm/macros/battle_frontier/battle_dome.inc", "data/maps/BattleFrontier_BattleDome*/**"],
+      "scenarios": ["dome-hard-tucker"]
+    },
+    {
       "name": "Battle Arena",
       "paths": ["src/battle_arena.c", "include/battle_arena.h", "include/constants/battle_arena.h", "asm/macros/battle_frontier/battle_arena.inc", "data/maps/BattleFrontier_BattleArena*/**"],
       "scenarios": ["arena-hard-greta"]
     },
     {
       "name": "other facilities",
-      "paths": ["src/battle_dome.c", "src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattleDome*/**", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "paths": ["src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
       "scenarios": []
     },
     {

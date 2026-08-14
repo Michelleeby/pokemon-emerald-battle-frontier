@@ -16,6 +16,7 @@ from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
 from e2e.arena_hard_greta import run as run_arena_hard_greta
+from e2e.dome_hard_tucker import run as run_dome_hard_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
 from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
@@ -34,6 +35,7 @@ ALLOWED_DIAGNOSTIC_NAMES = {"report.json", "input-trace.json"}
 ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
     "arena-hard-greta": run_arena_hard_greta,
+    "dome-hard-tucker": run_dome_hard_tucker,
     "factory-hard-noland": run_factory_hard_noland,
     "factory-hard-setup": run_factory_hard_setup,
     "tower-hard-anabel": run_tower_hard_anabel,
@@ -88,7 +90,7 @@ def base_report(name: str) -> dict[str, object]:
         "rng_seed": RNG_SEEDS,
         "rom_sha256": file_sha256(RELEASE_ROM),
         "gameplay_rom_sha256": file_sha256(GAMEPLAY_ROM),
-        "battle_policy": "Tower, Factory, and Arena outcomes are assisted in E2E gameplay builds",
+        "battle_policy": "Tower, Factory, Dome, and Arena outcomes are assisted in E2E gameplay builds",
         "rtc_value": None,
         "scenario": name,
         "scenario_version": SCENARIO_VERSION,

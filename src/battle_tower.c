@@ -2098,6 +2098,10 @@ void DoSpecialTrainerBattle(void)
             gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
         if (gTrainerBattleOpponent_A == TRAINER_FRONTIER_BRAIN)
             FillFrontierTrainerParty(DOME_BATTLE_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
         CreateTask(Task_StartBattleAfterTransition, 1);
         CreateTask_PlayMapChosenOrBattleBGM(0);
         BattleTransition_StartOnField(GetSpecialBattleTransition(B_TRANSITION_GROUP_B_DOME));

@@ -139,6 +139,7 @@ class SelectorTests(unittest.TestCase):
             result["scenarios"],
             [
                 "arena-hard-greta",
+                "dome-hard-tucker",
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "tower-hard-anabel",
@@ -149,6 +150,11 @@ class SelectorTests(unittest.TestCase):
         result = select_e2e_scenarios(["src/battle_arena.c"], self.e2e_manifest)
         self.assertEqual(result["scenarios"], ["arena-hard-greta"])
         self.assertEqual(result["matrix"], {"scenario": ["arena-hard-greta"]})
+
+    def test_dome_change_selects_hard_tucker_scenario(self) -> None:
+        result = select_e2e_scenarios(["src/battle_dome.c"], self.e2e_manifest)
+        self.assertEqual(result["scenarios"], ["dome-hard-tucker"])
+        self.assertEqual(result["matrix"], {"scenario": ["dome-hard-tucker"]})
 
     def test_save_change_conservatively_selects_all_scenarios(self) -> None:
         result = select_e2e_scenarios(["src/save.c"], self.e2e_manifest)
