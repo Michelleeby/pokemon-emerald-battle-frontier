@@ -29,6 +29,7 @@
 #include "graphics.h"
 #include "constants/battle_frontier.h"
 #include "constants/battle_tent.h"
+#include "constants/frontier_util.h"
 #include "constants/songs.h"
 #include "constants/rgb.h"
 
@@ -1742,7 +1743,9 @@ static void CreateFrontierFactorySelectableMons(u8 firstMonId)
     u32 otId = 0;
     u8 battleMode = VarGet(VAR_FRONTIER_BATTLE_MODE);
     u8 lvlMode = gSaveBlock2Ptr->frontier.lvlMode;
-    u8 challengeNum = gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / 7;
+    u8 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                    ? 7
+                    : gSaveBlock2Ptr->frontier.factoryWinStreaks[battleMode][lvlMode] / FRONTIER_STAGES_PER_CHALLENGE;
     u8 rentalRank = 0;
 
     gFacilityTrainerMons = gBattleFrontierMons;
