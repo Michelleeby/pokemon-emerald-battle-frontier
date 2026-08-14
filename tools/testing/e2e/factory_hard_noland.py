@@ -27,6 +27,7 @@ from .symbols import load_symbols, require_symbols
 TRAINER_FRONTIER_BRAIN = 1022
 HARD_NOLAND_START_STREAK = 13
 HARD_NOLAND_COMPLETED_STREAK = 14
+HARD_RENTAL_IV = 31
 
 
 def _assert_completed_state(game: Session, addresses: dict[str, int]) -> None:
@@ -120,6 +121,12 @@ def run(artifact_dir: Path) -> None:
         addresses = factory_addresses(save_block1, save_block2)
         if game.read(addresses["challenge_status"], width=8) != CHALLENGE_STATUS_SAVING:
             raise ScenarioFailure("Factory challenge did not enter the saving state")
+        for index in range(3):
+            rental_ivs = game.read(addresses["rental_mons"] + index * 12 + 8, width=8)
+            if rental_ivs != HARD_RENTAL_IV:
+                raise ScenarioFailure(
+                    f"hard Noland rental {index} has IV {rental_ivs}, expected 31"
+                )
 
         addresses = complete_factory_route(
             game,

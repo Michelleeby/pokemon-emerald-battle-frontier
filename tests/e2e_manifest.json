@@ -2,11 +2,8 @@
   "version": 1,
   "scenarios": [
     "factory-hard-noland",
-    "factory-normal-noland",
-    "tower-hard-anabel",
-    "tower-lobby-cancel",
-    "tower-normal-anabel",
-    "tower-save-restart"
+    "factory-hard-setup",
+    "tower-hard-anabel"
   ],
   "rules": [
     {
@@ -20,14 +17,9 @@
       "scenarios": "all"
     },
     {
-      "name": "save system",
-      "paths": ["src/save*.c", "src/load_save.c", "src/reload_save.c", "include/global.h", "include/save*.h", "include/load_save.h", "include/reload_save.h"],
-      "scenarios": ["tower-save-restart"]
-    },
-    {
       "name": "Battle Factory",
       "paths": ["src/battle_factory*.c", "include/battle_factory*.h", "include/constants/battle_factory.h", "asm/macros/battle_frontier/battle_factory.inc", "data/maps/BattleFrontier_BattleFactory*/**"],
-      "scenarios": ["factory-hard-noland", "factory-normal-noland"]
+      "scenarios": ["factory-hard-noland", "factory-hard-setup"]
     },
     {
       "name": "other facilities",

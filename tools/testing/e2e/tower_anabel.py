@@ -114,6 +114,8 @@ def run_anabel_route(artifact_dir: Path, *, hard: bool) -> None:
             symbols["gSaveBlock1Ptr"],
             symbols["gSaveBlock2Ptr"],
             symbols["sLockFieldControls"],
+            symbols["gTrainerBattleOpponent_A"],
+            symbols[E2E_AUTO_WIN_COUNT_SYMBOL],
             route_name=f"{mode} Anabel",
         )
         if (

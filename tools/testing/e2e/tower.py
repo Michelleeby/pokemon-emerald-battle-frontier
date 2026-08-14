@@ -191,6 +191,8 @@ def complete_tower_route(
     save_block1_ptr: int,
     save_block2_ptr: int,
     lock_field_controls: int,
+    trainer_opponent: int,
+    auto_win_count: int,
     *,
     route_name: str,
 ) -> dict[str, int]:
@@ -203,9 +205,16 @@ def complete_tower_route(
     next_map = 0
     observed_battles = 0
     saw_won_status = False
+    saw_hard_pool_trainer = False
 
     for _ in range(2400):
         observed_map = current_map(game, save_block1_ptr)
+        trainer = game.read(trainer_opponent, width=16)
+        if (
+            game.read(auto_win_count, width=32) == 0
+            and 200 <= trainer <= 299
+        ):
+            saw_hard_pool_trainer = True
         if next_map < len(expected_maps) and observed_map == expected_maps[next_map]:
             next_map += 1
 
@@ -233,6 +242,11 @@ def complete_tower_route(
                 and status == 0
                 and game.read(lock_field_controls, width=8) == 0
             ):
+                if not saw_hard_pool_trainer:
+                    raise TowerScenarioFailure(
+                        "hard Tower route did not select an ordinary trainer from "
+                        "the 200-299 pool"
+                    )
                 return addresses
 
         game.press("A", held_frames=1, released_frames=29)

@@ -28,17 +28,19 @@ parties, and seeds both game RNGs explicitly.
 | Tutorial start, first action, double-tap skip, and completion | `new-game-tutorial` | Follow-up: complete onboarding, name/avatar UI, ferry transition, and all checkpoints require frame-driven tests. |
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
-| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, a flash-backed Singles save/restart after one assisted facility outcome, and normal 33→35 and hard 19→21 Anabel boundary routes with reciprocal streak isolation | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart`, `tower-normal-anabel`, `tower-hard-anabel` E2E | Follow-up: input-driven retirement and multis partner interaction require additional frame-driven script coverage. |
-| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, pause preparation, real lobby and rental-selection input, and normal 20→21 and hard 13→14 Noland boundary routes with reciprocal streak isolation | `frontier-factory`; `factory-normal-noland`, `factory-hard-noland` E2E | Follow-up: lobby cancel, swap-screen input, retirement/disqualification scripts, seven-battle traversal, and flash-backed restart require additional frame-driven script coverage. |
-| Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Follow-up: lobby and tournament-tree cancel input, complete rendered previews, four actual battles, transition callbacks, room warps, Tucker presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Follow-up: lobby cancel input, three actual turns and seven actual battles, rendered Mind/Skill/Body judgment presentation, transition callbacks, room warps, Greta presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Follow-up: lobby cancel input, seven actual battles, rendered low-HP flavor text, transition callbacks, room warps, Spenser presentation, doubles target preferences, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation | `frontier-pike` | Follow-up: input-driven path and lobby cancellation, complete fourteen-room traversal, actual trainer/wild battles, status-flash and NPC presentation, transition callbacks, room warps, Lucy presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Follow-up: input-driven lobby cancellation, complete seven-floor traversal, rendered hints and light effects, actual item pickup and trainer/wild battles, frame-driven escape/defeat and summit scripts, map warps, Brandon presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
+| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, and pause/resume state; hard 19→21 Anabel boundary and hardest ordinary trainer pool through production scripts | `frontier-tower`; `tower-hard-anabel` E2E | The targeted E2E route owns the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
+| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation; hard 13→14 Noland boundary, 31-IV rentals, and hardest ordinary trainer pool through production scripts | `frontier-factory`; `factory-hard-noland`, `factory-hard-setup` E2E | The targeted E2E routes own the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
+| Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Tucker boundary through production scripts. Unchanged tournament plumbing is out of scope. |
+| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Greta boundary through production scripts. Unchanged Arena battle plumbing is out of scope. |
+| Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Spenser boundary through production scripts. Unchanged Palace battle plumbing is out of scope. |
+| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation | `frontier-pike` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Lucy boundary through production scripts. Unchanged room traversal is out of scope. |
+| Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Brandon boundary through production scripts. Unchanged floor traversal is out of scope. |
 
-The remaining follow-ups require frame-driven, presentation, or initialized
-flash fixtures beyond the current C-level state suites. Replace each follow-up
-with named coverage when the corresponding harness exists.
+The remaining E2E follow-ups are limited to behavior changed by hard mode:
+hardest trainer-pool selection and shortened Frontier Brain boundaries. The
+Factory also owns the only modified rental-IV path. Unchanged vanilla facility
+plumbing, presentation, cancellation, traversal, and save/restart behavior are
+not E2E goals for this project.
 
 ## End-to-end harness development
 
@@ -58,33 +60,24 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-lobby-cancel tower-save-restart tower-normal-anabel tower-hard-anabel"
+make e2e TESTS="tower-hard-anabel factory-hard-noland factory-hard-setup"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
-scenario names fail before execution. `tower-lobby-cancel` uses a dedicated
-`E2E_FIXTURE` ROM to create a checksummed flash save after production map
-initialization, destroys that emulator core, and starts the normal-entry
-E2E gameplay ROM with the generated save. It selects Continue through real input,
-interacts with the Singles attendant, cancels the Challenge / Info / Cancel
-menu with B, and asserts the map, player control, and challenge state.
-`tower-save-restart` enters a Singles Lv. 50 challenge, receives one assisted
-facility outcome, selects Rest, and exercises the production Frontier flash save. It
-destroys and recreates the emulator core with only the scenario-local save,
-selects Continue through real input, verifies the paused challenge data, and
-asserts that the Tower resumes the saved challenge and that exactly one
-assisted outcome occurred. `tower-normal-anabel` seeds the preserved vanilla
-boundary at 33 wins, and `tower-hard-anabel` seeds the shortened hard boundary
-at 19. Each enters through the real lobby and party UI, wins one ordinary
-battle followed by Anabel, verifies the expected 35 or 21 final streak in the
-correct save block, and requires the other mode's streak to remain unchanged.
-`factory-normal-noland` seeds a normal Factory Singles Lv. 50 streak of 20,
-and `factory-hard-noland` seeds a hard Factory streak of 13. Each enters
-through the real lobby and rental-selection UI, defeats Noland once, verifies
-the expected 21 or 14 final streak in the correct save block, and requires the
-other mode's streak to remain unchanged. Because the Brain branch does not
-increment the ordinary Factory challenge counter, both completed routes retain
-a battle number of zero.
+scenario names fail before execution. The scenarios intentionally cover only
+behavior changed by hard mode, not unchanged facility plumbing.
+`tower-hard-anabel` seeds the shortened hard boundary at 19, enters through the
+production challenge UI, verifies that the ordinary opponent comes from the
+hardest trainer pool, wins that battle and the following Anabel battle, and
+checks the final hard streak of 21 without changing the normal streak.
+`factory-hard-noland` seeds a hard Factory streak of 13, enters through the
+production challenge and rental-selection UI, verifies 31-IV rentals, defeats
+Noland once, and checks the final hard streak of 14 without changing the normal
+streak. Because the Brain branch does not increment the ordinary Factory
+challenge counter, the completed route retains a battle number of zero.
+`factory-hard-setup` enters a fresh hard Factory challenge only far enough to
+verify 31-IV rentals and an ordinary opponent from the hardest trainer pool;
+it does not replay the vanilla seven-battle route.
 
 The assistance seam exists only in the E2E gameplay build and is restricted to
 Tower and Factory special trainer battles. Production still constructs the
@@ -121,11 +114,10 @@ build-bundle output.
 
 `tests/e2e_manifest.json` owns E2E selection independently from the C-suite
 manifest. Tower changes select every scenario because the assisted gameplay
-seam is shared by Tower and Factory, Factory changes select both Noland
-scenarios, save-system changes select `tower-save-restart`, E2E infrastructure
-changes select every scenario, and documentation-only or explicitly uncovered
-facility changes select none. Unknown relevant gameplay paths conservatively
-select every E2E scenario.
+seam is shared by Tower and Factory, Factory changes select both targeted
+Factory scenarios, E2E infrastructure changes select every scenario, and
+documentation-only or explicitly uncovered facility changes select none.
+Unknown relevant gameplay paths conservatively select every E2E scenario.
 
 CI runs selected scenarios in a `fail-fast: false` matrix. Each matrix job
 checks out and builds the pinned mGBA revision and builds its own release ROM,

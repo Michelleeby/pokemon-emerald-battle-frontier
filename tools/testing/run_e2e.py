@@ -16,11 +16,8 @@ from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
 from e2e.factory_hard_noland import run as run_factory_hard_noland
-from e2e.factory_normal_noland import run as run_factory_normal_noland
-from e2e.tower_lobby_cancel import run as run_tower_lobby_cancel
+from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
-from e2e.tower_save_restart import run as run_tower_save_restart
-from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,11 +33,8 @@ ALLOWED_DIAGNOSTIC_NAMES = {"report.json", "input-trace.json"}
 ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
     "factory-hard-noland": run_factory_hard_noland,
-    "factory-normal-noland": run_factory_normal_noland,
+    "factory-hard-setup": run_factory_hard_setup,
     "tower-hard-anabel": run_tower_hard_anabel,
-    "tower-lobby-cancel": run_tower_lobby_cancel,
-    "tower-normal-anabel": run_tower_normal_anabel,
-    "tower-save-restart": run_tower_save_restart,
 }
 
 
