@@ -18,6 +18,7 @@ from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
 from e2e.arena_hard_greta import run as run_arena_hard_greta
 from e2e.arena_normal_greta import run as run_arena_normal_greta
 from e2e.dome_hard_tucker import run as run_dome_hard_tucker
+from e2e.dome_normal_tucker import run as run_dome_normal_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
 from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
@@ -39,6 +40,7 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "arena-hard-greta": run_arena_hard_greta,
     "arena-normal-greta": run_arena_normal_greta,
     "dome-hard-tucker": run_dome_hard_tucker,
+    "dome-normal-tucker": run_dome_normal_tucker,
     "factory-hard-noland": run_factory_hard_noland,
     "factory-hard-setup": run_factory_hard_setup,
     "tower-hard-anabel": run_tower_hard_anabel,

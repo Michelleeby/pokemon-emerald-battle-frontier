@@ -2530,6 +2530,14 @@ static void InitDomeTrainers(void)
     Free(statValues);
 }
 
+#ifdef E2E_TESTING
+void E2E_InitDomeTournament(void)
+{
+    SetFacilityTrainerAndMonPtrs();
+    InitDomeTrainers();
+}
+#endif
+
 #define CALC_STAT(base, statIndex)                                                          \
 {                                                                                           \
     u8 baseStat = gSpeciesInfo[species].base;                                                 \

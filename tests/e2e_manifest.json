@@ -4,6 +4,7 @@
     "arena-hard-greta",
     "arena-normal-greta",
     "dome-hard-tucker",
+    "dome-normal-tucker",
     "factory-hard-noland",
     "factory-hard-setup",
     "tower-hard-anabel",
@@ -28,7 +29,7 @@
     {
       "name": "Battle Dome",
       "paths": ["src/battle_dome.c", "include/battle_dome.h", "include/constants/battle_dome.h", "asm/macros/battle_frontier/battle_dome.inc", "data/maps/BattleFrontier_BattleDome*/**"],
-      "scenarios": ["dome-hard-tucker"]
+      "scenarios": ["dome-hard-tucker", "dome-normal-tucker"]
     },
     {
       "name": "Battle Arena",

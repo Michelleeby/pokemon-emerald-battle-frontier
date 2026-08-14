@@ -1,4 +1,5 @@
 #include "global.h"
+#include "battle_dome.h"
 #include "event_data.h"
 #include "load_save.h"
 #include "main.h"
@@ -91,15 +92,41 @@ void E2E_CreateFrontierLobbyFixture(void)
     // advancing the first frame. No host memory mutation chooses the fixture.
     if (JOY_HELD(L_BUTTON))
     {
-        map = MAP_BATTLE_FRONTIER_BATTLE_DOME_LOBBY;
-        x = 5;
-        y = 11;
         if (JOY_HELD(SELECT_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_DOME_PRE_BATTLE_ROOM;
+            x = 5;
+            y = 7;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_DOME,
+                FRONTIER_CHALLENGE_HARD);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
                 STREAK_DOME_HARD_SINGLES_50;
             gSaveBlock2Ptr->frontier
                 .domeHardWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 2;
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0x0201;
+            E2E_InitDomeTournament();
+        }
+        else if (JOY_HELD(START_BUTTON))
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_DOME_PRE_BATTLE_ROOM;
+            x = 5;
+            y = 7;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_DOME,
+                FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
+                STREAK_DOME_SINGLES_50;
+            gSaveBlock2Ptr->frontier
+                .domeWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 4;
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0x0201;
+            E2E_InitDomeTournament();
+        }
+        else
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_DOME_LOBBY;
+            x = 5;
+            y = 11;
         }
     }
     else if (JOY_HELD(R_BUTTON))
