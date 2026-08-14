@@ -29,7 +29,7 @@ parties, and seeds both game RNGs explicitly.
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
 | Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, a flash-backed Singles save/restart after one assisted facility outcome, and normal 33→35 and hard 19→21 Anabel boundary routes with reciprocal streak isolation | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart`, `tower-normal-anabel`, `tower-hard-anabel` E2E | Follow-up: input-driven retirement and multis partner interaction require additional frame-driven script coverage. |
-| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation | `frontier-factory` | Follow-up: lobby cancel, rental-selection and swap-screen input, retirement/disqualification scripts, seven actual battles, room warps, Noland battle presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
+| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, pause preparation, real lobby and rental-selection input, and normal 20→21 and hard 13→14 Noland boundary routes with reciprocal streak isolation | `frontier-factory`; `factory-normal-noland`, `factory-hard-noland` E2E | Follow-up: lobby cancel, swap-screen input, retirement/disqualification scripts, seven-battle traversal, and flash-backed restart require additional frame-driven script coverage. |
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Follow-up: lobby and tournament-tree cancel input, complete rendered previews, four actual battles, transition callbacks, room warps, Tucker presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Follow-up: lobby cancel input, three actual turns and seven actual battles, rendered Mind/Skill/Body judgment presentation, transition callbacks, room warps, Greta presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
 | Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Follow-up: lobby cancel input, seven actual battles, rendered low-HP flavor text, transition callbacks, room warps, Spenser presentation, doubles target preferences, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
@@ -78,6 +78,13 @@ boundary at 33 wins, and `tower-hard-anabel` seeds the shortened hard boundary
 at 19. Each enters through the real lobby and party UI, wins one ordinary
 battle followed by Anabel, verifies the expected 35 or 21 final streak in the
 correct save block, and requires the other mode's streak to remain unchanged.
+`factory-normal-noland` seeds a normal Factory Singles Lv. 50 streak of 20,
+and `factory-hard-noland` seeds a hard Factory streak of 13. Each enters
+through the real lobby and rental-selection UI, defeats Noland once, verifies
+the expected 21 or 14 final streak in the correct save block, and requires the
+other mode's streak to remain unchanged. Because the Brain branch does not
+increment the ordinary Factory challenge counter, both completed routes retain
+a battle number of zero.
 
 The assistance seam exists only in the E2E gameplay build and is restricted to
 Tower and Factory special trainer battles. Production still constructs the
@@ -87,9 +94,8 @@ rewards, and saves without repeatedly exercising vanilla battle strategy. The
 release ROM contains neither the assisted task nor its outcome counter.
 
 CI runs each E2E scenario in a separate matrix job with a 30-minute job
-timeout. The seven-win route also has its own 108,000-frame bound. Run long
-scenarios separately when a local command host imposes a shorter aggregate
-wall-clock limit.
+timeout. Run long scenarios separately when a local command host imposes a
+shorter aggregate wall-clock limit.
 
 Run its host unit tests and live mGBA integration diagnostic with:
 
@@ -114,10 +120,12 @@ artifacts must not include ROM, ELF, map, symbol, mGBA binary, or shared
 build-bundle output.
 
 `tests/e2e_manifest.json` owns E2E selection independently from the C-suite
-manifest. Tower changes select all three Tower scenarios, save-system changes
-select `tower-save-restart`, E2E infrastructure changes select every scenario,
-and documentation-only or explicitly uncovered facility changes select none.
-Unknown relevant gameplay paths conservatively select every E2E scenario.
+manifest. Tower changes select every scenario because the assisted gameplay
+seam is shared by Tower and Factory, Factory changes select both Noland
+scenarios, save-system changes select `tower-save-restart`, E2E infrastructure
+changes select every scenario, and documentation-only or explicitly uncovered
+facility changes select none. Unknown relevant gameplay paths conservatively
+select every E2E scenario.
 
 CI runs selected scenarios in a `fail-fast: false` matrix. Each matrix job
 checks out and builds the pinned mGBA revision and builds its own release ROM,
@@ -127,15 +135,16 @@ the documentation-only path. The stable `Tests / required` job requires either
 the complete selected E2E matrix or the no-scenarios job to pass, as well as
 successful artifact cleanup.
 
-Every scenario report records the commit SHA, release ROM SHA-256, pinned mGBA
-revision, scenario and fixture versions, fixed RNG seeds, RTC policy, driver
-response timeout, bounded-frame-wait policy, duration, status, and failed
-predicate. Failures are classified as assertion failures, driver timeouts, or
-runner crashes. The runner attempts a failure screenshot while the emulator is
-still responsive. Only JSON, logs, PNGs, and scenario-local saves are copied to
-the CI upload staging directory; ROM, ELF, map, symbol, and executable output
-is excluded. Workflow cleanup deletes both transient gameplay bundles and E2E
-diagnostics after matrix completion.
+Every scenario report records the commit SHA, release and gameplay ROM
+SHA-256 values, assisted-outcome policy, pinned mGBA revision, scenario and
+fixture versions, fixed RNG seeds, RTC policy, driver response timeout,
+bounded-frame-wait policy, duration, status, and failed predicate. Failures are
+classified as assertion failures, driver timeouts, or runner crashes. The
+runner attempts a failure screenshot while the emulator is still responsive.
+Only JSON, logs, PNGs, and scenario-local saves are copied to the CI upload
+staging directory; ROM, ELF, map, symbol, and executable output is excluded.
+Workflow cleanup deletes both transient gameplay bundles and E2E diagnostics
+after matrix completion.
 
 ## Determinism and diagnostics
 
