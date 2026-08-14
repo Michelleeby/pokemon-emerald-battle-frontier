@@ -2,6 +2,7 @@
   "version": 1,
   "scenarios": [
     "arena-hard-greta",
+    "arena-normal-greta",
     "dome-hard-tucker",
     "factory-hard-noland",
     "factory-hard-setup",
@@ -32,7 +33,7 @@
     {
       "name": "Battle Arena",
       "paths": ["src/battle_arena.c", "include/battle_arena.h", "include/constants/battle_arena.h", "asm/macros/battle_frontier/battle_arena.inc", "data/maps/BattleFrontier_BattleArena*/**"],
-      "scenarios": ["arena-hard-greta"]
+      "scenarios": ["arena-hard-greta", "arena-normal-greta"]
     },
     {
       "name": "other facilities",

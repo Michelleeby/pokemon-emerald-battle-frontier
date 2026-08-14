@@ -104,15 +104,35 @@ void E2E_CreateFrontierLobbyFixture(void)
     }
     else if (JOY_HELD(R_BUTTON))
     {
-        map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_LOBBY;
-        x = 7;
-        y = 8;
         if (JOY_HELD(SELECT_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_BATTLE_ROOM;
+            x = 7;
+            y = 5;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_ARENA,
+                FRONTIER_CHALLENGE_HARD);
             gSaveBlock1Ptr->frontierHardMode.arenaWinStreakActiveFlags =
                 STREAK_ARENA_50;
             gSaveBlock1Ptr->frontierHardMode
                 .arenaWinStreaks[FRONTIER_LVL_50] = 12;
+        }
+        else if (JOY_HELD(START_BUTTON))
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_BATTLE_ROOM;
+            x = 7;
+            y = 5;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_ARENA,
+                FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_ARENA_50;
+            gSaveBlock2Ptr->frontier.arenaWinStreaks[FRONTIER_LVL_50] = 26;
+        }
+        else
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_LOBBY;
+            x = 7;
+            y = 8;
         }
     }
     else if (JOY_HELD(B_BUTTON))

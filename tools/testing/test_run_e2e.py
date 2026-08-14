@@ -19,6 +19,7 @@ class E2ESelectionTests(unittest.TestCase):
             selected_scenarios([]),
             [
                 "arena-hard-greta",
+                "arena-normal-greta",
                 "dome-hard-tucker",
                 "factory-hard-noland",
                 "factory-hard-setup",
