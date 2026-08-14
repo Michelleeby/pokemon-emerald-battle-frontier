@@ -2007,6 +2007,19 @@ static void HandleSpecialTrainerBattleEnd(void)
     SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
 }
 
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u32 gE2EAutoWinCount = 0;
+
+static void Task_E2EAutoWinFacilityBattle(u8 taskId)
+{
+    gBattleOutcome = B_OUTCOME_WON;
+    gSpecialVar_Result = gBattleOutcome;
+    gE2EAutoWinCount++;
+    DestroyTask(taskId);
+    HandleSpecialTrainerBattleEnd();
+}
+#endif
+
 static void Task_StartBattleAfterTransition(u8 taskId)
 {
     if (IsBattleTransitionDone() == TRUE)
@@ -2046,6 +2059,10 @@ void DoSpecialTrainerBattle(void)
             FillFrontierTrainersParties(FRONTIER_MULTI_PARTY_SIZE);
             break;
         }
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         // The gameplay tests inspect the prepared battle before callbacks,
         // audio, and transitions require an initialized overworld runtime.
@@ -2118,6 +2135,10 @@ void DoSpecialTrainerBattle(void)
         if (VarGet(VAR_FRONTIER_BATTLE_MODE) == FRONTIER_MODE_DOUBLES)
             gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
         FillFactoryTrainerParty();
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         // Gameplay tests inspect the prepared battle before callbacks,
         // audio, and transitions require an initialized overworld runtime.

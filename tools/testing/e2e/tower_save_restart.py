@@ -9,9 +9,10 @@ from .symbols import load_symbols, require_symbols
 from .tower import (
     CHALLENGE_STATUS_PAUSED,
     CHALLENGE_STATUS_SAVING,
+    E2E_AUTO_WIN_COUNT_SYMBOL,
     MAP_NUM_TOWER_LOBBY,
-    RELEASE_ELF,
-    RELEASE_ROM,
+    GAMEPLAY_ELF,
+    GAMEPLAY_ROM,
     STREAK_TOWER_SINGLES_50,
     TowerScenarioFailure as ScenarioFailure,
     advance_until,
@@ -106,7 +107,7 @@ def run(artifact_dir: Path) -> None:
     save = artifact_dir / "tower-save-restart.sav"
     save.unlink(missing_ok=True)
     release_symbols = require_symbols(
-        load_symbols(RELEASE_ELF),
+        load_symbols(GAMEPLAY_ELF),
         "gMapHeader",
         "gMain",
         "gObjectEvents",
@@ -118,11 +119,12 @@ def run(artifact_dir: Path) -> None:
         "BattleFrontier_BattleTowerLobby_Layout",
         "CB2_UpdatePartyMenu",
         "sLockFieldControls",
+        E2E_AUTO_WIN_COUNT_SYMBOL,
     )
 
     create_tower_lobby_save(artifact_dir, save)
 
-    with Session(RELEASE_ROM, artifact_dir / "scenario", save=save) as game:
+    with Session(GAMEPLAY_ROM, artifact_dir / "scenario", save=save) as game:
         save_block1 = wait_for_tower_lobby(
             game,
             release_symbols["gSaveBlock1Ptr"],
@@ -152,6 +154,8 @@ def run(artifact_dir: Path) -> None:
             release_symbols["CB2_UpdatePartyMenu"],
         )
         _assert_saved_tower_state(game, addresses)
+        if game.read(release_symbols[E2E_AUTO_WIN_COUNT_SYMBOL], width=32) != 1:
+            raise ScenarioFailure("save/restart route did not use exactly one assisted battle")
         game.run_frames(120)
 
         game.restart()

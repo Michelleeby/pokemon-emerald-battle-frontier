@@ -7,6 +7,7 @@ MODERN      ?= 0
 KEEP_TEMPS  ?= 0
 TESTING     ?= 0
 E2E_TESTING ?= 0
+E2E_FIXTURE ?= 0
 TEST_SUITE  ?=
 TEST_MIN_EWRAM_FREE ?= 8192
 TEST_MIN_IWRAM_STACK ?= 1536
@@ -28,7 +29,11 @@ ifeq ($(E2E_TESTING),1)
     $(error TESTING and E2E_TESTING are mutually exclusive)
   endif
   MODERN := 1
-  FILE_NAME := build/e2e/fixtures/tower-lobby
+  ifeq ($(E2E_FIXTURE),1)
+    FILE_NAME := build/e2e/fixtures/tower-lobby
+  else
+    FILE_NAME := build/e2e/gameplay/pokeemerald
+  endif
 endif
 
 # Builds the ROM using a modern compiler
@@ -108,7 +113,11 @@ ifeq ($(E2E_TESTING),1)
   MODERN_ROM_NAME := $(FILE_NAME).gba
   MODERN_ELF_NAME := $(FILE_NAME).elf
   MODERN_MAP_NAME := $(FILE_NAME).map
-  MODERN_OBJ_DIR_NAME := build/e2e-fixture-obj
+  ifeq ($(E2E_FIXTURE),1)
+    MODERN_OBJ_DIR_NAME := build/e2e-fixture-obj
+  else
+    MODERN_OBJ_DIR_NAME := build/e2e-gameplay-obj
+  endif
 endif
 
 # Pick our active variables
@@ -151,6 +160,9 @@ ifeq ($(TESTING),1)
 endif
 ifeq ($(E2E_TESTING),1)
   CPPFLAGS += -DE2E_TESTING=1
+  ifeq ($(E2E_FIXTURE),1)
+    CPPFLAGS += -DE2E_FIXTURE=1
+  endif
 endif
 ifeq ($(MODERN),0)
   CPPFLAGS += -I tools/agbcc/include -I tools/agbcc -nostdinc -undef -std=gnu89
@@ -312,6 +324,7 @@ clean-test:
 clean-e2e:
 	rm -rf $(BUILD_DIR)/e2e
 	rm -rf $(BUILD_DIR)/e2e-fixture-obj
+	rm -rf $(BUILD_DIR)/e2e-gameplay-obj
 
 # Other rules
 include graphics_file_rules.mk
@@ -486,9 +499,13 @@ e2e-runner: $(E2E_RUNNER)
 
 e2e-fixture-rom:
 	@mkdir -p build/e2e/fixtures
+	$(MAKE) E2E_TESTING=1 E2E_FIXTURE=1 rom
+
+e2e-gameplay-rom:
+	@mkdir -p build/e2e/gameplay
 	$(MAKE) E2E_TESTING=1 rom
 
-e2e: rom e2e-runner e2e-fixture-rom
+e2e: rom e2e-runner e2e-fixture-rom e2e-gameplay-rom
 	python3 tools/testing/run_e2e.py $(TESTS)
 
 check-e2e-runner: rom e2e-runner

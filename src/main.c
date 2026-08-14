@@ -118,10 +118,10 @@ void AgbMain(void)
     SetDefaultFontsPointer();
     InitHeap(gHeap, HEAP_SIZE);
 
-#ifdef E2E_TESTING
+#ifdef E2E_FIXTURE
     {
-        extern void E2E_CreateTowerLobbyFixture(void);
-        SetMainCallback2(E2E_CreateTowerLobbyFixture);
+        extern void E2E_CreateFrontierLobbyFixture(void);
+        SetMainCallback2(E2E_CreateFrontierLobbyFixture);
     }
 #endif
 

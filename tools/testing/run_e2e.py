@@ -15,15 +15,19 @@ import time
 from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
+from e2e.factory_hard_noland import run as run_factory_hard_noland
+from e2e.factory_normal_noland import run as run_factory_normal_noland
 from e2e.tower_lobby_cancel import run as run_tower_lobby_cancel
-from e2e.tower_seven_win import run as run_tower_seven_win
+from e2e.tower_hard_anabel import run as run_tower_hard_anabel
 from e2e.tower_save_restart import run as run_tower_save_restart
+from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
 
 ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_ROOT = ROOT / "build" / "e2e" / "artifacts"
 UPLOAD_ROOT = ROOT / "build" / "e2e" / "upload"
 RELEASE_ROM = ROOT / "pokeemerald.gba"
+GAMEPLAY_ROM = ROOT / "build" / "e2e" / "gameplay" / "pokeemerald.gba"
 MGBA_REVISION = "26b7884bc25a5933960f3cdcd98bac1ae14d42e2"
 FIXTURE_VERSION = 1
 SCENARIO_VERSION = 1
@@ -31,9 +35,12 @@ RNG_SEEDS = {"primary": "0x1234", "secondary": "0x5678"}
 ALLOWED_DIAGNOSTIC_NAMES = {"report.json", "input-trace.json"}
 ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
+    "factory-hard-noland": run_factory_hard_noland,
+    "factory-normal-noland": run_factory_normal_noland,
+    "tower-hard-anabel": run_tower_hard_anabel,
     "tower-lobby-cancel": run_tower_lobby_cancel,
+    "tower-normal-anabel": run_tower_normal_anabel,
     "tower-save-restart": run_tower_save_restart,
-    "tower-seven-win": run_tower_seven_win,
 }
 
 
@@ -84,6 +91,8 @@ def base_report(name: str) -> dict[str, object]:
         "mgba_revision": MGBA_REVISION,
         "rng_seed": RNG_SEEDS,
         "rom_sha256": file_sha256(RELEASE_ROM),
+        "gameplay_rom_sha256": file_sha256(GAMEPLAY_ROM),
+        "battle_policy": "Tower and Factory outcomes are assisted in E2E gameplay builds",
         "rtc_value": None,
         "scenario": name,
         "scenario_version": SCENARIO_VERSION,

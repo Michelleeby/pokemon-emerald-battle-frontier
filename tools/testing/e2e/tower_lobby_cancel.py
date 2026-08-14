@@ -8,8 +8,8 @@ from .session import Session
 from .symbols import load_symbols, require_symbols
 from .tower import (
     MAP_NUM_TOWER_LOBBY,
-    RELEASE_ELF,
-    RELEASE_ROM,
+    GAMEPLAY_ELF,
+    GAMEPLAY_ROM,
     TowerScenarioFailure as ScenarioFailure,
     advance_until,
     create_tower_lobby_save,
@@ -26,7 +26,7 @@ def run(artifact_dir: Path) -> None:
     artifact_dir = Path(artifact_dir).resolve()
     save = artifact_dir / "tower-lobby.sav"
     release_symbols = require_symbols(
-        load_symbols(RELEASE_ELF),
+        load_symbols(GAMEPLAY_ELF),
         "gSaveBlock1Ptr",
         "gSaveBlock2Ptr",
         "gSpecialVar_Result",
@@ -39,7 +39,7 @@ def run(artifact_dir: Path) -> None:
 
     create_tower_lobby_save(artifact_dir, save)
 
-    with Session(RELEASE_ROM, artifact_dir / "scenario", save=save) as game:
+    with Session(GAMEPLAY_ROM, artifact_dir / "scenario", save=save) as game:
         save_block1 = wait_for_tower_lobby(
             game,
             release_symbols["gSaveBlock1Ptr"],
