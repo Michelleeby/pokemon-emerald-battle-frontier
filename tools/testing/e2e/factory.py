@@ -209,6 +209,7 @@ def complete_factory_route(
     lock_field_controls: int,
     *,
     expected_battles: int,
+    expected_battle_room_visits: int | None = None,
     expected_pre_battle_visits: int | None = None,
     route_name: str,
 ) -> dict[str, int]:
@@ -274,8 +275,15 @@ def complete_factory_route(
                     if expected_pre_battle_visits is None
                     else expected_pre_battle_visits
                 )
+                expected_battle_room_visits = (
+                    expected_battles
+                    if expected_battle_room_visits is None
+                    else expected_battle_room_visits
+                )
                 if (
-                    battle_room_visits != expected_battles
+                    not expected_battle_room_visits
+                    <= battle_room_visits
+                    <= expected_battles
                     or not expected_pre_battle_visits
                     <= pre_battle_room_visits
                     <= expected_battles

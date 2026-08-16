@@ -133,6 +133,7 @@ def run_noland_route(artifact_dir: Path, mode: NolandMode) -> None:
             symbols["gSpecialVar_Result"],
             symbols["sLockFieldControls"],
             expected_battles=2,
+            expected_battle_room_visits=1,
             expected_pre_battle_visits=1,
             route_name=f"{mode.name} Noland",
         )
