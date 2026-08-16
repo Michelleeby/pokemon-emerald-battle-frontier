@@ -145,6 +145,8 @@ class SelectorTests(unittest.TestCase):
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "factory-normal-noland",
+                "palace-hard-spenser",
+                "palace-normal-spenser",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
             ],
@@ -173,6 +175,16 @@ class SelectorTests(unittest.TestCase):
     def test_save_change_conservatively_selects_all_scenarios(self) -> None:
         result = select_e2e_scenarios(["src/save.c"], self.e2e_manifest)
         self.assertEqual(result["scenarios"], self.e2e_manifest["scenarios"])
+
+    def test_palace_change_selects_paired_spenser_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_palace.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["palace-hard-spenser", "palace-normal-spenser"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["palace-hard-spenser", "palace-normal-spenser"]},
+        )
 
     def test_factory_change_selects_factory_noland_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(

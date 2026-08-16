@@ -8,6 +8,8 @@
     "factory-hard-noland",
     "factory-hard-setup",
     "factory-normal-noland",
+    "palace-hard-spenser",
+    "palace-normal-spenser",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
@@ -38,8 +40,13 @@
       "scenarios": ["arena-hard-greta", "arena-normal-greta"]
     },
     {
+      "name": "Battle Palace",
+      "paths": ["src/battle_palace.c", "include/battle_palace.h", "include/constants/battle_palace.h", "asm/macros/battle_frontier/battle_palace.inc", "data/maps/BattleFrontier_BattlePalace*/**"],
+      "scenarios": ["palace-hard-spenser", "palace-normal-spenser"]
+    },
+    {
       "name": "other facilities",
-      "paths": ["src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "paths": ["src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
       "scenarios": []
     },
     {

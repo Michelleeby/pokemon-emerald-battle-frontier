@@ -2114,6 +2114,10 @@ void DoSpecialTrainerBattle(void)
             FillFrontierTrainerParty(FRONTIER_PARTY_SIZE);
         else
             FillTentTrainerParty(FRONTIER_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif

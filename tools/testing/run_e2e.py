@@ -22,6 +22,8 @@ from e2e.dome_normal_tucker import run as run_dome_normal_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
 from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.factory_normal_noland import run as run_factory_normal_noland
+from e2e.palace_hard_spenser import run as run_palace_hard_spenser
+from e2e.palace_normal_spenser import run as run_palace_normal_spenser
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
 from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
@@ -45,6 +47,8 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "factory-hard-noland": run_factory_hard_noland,
     "factory-hard-setup": run_factory_hard_setup,
     "factory-normal-noland": run_factory_normal_noland,
+    "palace-hard-spenser": run_palace_hard_spenser,
+    "palace-normal-spenser": run_palace_normal_spenser,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,
 }
@@ -98,7 +102,7 @@ def base_report(name: str) -> dict[str, object]:
         "rng_seed": RNG_SEEDS,
         "rom_sha256": file_sha256(RELEASE_ROM),
         "gameplay_rom_sha256": file_sha256(GAMEPLAY_ROM),
-        "battle_policy": "Tower, Factory, Dome, and Arena outcomes are assisted in E2E gameplay builds",
+        "battle_policy": "Tower, Factory, Dome, Arena, and Palace outcomes are assisted in E2E gameplay builds",
         "rtc_value": None,
         "scenario": name,
         "scenario_version": SCENARIO_VERSION,

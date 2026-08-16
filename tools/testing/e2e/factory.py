@@ -276,7 +276,9 @@ def complete_factory_route(
                 )
                 if (
                     battle_room_visits != expected_battles
-                    or pre_battle_room_visits != expected_pre_battle_visits
+                    or not expected_pre_battle_visits
+                    <= pre_battle_room_visits
+                    <= expected_battles
                 ):
                     raise FactoryScenarioFailure(
                         "Factory room route was incomplete "

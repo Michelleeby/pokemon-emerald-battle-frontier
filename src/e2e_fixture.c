@@ -90,7 +90,33 @@ void E2E_CreateFrontierLobbyFixture(void)
 
     // The fixture runner selects Factory with ordinary keypad input before
     // advancing the first frame. No host memory mutation chooses the fixture.
-    if (JOY_HELD(L_BUTTON))
+    if (JOY_HELD(A_BUTTON))
+    {
+        map = MAP_BATTLE_FRONTIER_BATTLE_PALACE_BATTLE_ROOM;
+        x = 7;
+        y = 6;
+        if (JOY_HELD(SELECT_BUTTON))
+        {
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_PALACE,
+                FRONTIER_CHALLENGE_HARD);
+            gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags =
+                STREAK_PALACE_SINGLES_50;
+            gSaveBlock1Ptr->frontierHardMode
+                .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 12;
+        }
+        else
+        {
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_PALACE,
+                FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
+                STREAK_PALACE_SINGLES_50;
+            gSaveBlock2Ptr->frontier
+                .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 19;
+        }
+    }
+    else if (JOY_HELD(L_BUTTON))
     {
         if (JOY_HELD(SELECT_BUTTON))
         {
