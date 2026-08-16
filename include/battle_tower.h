@@ -50,6 +50,10 @@ extern u16 gFrontierTempParty[];
 extern const struct BattleFrontierTrainer *gFacilityTrainers;
 extern const struct FacilityMon *gFacilityTrainerMons;
 
+#ifdef E2E_TESTING
+extern volatile u32 gE2EAutoWinCount;
+#endif
+
 void CallBattleTowerFunc(void);
 u16 GetRandomScaledFrontierTrainerId(u8 challengeNum, u8 battleNum);
 void SetBattleFacilityTrainerGfxId(u16 trainerId, u8 tempVarId);

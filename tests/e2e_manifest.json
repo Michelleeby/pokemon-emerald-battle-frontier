@@ -12,6 +12,8 @@
     "palace-normal-spenser",
     "pike-hard-lucy",
     "pike-normal-lucy",
+    "pyramid-hard-brandon",
+    "pyramid-normal-brandon",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
@@ -52,9 +54,9 @@
       "scenarios": ["pike-hard-lucy", "pike-normal-lucy"]
     },
     {
-      "name": "other facilities",
+      "name": "Battle Pyramid",
       "paths": ["src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePyramid*/**"],
-      "scenarios": []
+      "scenarios": ["pyramid-hard-brandon", "pyramid-normal-brandon"]
     },
     {
       "name": "uncovered named flows",

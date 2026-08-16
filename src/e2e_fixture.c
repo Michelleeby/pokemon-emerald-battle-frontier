@@ -1,5 +1,6 @@
 #include "global.h"
 #include "battle_dome.h"
+#include "battle_pyramid.h"
 #include "event_data.h"
 #include "load_save.h"
 #include "main.h"
@@ -145,7 +146,33 @@ void E2E_CreateFrontierLobbyFixture(void)
     }
     else if (JOY_HELD(L_BUTTON))
     {
-        if (JOY_HELD(SELECT_BUTTON))
+        if (JOY_HELD(B_BUTTON))
+        {
+            map = MAP_BATTLE_FRONTIER_BATTLE_PYRAMID_FLOOR;
+            x = 1;
+            y = 1;
+            E2E_SeedActiveFrontierChallenge(
+                FRONTIER_FACILITY_PYRAMID,
+                JOY_HELD(SELECT_BUTTON) ? FRONTIER_CHALLENGE_HARD
+                                        : FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.challengeStatus = 99;
+            gSaveBlock2Ptr->frontier.curChallengeBattleNum =
+                FRONTIER_STAGES_PER_CHALLENGE - 1;
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = E2E_PYRAMID_ROUTE_TAG;
+            if (JOY_HELD(SELECT_BUTTON))
+            {
+                gSaveBlock1Ptr->frontierHardMode.pyramidWinStreakActiveFlags =
+                    STREAK_PYRAMID_50;
+                gSaveBlock1Ptr->frontierHardMode
+                    .pyramidWinStreaks[FRONTIER_LVL_50] = 13;
+            }
+            else
+            {
+                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PYRAMID_50;
+                gSaveBlock2Ptr->frontier.pyramidWinStreaks[FRONTIER_LVL_50] = 20;
+            }
+        }
+        else if (JOY_HELD(SELECT_BUTTON))
         {
             map = MAP_BATTLE_FRONTIER_BATTLE_DOME_PRE_BATTLE_ROOM;
             x = 5;

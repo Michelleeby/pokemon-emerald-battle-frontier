@@ -90,6 +90,9 @@ static void CB2_GiveFrontierStarter(void);
 static void CB2_StartFirstBattle(void);
 static void CB2_EndFirstBattle(void);
 static void CB2_EndTrainerBattle(void);
+#ifdef E2E_TESTING
+static void Task_E2EAutoWinPyramidTrainerBattle(u8 taskId);
+#endif
 static bool32 IsPlayerDefeated(u32 battleOutcome);
 static u16 GetRematchTrainerId(u16 trainerId);
 static void RegisterTrainerInMatchCall(void);
@@ -1355,6 +1358,16 @@ void BattleSetup_StartTrainerBattle(void)
     gWhichTrainerToFaceAfterBattle = 0;
     gMain.savedCallback = CB2_EndTrainerBattle;
 
+#ifdef E2E_TESTING
+    if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE
+     && gSaveBlock2Ptr->frontier.selectedPartyMons[3] == E2E_PYRAMID_ROUTE_TAG)
+    {
+        CreateTask(Task_E2EAutoWinPyramidTrainerBattle, 1);
+        ScriptContext_Stop();
+        return;
+    }
+#endif
+
     if (CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE || InTrainerHillChallenge())
         DoBattlePyramidTrainerHillBattle();
     else
@@ -1362,6 +1375,17 @@ void BattleSetup_StartTrainerBattle(void)
 
     ScriptContext_Stop();
 }
+
+#ifdef E2E_TESTING
+static void Task_E2EAutoWinPyramidTrainerBattle(u8 taskId)
+{
+    gBattleOutcome = B_OUTCOME_WON;
+    gSpecialVar_Result = gBattleOutcome;
+    gE2EAutoWinCount++;
+    DestroyTask(taskId);
+    CB2_EndTrainerBattle();
+}
+#endif
 
 static void CB2_EndTrainerBattle(void)
 {

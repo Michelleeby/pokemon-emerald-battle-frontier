@@ -26,6 +26,8 @@ from e2e.palace_hard_spenser import run as run_palace_hard_spenser
 from e2e.palace_normal_spenser import run as run_palace_normal_spenser
 from e2e.pike_hard_lucy import run as run_pike_hard_lucy
 from e2e.pike_normal_lucy import run as run_pike_normal_lucy
+from e2e.pyramid_hard_brandon import run as run_pyramid_hard_brandon
+from e2e.pyramid_normal_brandon import run as run_pyramid_normal_brandon
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
 from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
@@ -53,6 +55,8 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "palace-normal-spenser": run_palace_normal_spenser,
     "pike-hard-lucy": run_pike_hard_lucy,
     "pike-normal-lucy": run_pike_normal_lucy,
+    "pyramid-hard-brandon": run_pyramid_hard_brandon,
+    "pyramid-normal-brandon": run_pyramid_normal_brandon,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,
 }
@@ -106,7 +110,7 @@ def base_report(name: str) -> dict[str, object]:
         "rng_seed": RNG_SEEDS,
         "rom_sha256": file_sha256(RELEASE_ROM),
         "gameplay_rom_sha256": file_sha256(GAMEPLAY_ROM),
-        "battle_policy": "Tower, Factory, Dome, Arena, Palace, and Pike outcomes are assisted in E2E gameplay builds",
+        "battle_policy": "Tower, Factory, Dome, Arena, Palace, Pike, and Pyramid outcomes are assisted in E2E gameplay builds",
         "rtc_value": None,
         "scenario": name,
         "scenario_version": SCENARIO_VERSION,

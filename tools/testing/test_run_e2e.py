@@ -29,6 +29,8 @@ class E2ESelectionTests(unittest.TestCase):
                 "palace-normal-spenser",
                 "pike-hard-lucy",
                 "pike-normal-lucy",
+                "pyramid-hard-brandon",
+                "pyramid-normal-brandon",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
             ],
