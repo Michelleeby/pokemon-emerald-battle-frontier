@@ -33,7 +33,7 @@ parties, and seeds both game RNGs explicitly.
 | Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation; paired normal championship 4→5 and hard championship 2→3 Tucker boundaries with their expected ordinary trainer pools through production scripts | `frontier-dome`; `dome-normal-tucker`, `dome-hard-tucker` E2E | The paired E2E routes own the mode boundary difference; unchanged tournament plumbing remains outside E2E scope. |
 | Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger; paired normal 26→28 and hard 12→14 Greta boundaries with their expected ordinary trainer pools through production scripts | `frontier-arena`; `arena-normal-greta`, `arena-hard-greta` E2E | The paired E2E routes own the mode boundary difference; unchanged Arena battle plumbing is out of scope. |
 | Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback; paired normal 19→21 and hard 12→14 Spenser boundaries with their expected ordinary trainer pools through production scripts | `frontier-palace`; `palace-normal-spenser`, `palace-hard-spenser` E2E | The paired E2E routes own the mode boundary difference; unchanged Palace battle plumbing remains outside E2E scope. |
-| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation | `frontier-pike` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Lucy boundary through production scripts. Unchanged room traversal is out of scope. |
+| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation; paired normal 24→28 and hard 10→14 Lucy boundaries with their expected ordinary trainer pools through production scripts | `frontier-pike`; `pike-normal-lucy`, `pike-hard-lucy` E2E | The paired E2E routes own the mode boundary difference; unrelated random Pike rooms remain outside E2E scope. |
 | Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Targeted E2E gap: prove the hard-mode hardest trainer pool and shortened Brandon boundary through production scripts. Unchanged floor traversal is out of scope. |
 
 The remaining E2E follow-ups are limited to behavior changed by hard mode:
@@ -60,7 +60,7 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-normal-noland factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker palace-normal-spenser palace-hard-spenser"
+make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-normal-noland factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker palace-normal-spenser palace-hard-spenser pike-normal-lucy pike-hard-lucy"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
@@ -89,6 +89,13 @@ seeds streak 19 and verifies the normal 100–139 ordinary pool before Spenser a
 21; `palace-hard-spenser` seeds streak 12 and verifies the hard 200–299 pool
 before Spenser at 14. Both start from a seeded active challenge, assist exactly
 the ordinary battle and Spenser, and verify mode-isolated streak progression.
+The paired Pike scenarios share one configured route. `pike-normal-lucy` seeds
+streak 24 and verifies the normal 80–119 ordinary pool before Lucy at 28;
+`pike-hard-lucy` seeds streak 10 and verifies the hard 200–299 pool before Lucy
+at 14. A narrow E2E-only seam selects the first single-battle room; Lucy room
+detection, both battles, room progression, dialogue, final-room handling, and
+lobby completion remain production-driven. Both routes finish at room counter
+14, assist exactly the ordinary battle and Lucy, and verify mode isolation.
 The paired Dome scenarios share one configured route. `dome-normal-tucker`
 seeds championship streak 4 and verifies ordinary tournament opponents from
 the combined normal 140–199 bracket pools before Tucker; `dome-hard-tucker`
@@ -97,7 +104,7 @@ production-generated bracket, assist exactly four outcomes, finish against
 Tucker, and verify mode-isolated championship progression.
 
 The assistance seam exists only in the E2E gameplay build and is restricted to
-Tower, Factory, Dome, Arena, and Palace special trainer battles. Production still constructs the
+Tower, Factory, Dome, Arena, Palace, and Pike special trainer battles. Production still constructs the
 facility opponent and enters the ordinary facility end-of-battle handling, so
 the scenarios cover the surrounding scripts, state progression, warps,
 rewards, and saves without repeatedly exercising vanilla battle strategy. The

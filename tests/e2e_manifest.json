@@ -10,6 +10,8 @@
     "factory-normal-noland",
     "palace-hard-spenser",
     "palace-normal-spenser",
+    "pike-hard-lucy",
+    "pike-normal-lucy",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
@@ -45,8 +47,13 @@
       "scenarios": ["palace-hard-spenser", "palace-normal-spenser"]
     },
     {
+      "name": "Battle Pike",
+      "paths": ["src/battle_pike.c", "include/battle_pike.h", "include/constants/battle_pike.h", "asm/macros/battle_frontier/battle_pike.inc", "data/maps/BattleFrontier_BattlePike*/**"],
+      "scenarios": ["pike-hard-lucy", "pike-normal-lucy"]
+    },
+    {
       "name": "other facilities",
-      "paths": ["src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "paths": ["src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePyramid*/**"],
       "scenarios": []
     },
     {

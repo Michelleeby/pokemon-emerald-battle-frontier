@@ -92,28 +92,55 @@ void E2E_CreateFrontierLobbyFixture(void)
     // advancing the first frame. No host memory mutation chooses the fixture.
     if (JOY_HELD(A_BUTTON))
     {
-        map = MAP_BATTLE_FRONTIER_BATTLE_PALACE_BATTLE_ROOM;
-        x = 7;
-        y = 6;
-        if (JOY_HELD(SELECT_BUTTON))
+        if (JOY_HELD(B_BUTTON))
         {
+            map = MAP_BATTLE_FRONTIER_BATTLE_PIKE_THREE_PATH_ROOM;
+            x = 6;
+            y = 10;
             E2E_SeedActiveFrontierChallenge(
-                FRONTIER_FACILITY_PALACE,
-                FRONTIER_CHALLENGE_HARD);
-            gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags =
-                STREAK_PALACE_SINGLES_50;
-            gSaveBlock1Ptr->frontierHardMode
-                .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 12;
+                FRONTIER_FACILITY_PIKE,
+                JOY_HELD(SELECT_BUTTON) ? FRONTIER_CHALLENGE_HARD
+                                        : FRONTIER_CHALLENGE_NORMAL);
+            gSaveBlock2Ptr->frontier.challengeStatus = 99;
+            gSaveBlock2Ptr->frontier.curChallengeBattleNum = 11;
+            gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0xE2E1;
+            if (JOY_HELD(SELECT_BUTTON))
+            {
+                gSaveBlock1Ptr->frontierHardMode.pikeWinStreakActiveFlags =
+                    STREAK_PIKE_50;
+                gSaveBlock1Ptr->frontierHardMode.pikeWinStreaks[FRONTIER_LVL_50] = 10;
+            }
+            else
+            {
+                gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_PIKE_50;
+                gSaveBlock2Ptr->frontier.pikeWinStreaks[FRONTIER_LVL_50] = 24;
+            }
         }
         else
         {
-            E2E_SeedActiveFrontierChallenge(
-                FRONTIER_FACILITY_PALACE,
-                FRONTIER_CHALLENGE_NORMAL);
-            gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
-                STREAK_PALACE_SINGLES_50;
-            gSaveBlock2Ptr->frontier
-                .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 19;
+            map = MAP_BATTLE_FRONTIER_BATTLE_PALACE_BATTLE_ROOM;
+            x = 7;
+            y = 6;
+            if (JOY_HELD(SELECT_BUTTON))
+            {
+                E2E_SeedActiveFrontierChallenge(
+                    FRONTIER_FACILITY_PALACE,
+                    FRONTIER_CHALLENGE_HARD);
+                gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags =
+                    STREAK_PALACE_SINGLES_50;
+                gSaveBlock1Ptr->frontierHardMode
+                    .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 12;
+            }
+            else
+            {
+                E2E_SeedActiveFrontierChallenge(
+                    FRONTIER_FACILITY_PALACE,
+                    FRONTIER_CHALLENGE_NORMAL);
+                gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
+                    STREAK_PALACE_SINGLES_50;
+                gSaveBlock2Ptr->frontier
+                    .palaceWinStreaks[FRONTIER_MODE_SINGLES][FRONTIER_LVL_50] = 19;
+            }
         }
     }
     else if (JOY_HELD(L_BUTTON))

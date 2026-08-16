@@ -147,6 +147,8 @@ class SelectorTests(unittest.TestCase):
                 "factory-normal-noland",
                 "palace-hard-spenser",
                 "palace-normal-spenser",
+                "pike-hard-lucy",
+                "pike-normal-lucy",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
             ],
@@ -197,6 +199,16 @@ class SelectorTests(unittest.TestCase):
         self.assertEqual(
             result["matrix"],
             {"scenario": ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"]},
+        )
+
+    def test_pike_change_selects_paired_lucy_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_pike.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["pike-hard-lucy", "pike-normal-lucy"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["pike-hard-lucy", "pike-normal-lucy"]},
         )
 
     def test_documentation_change_selects_no_e2e_scenario(self) -> None:
