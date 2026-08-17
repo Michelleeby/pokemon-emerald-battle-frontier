@@ -38,6 +38,11 @@ static void SetMenuInputHandler(struct Pokenav_Menu *);
 
 extern const u8 EventScript_PCMainMenu[];
 
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u32 gE2EPokenavTeamLabOpenCount = 0;
+EWRAM_DATA volatile u32 gE2EPokenavPcOpenCount = 0;
+#endif
+
 // Number of entries - 1 for that menu type
 static const u8 sLastCursorPositions[] =
 {
@@ -353,6 +358,9 @@ static void Task_WaitFadeAccessPC(u8 taskId)
 {
     if (!WaitForPokenavShutdownFade())
     {
+#ifdef E2E_TESTING
+        gE2EPokenavPcOpenCount++;
+#endif
         ScriptContext_SetupScript(EventScript_PCMainMenu);
         DestroyTask(taskId);
     }
@@ -362,6 +370,9 @@ static void Task_WaitFadeOpenTeamLabParty(u8 taskId)
 {
     if (!WaitForPokenavShutdownFade())
     {
+#ifdef E2E_TESTING
+        gE2EPokenavTeamLabOpenCount++;
+#endif
         OpenTeamLabPartyMenu();
         DestroyTask(taskId);
     }

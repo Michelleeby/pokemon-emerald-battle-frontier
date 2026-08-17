@@ -41,6 +41,11 @@ struct FrontierIntroTutorial
 
 static EWRAM_DATA struct FrontierIntroTutorial sTutorial = {0};
 
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u8 gE2EFrontierIntroCheckpoint = FRONTIER_INTRO_CHECKPOINT_NONE;
+EWRAM_DATA volatile u32 gE2EFrontierIntroFinishCount = 0;
+#endif
+
 #define ACTION(checkpoint, key) {FRONTIER_INTRO_CHECKPOINT_##checkpoint, 0, RELEASE_FRAMES, key}
 #define FAST_ACTION(checkpoint, key) {FRONTIER_INTRO_CHECKPOINT_##checkpoint, 0, FAST_RELEASE_FRAMES, key}
 #define VERY_FAST_ACTION(checkpoint, key) {FRONTIER_INTRO_CHECKPOINT_##checkpoint, 0, VERY_FAST_RELEASE_FRAMES, key}
@@ -185,6 +190,9 @@ static void FinishTutorial(void)
     sTutorial.active = FALSE;
     sTutorial.button = 0;
     ScriptContext_Enable();
+#ifdef E2E_TESTING
+    gE2EFrontierIntroFinishCount++;
+#endif
 }
 
 static void BeginSkipAction(u8 checkpoint)
@@ -275,6 +283,9 @@ u8 FrontierIntroTutorial_TestGetStep(void)
 
 void FrontierIntroTutorial_NotifyReady(u8 checkpoint)
 {
+#ifdef E2E_TESTING
+    gE2EFrontierIntroCheckpoint = checkpoint;
+#endif
     if (!sTutorial.active || sTutorial.phase != INPUT_PHASE_WAIT)
         return;
 

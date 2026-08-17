@@ -8,12 +8,16 @@
     "factory-hard-noland",
     "factory-hard-setup",
     "factory-normal-noland",
+    "frontier-intro-team-lab",
     "palace-hard-spenser",
     "palace-normal-spenser",
     "pike-hard-lucy",
     "pike-normal-lucy",
+    "pokenav-team-lab-access",
     "pyramid-hard-brandon",
     "pyramid-normal-brandon",
+    "team-lab-create-mon",
+    "team-lab-edit-stats",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
@@ -59,9 +63,24 @@
       "scenarios": ["pyramid-hard-brandon", "pyramid-normal-brandon"]
     },
     {
-      "name": "uncovered named flows",
-      "paths": ["src/team_lab*.c", "include/team_lab.h", "src/frontier_intro_tutorial.c", "include/frontier_intro_tutorial.h"],
-      "scenarios": []
+      "name": "Team Lab editor",
+      "paths": ["src/team_lab*.c", "include/team_lab.h"],
+      "scenarios": ["team-lab-create-mon", "team-lab-edit-stats", "pokenav-team-lab-access", "frontier-intro-team-lab"]
+    },
+    {
+      "name": "Team Lab Pokédex selection integration",
+      "paths": ["src/pokedex.c", "include/pokedex.h"],
+      "scenarios": ["team-lab-create-mon", "frontier-intro-team-lab"]
+    },
+    {
+      "name": "PokéNav Team Lab access",
+      "paths": ["src/pokenav*.c", "include/pokenav.h", "src/field_specials.c", "graphics/pokenav/options/**"],
+      "scenarios": ["pokenav-team-lab-access", "frontier-intro-team-lab"]
+    },
+    {
+      "name": "Frontier introduction",
+      "paths": ["src/frontier_intro_tutorial.c", "include/frontier_intro_tutorial.h", "data/maps/BattleFrontier_OutsideWest/**", "data/maps/SlateportCity_Harbor/**"],
+      "scenarios": ["frontier-intro-team-lab"]
     }
   ],
   "relevant_paths": ["src/**", "include/**", "data/**", "asm/**", "tools/testing/**", ".github/workflows/test*.yml", "Makefile"],

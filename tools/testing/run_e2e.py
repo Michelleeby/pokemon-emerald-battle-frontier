@@ -22,6 +22,7 @@ from e2e.dome_normal_tucker import run as run_dome_normal_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
 from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.factory_normal_noland import run as run_factory_normal_noland
+from e2e.frontier_intro_team_lab import run as run_frontier_intro_team_lab
 from e2e.palace_hard_spenser import run as run_palace_hard_spenser
 from e2e.palace_normal_spenser import run as run_palace_normal_spenser
 from e2e.pike_hard_lucy import run as run_pike_hard_lucy
@@ -30,6 +31,9 @@ from e2e.pyramid_hard_brandon import run as run_pyramid_hard_brandon
 from e2e.pyramid_normal_brandon import run as run_pyramid_normal_brandon
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
 from e2e.tower_normal_anabel import run as run_tower_normal_anabel
+from e2e.pokenav_team_lab_access import run as run_pokenav_team_lab_access
+from e2e.team_lab_create_mon import run as run_team_lab_create_mon
+from e2e.team_lab_edit_stats import run as run_team_lab_edit_stats
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -51,12 +55,16 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "factory-hard-noland": run_factory_hard_noland,
     "factory-hard-setup": run_factory_hard_setup,
     "factory-normal-noland": run_factory_normal_noland,
+    "frontier-intro-team-lab": run_frontier_intro_team_lab,
     "palace-hard-spenser": run_palace_hard_spenser,
     "palace-normal-spenser": run_palace_normal_spenser,
     "pike-hard-lucy": run_pike_hard_lucy,
     "pike-normal-lucy": run_pike_normal_lucy,
+    "pokenav-team-lab-access": run_pokenav_team_lab_access,
     "pyramid-hard-brandon": run_pyramid_hard_brandon,
     "pyramid-normal-brandon": run_pyramid_normal_brandon,
+    "team-lab-create-mon": run_team_lab_create_mon,
+    "team-lab-edit-stats": run_team_lab_edit_stats,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,
 }

@@ -16,6 +16,7 @@
 #include "constants/moves.h"
 #include "constants/pokemon.h"
 #include "constants/species.h"
+#include "constants/flags.h"
 #include "constants/battle_frontier.h"
 #include "constants/frontier_util.h"
 #include "constants/global.h"
@@ -89,9 +90,32 @@ void E2E_CreateFrontierLobbyFixture(void)
     gPlayerParty[0].speed = gPlayerParty[0].spAttack = gPlayerParty[0].spDefense = 999;
     gPlayerPartyCount = 3;
 
+    // START+SELECT selects the Team Lab integration fixture. UP additionally
+    // arms the guided Frontier introduction.
+    if (JOY_HELD(START_BUTTON) && JOY_HELD(SELECT_BUTTON))
+    {
+        u8 abilityNum = 0;
+
+        map = MAP_BATTLE_FRONTIER_OUTSIDE_WEST;
+        x = 19;
+        y = 67;
+        ZeroPlayerPartyMons();
+        CreateMon(&gPlayerParty[0], SPECIES_LUDICOLO, 50, 31, TRUE,
+                  0x11111111, OT_ID_PLAYER_ID, 0);
+        SetMonMoveSlot(&gPlayerParty[0], MOVE_FAKE_OUT, 0);
+        SetMonData(&gPlayerParty[0], MON_DATA_ABILITY_NUM, &abilityNum);
+        gPlayerPartyCount = 1;
+        FlagSet(FLAG_SYS_POKENAV_GET);
+        FlagSet(FLAG_RECEIVED_POKENAV);
+        FlagClear(FLAG_FRONTIER_INTRO_TUTORIAL_COMPLETE);
+        if (JOY_HELD(DPAD_UP))
+            FlagSet(FLAG_FRONTIER_INTRO_TUTORIAL_PENDING);
+        else
+            FlagClear(FLAG_FRONTIER_INTRO_TUTORIAL_PENDING);
+    }
     // The fixture runner selects Factory with ordinary keypad input before
     // advancing the first frame. No host memory mutation chooses the fixture.
-    if (JOY_HELD(A_BUTTON))
+    else if (JOY_HELD(A_BUTTON))
     {
         if (JOY_HELD(B_BUTTON))
         {

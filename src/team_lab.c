@@ -21,6 +21,11 @@ static const u16 sTmHmMoves[] =
 extern const u16 gEggMoves[];
 extern const struct Evolution gEvolutionTable[][EVOS_PER_MON];
 
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u8 gE2ETeamLabRolledGender = MON_MALE;
+EWRAM_DATA volatile u8 gE2ETeamLabCreatedGender = MON_MALE;
+#endif
+
 static bool8 IsEggMove(u16 species, u16 move)
 {
     u32 i;
@@ -230,6 +235,10 @@ void TeamLab_CreateMon(struct Pokemon *mon, const struct TeamLabMonBuild *build)
           || GetGenderFromSpeciesAndPersonality(build->species, personality) != gender);
 
     CreateMon(mon, build->species, build->level, 0, TRUE, personality, OT_ID_PLAYER_ID, 0);
+#ifdef E2E_TESTING
+    gE2ETeamLabRolledGender = gender;
+    gE2ETeamLabCreatedGender = GetMonGender(mon);
+#endif
     SetMonData(mon, MON_DATA_HELD_ITEM, &build->heldItem);
 
     for (i = 0; i < NUM_STATS; i++)

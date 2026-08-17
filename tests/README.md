@@ -36,11 +36,12 @@ parties, and seeds both game RNGs explicitly.
 | Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation; paired normal 24→28 and hard 10→14 Lucy boundaries with their expected ordinary trainer pools through production scripts | `frontier-pike`; `pike-normal-lucy`, `pike-hard-lucy` E2E | The paired E2E routes own the mode boundary difference; unrelated random Pike rooms remain outside E2E scope. |
 | Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Paired normal/hard Brandon E2Es cover the final-floor trainer pools and summit boundary through production scripts. Unchanged full randomized-floor traversal is out of scope. |
 
-The remaining E2E follow-ups are limited to behavior changed by hard mode:
-hardest trainer-pool selection and shortened Frontier Brain boundaries. The
-Factory also owns the only modified rental-IV path. Unchanged vanilla facility
-plumbing, presentation, cancellation, traversal, and save/restart behavior are
-not E2E goals for this project.
+The Team Lab E2E routes cover only editor-owned integration boundaries:
+PokéNav entry and return, Pokédex selection results, inherited-move validation,
+ability persistence, accelerated and correctly mapped stat editing, and the
+guided Frontier introduction's editor traversal and nested skip. They do not
+retest vanilla Pokédex, naming-screen, PC-storage, Bag, ferry, or party-menu
+behavior.
 
 ## End-to-end harness development
 
@@ -62,6 +63,10 @@ Run named gameplay scenarios through the same headless session path with:
 ```sh
 make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-normal-noland factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker palace-normal-spenser palace-hard-spenser pike-normal-lucy pike-hard-lucy"
 ```
+
+The additional editor scenarios are `team-lab-create-mon`,
+`team-lab-edit-stats`, `pokenav-team-lab-access`, and
+`frontier-intro-team-lab`.
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
 scenario names fail before execution. The scenarios intentionally cover only
