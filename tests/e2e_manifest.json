@@ -1,12 +1,21 @@
 {
   "version": 1,
   "scenarios": [
+    "arena-hard-greta",
+    "arena-normal-greta",
+    "dome-hard-tucker",
+    "dome-normal-tucker",
     "factory-hard-noland",
+    "factory-hard-setup",
     "factory-normal-noland",
+    "palace-hard-spenser",
+    "palace-normal-spenser",
+    "pike-hard-lucy",
+    "pike-normal-lucy",
+    "pyramid-hard-brandon",
+    "pyramid-normal-brandon",
     "tower-hard-anabel",
-    "tower-lobby-cancel",
-    "tower-normal-anabel",
-    "tower-save-restart"
+    "tower-normal-anabel"
   ],
   "rules": [
     {
@@ -20,19 +29,34 @@
       "scenarios": "all"
     },
     {
-      "name": "save system",
-      "paths": ["src/save*.c", "src/load_save.c", "src/reload_save.c", "include/global.h", "include/save*.h", "include/load_save.h", "include/reload_save.h"],
-      "scenarios": ["tower-save-restart"]
-    },
-    {
       "name": "Battle Factory",
       "paths": ["src/battle_factory*.c", "include/battle_factory*.h", "include/constants/battle_factory.h", "asm/macros/battle_frontier/battle_factory.inc", "data/maps/BattleFrontier_BattleFactory*/**"],
-      "scenarios": ["factory-hard-noland", "factory-normal-noland"]
+      "scenarios": ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"]
     },
     {
-      "name": "other facilities",
-      "paths": ["src/battle_dome.c", "src/battle_arena.c", "src/battle_palace.c", "src/battle_pike.c", "src/battle_pyramid*.c", "data/maps/BattleFrontier_BattleDome*/**", "data/maps/BattleFrontier_BattleArena*/**", "data/maps/BattleFrontier_BattlePalace*/**", "data/maps/BattleFrontier_BattlePike*/**", "data/maps/BattleFrontier_BattlePyramid*/**"],
-      "scenarios": []
+      "name": "Battle Dome",
+      "paths": ["src/battle_dome.c", "include/battle_dome.h", "include/constants/battle_dome.h", "asm/macros/battle_frontier/battle_dome.inc", "data/maps/BattleFrontier_BattleDome*/**"],
+      "scenarios": ["dome-hard-tucker", "dome-normal-tucker"]
+    },
+    {
+      "name": "Battle Arena",
+      "paths": ["src/battle_arena.c", "include/battle_arena.h", "include/constants/battle_arena.h", "asm/macros/battle_frontier/battle_arena.inc", "data/maps/BattleFrontier_BattleArena*/**"],
+      "scenarios": ["arena-hard-greta", "arena-normal-greta"]
+    },
+    {
+      "name": "Battle Palace",
+      "paths": ["src/battle_palace.c", "include/battle_palace.h", "include/constants/battle_palace.h", "asm/macros/battle_frontier/battle_palace.inc", "data/maps/BattleFrontier_BattlePalace*/**"],
+      "scenarios": ["palace-hard-spenser", "palace-normal-spenser"]
+    },
+    {
+      "name": "Battle Pike",
+      "paths": ["src/battle_pike.c", "include/battle_pike.h", "include/constants/battle_pike.h", "asm/macros/battle_frontier/battle_pike.inc", "data/maps/BattleFrontier_BattlePike*/**"],
+      "scenarios": ["pike-hard-lucy", "pike-normal-lucy"]
+    },
+    {
+      "name": "Battle Pyramid",
+      "paths": ["src/battle_pyramid*.c", "data/maps/BattleFrontier_BattlePyramid*/**"],
+      "scenarios": ["pyramid-hard-brandon", "pyramid-normal-brandon"]
     },
     {
       "name": "uncovered named flows",

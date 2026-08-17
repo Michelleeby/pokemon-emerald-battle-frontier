@@ -15,11 +15,20 @@ import time
 from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
+from e2e.arena_hard_greta import run as run_arena_hard_greta
+from e2e.arena_normal_greta import run as run_arena_normal_greta
+from e2e.dome_hard_tucker import run as run_dome_hard_tucker
+from e2e.dome_normal_tucker import run as run_dome_normal_tucker
 from e2e.factory_hard_noland import run as run_factory_hard_noland
+from e2e.factory_hard_setup import run as run_factory_hard_setup
 from e2e.factory_normal_noland import run as run_factory_normal_noland
-from e2e.tower_lobby_cancel import run as run_tower_lobby_cancel
+from e2e.palace_hard_spenser import run as run_palace_hard_spenser
+from e2e.palace_normal_spenser import run as run_palace_normal_spenser
+from e2e.pike_hard_lucy import run as run_pike_hard_lucy
+from e2e.pike_normal_lucy import run as run_pike_normal_lucy
+from e2e.pyramid_hard_brandon import run as run_pyramid_hard_brandon
+from e2e.pyramid_normal_brandon import run as run_pyramid_normal_brandon
 from e2e.tower_hard_anabel import run as run_tower_hard_anabel
-from e2e.tower_save_restart import run as run_tower_save_restart
 from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 
 
@@ -35,12 +44,21 @@ RNG_SEEDS = {"primary": "0x1234", "secondary": "0x5678"}
 ALLOWED_DIAGNOSTIC_NAMES = {"report.json", "input-trace.json"}
 ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
+    "arena-hard-greta": run_arena_hard_greta,
+    "arena-normal-greta": run_arena_normal_greta,
+    "dome-hard-tucker": run_dome_hard_tucker,
+    "dome-normal-tucker": run_dome_normal_tucker,
     "factory-hard-noland": run_factory_hard_noland,
+    "factory-hard-setup": run_factory_hard_setup,
     "factory-normal-noland": run_factory_normal_noland,
+    "palace-hard-spenser": run_palace_hard_spenser,
+    "palace-normal-spenser": run_palace_normal_spenser,
+    "pike-hard-lucy": run_pike_hard_lucy,
+    "pike-normal-lucy": run_pike_normal_lucy,
+    "pyramid-hard-brandon": run_pyramid_hard_brandon,
+    "pyramid-normal-brandon": run_pyramid_normal_brandon,
     "tower-hard-anabel": run_tower_hard_anabel,
-    "tower-lobby-cancel": run_tower_lobby_cancel,
     "tower-normal-anabel": run_tower_normal_anabel,
-    "tower-save-restart": run_tower_save_restart,
 }
 
 
@@ -92,7 +110,7 @@ def base_report(name: str) -> dict[str, object]:
         "rng_seed": RNG_SEEDS,
         "rom_sha256": file_sha256(RELEASE_ROM),
         "gameplay_rom_sha256": file_sha256(GAMEPLAY_ROM),
-        "battle_policy": "Tower and Factory outcomes are assisted in E2E gameplay builds",
+        "battle_policy": "Tower, Factory, Dome, Arena, Palace, Pike, and Pyramid outcomes are assisted in E2E gameplay builds",
         "rtc_value": None,
         "scenario": name,
         "scenario_version": SCENARIO_VERSION,

@@ -3,6 +3,10 @@
 
 #include "constants/battle_pyramid.h"
 
+#ifdef E2E_TESTING
+#define E2E_PYRAMID_ROUTE_TAG 0xE2E2
+#endif
+
 void CallBattlePyramidFunction(void);
 u16 LocalIdToPyramidTrainerId(u8 localId);
 bool8 GetBattlePyramidTrainerFlag(u8 eventId);

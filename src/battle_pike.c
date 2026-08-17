@@ -1377,6 +1377,15 @@ static void SetHintedRoom(void)
     u8 *roomCandidates;
 
     gSpecialVar_Result = FALSE;
+#ifdef E2E_TESTING
+    if (gSaveBlock2Ptr->frontier.selectedPartyMons[3] == 0xE2E1)
+    {
+        gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0;
+        gSaveBlock2Ptr->frontier.pikeHintedRoomIndex = PIKE_ROOM_CENTER;
+        gSaveBlock2Ptr->frontier.pikeHintedRoomType = PIKE_ROOM_SINGLE_BATTLE;
+        return;
+    }
+#endif
     if (GetPikeQueenFightType(1))
     {
         gSpecialVar_Result = TRUE;

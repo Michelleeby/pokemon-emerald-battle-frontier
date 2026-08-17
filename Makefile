@@ -211,7 +211,7 @@ MAKEFLAGS += --no-print-directory
 .DELETE_ON_ERROR:
 
 RULES_NO_SCAN += libagbsyscall clean clean-assets clean-test tidy tidymodern tidynonmodern generated clean-generated list-tests
-.PHONY: all rom modern compare retroid clean-e2e check check-all list-tests test-roms e2e e2e-runner check-e2e-runner e2e-fixture-rom
+.PHONY: all rom modern compare retroid clean-e2e check check-all list-tests test-roms e2e e2e-runner check-e2e-runner e2e-fixture-rom e2e-gameplay-rom
 .PHONY: $(RULES_NO_SCAN)
 
 infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))

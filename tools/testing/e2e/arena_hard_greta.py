@@ -1,0 +1,9 @@
+"""Hard Battle Arena Greta boundary scenario."""
+
+from pathlib import Path
+
+from .arena_greta import HARD_GRETA, run_greta_route
+
+
+def run(artifact_dir: Path) -> None:
+    run_greta_route(artifact_dir, HARD_GRETA)

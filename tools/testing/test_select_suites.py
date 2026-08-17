@@ -133,23 +133,62 @@ class SelectorTests(unittest.TestCase):
         with self.assertRaises(ManifestError):
             validate_manifest(manifest)
 
-    def test_tower_change_selects_all_tower_e2e_scenarios(self) -> None:
+    def test_tower_change_selects_all_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(["src/battle_tower.c"], self.e2e_manifest)
         self.assertEqual(
             result["scenarios"],
             [
+                "arena-hard-greta",
+                "arena-normal-greta",
+                "dome-hard-tucker",
+                "dome-normal-tucker",
                 "factory-hard-noland",
+                "factory-hard-setup",
                 "factory-normal-noland",
+                "palace-hard-spenser",
+                "palace-normal-spenser",
+                "pike-hard-lucy",
+                "pike-normal-lucy",
+                "pyramid-hard-brandon",
+                "pyramid-normal-brandon",
                 "tower-hard-anabel",
-                "tower-lobby-cancel",
                 "tower-normal-anabel",
-                "tower-save-restart",
             ],
         )
 
-    def test_save_change_selects_only_restart_scenario(self) -> None:
+    def test_arena_change_selects_paired_greta_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_arena.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["arena-hard-greta", "arena-normal-greta"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["arena-hard-greta", "arena-normal-greta"]},
+        )
+
+    def test_dome_change_selects_paired_tucker_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_dome.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["dome-hard-tucker", "dome-normal-tucker"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["dome-hard-tucker", "dome-normal-tucker"]},
+        )
+
+    def test_save_change_conservatively_selects_all_scenarios(self) -> None:
         result = select_e2e_scenarios(["src/save.c"], self.e2e_manifest)
-        self.assertEqual(result["scenarios"], ["tower-save-restart"])
+        self.assertEqual(result["scenarios"], self.e2e_manifest["scenarios"])
+
+    def test_palace_change_selects_paired_spenser_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_palace.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["palace-hard-spenser", "palace-normal-spenser"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["palace-hard-spenser", "palace-normal-spenser"]},
+        )
 
     def test_factory_change_selects_factory_noland_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(
@@ -157,11 +196,21 @@ class SelectorTests(unittest.TestCase):
         )
         self.assertEqual(
             result["scenarios"],
-            ["factory-hard-noland", "factory-normal-noland"],
+            ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"],
         )
         self.assertEqual(
             result["matrix"],
-            {"scenario": ["factory-hard-noland", "factory-normal-noland"]},
+            {"scenario": ["factory-hard-noland", "factory-hard-setup", "factory-normal-noland"]},
+        )
+
+    def test_pike_change_selects_paired_lucy_scenarios(self) -> None:
+        result = select_e2e_scenarios(["src/battle_pike.c"], self.e2e_manifest)
+        self.assertEqual(
+            result["scenarios"], ["pike-hard-lucy", "pike-normal-lucy"]
+        )
+        self.assertEqual(
+            result["matrix"],
+            {"scenario": ["pike-hard-lucy", "pike-normal-lucy"]},
         )
 
     def test_documentation_change_selects_no_e2e_scenario(self) -> None:

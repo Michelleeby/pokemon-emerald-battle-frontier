@@ -28,17 +28,19 @@ parties, and seeds both game RNGs explicitly.
 | Tutorial start, first action, double-tap skip, and completion | `new-game-tutorial` | Follow-up: complete onboarding, name/avatar UI, ferry transition, and all checkpoints require frame-driven tests. |
 | Party plus new Frontier fields preserved across an in-memory save-block copy | `save-load` | Follow-up: flash write/checksum/load, corruption recovery, and facility restart require flash-backed fixtures. |
 | Shared controller command encoding and first-battle setup | `battle-shared` | Follow-up: recorded, Safari, link, and full facility callbacks require battle-state fixtures. |
-| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, pause/resume state, input-driven Singles lobby cancellation, a flash-backed Singles save/restart after one assisted facility outcome, and normal 33→35 and hard 19→21 Anabel boundary routes with reciprocal streak isolation | `frontier-tower`; `tower-lobby-cancel`, `tower-save-restart`, `tower-normal-anabel`, `tower-hard-anabel` E2E | Follow-up: input-driven retirement and multis partner interaction require additional frame-driven script coverage. |
-| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation | `frontier-factory` | Follow-up: lobby cancel, rental-selection and swap-screen input, retirement/disqualification scripts, seven actual battles, room warps, Noland battle presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation | `frontier-dome` | Follow-up: lobby and tournament-tree cancel input, complete rendered previews, four actual battles, transition callbacks, room warps, Tucker presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger | `frontier-arena` | Follow-up: lobby cancel input, three actual turns and seven actual battles, rendered Mind/Skill/Body judgment presentation, transition callbacks, room warps, Greta presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback | `frontier-palace` | Follow-up: lobby cancel input, seven actual battles, rendered low-HP flavor text, transition callbacks, room warps, Spenser presentation, doubles target preferences, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation | `frontier-pike` | Follow-up: input-driven path and lobby cancellation, complete fourteen-room traversal, actual trainer/wild battles, status-flash and NPC presentation, transition callbacks, room warps, Lucy presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
-| Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Follow-up: input-driven lobby cancellation, complete seven-floor traversal, rendered hints and light effects, actual item pickup and trainer/wild battles, frame-driven escape/defeat and summit scripts, map warps, Brandon presentation, and flash-backed restart require a host-driven frame/script harness and initialized flash fixture. |
+| Battle Tower normal/hard initialization, Level 50/open levels, singles/doubles flags and parties, trainer-pool round boundaries, Anabel boundaries, win progression, mode isolation, result cleanup, disqualification, and pause/resume state; paired normal 33→35 and hard 19→21 Anabel boundaries with their expected ordinary trainer pools through production scripts | `frontier-tower`; `tower-normal-anabel`, `tower-hard-anabel` E2E | The paired E2E routes own the mode boundary difference; unchanged vanilla plumbing remains outside E2E scope. |
+| Battle Factory normal/hard initialization, Level 50/open rental ranges, first/middle/seventh trainer pools, rental rank and swap gating, opponent exclusion, opponent rental metadata, party reconstruction, Return replacement, Noland boundaries, hard-mode IV/AI behavior, mode-isolated progression, lost-state cleanup, battle flags, and pause preparation; paired normal 19→21 and hard 12→14 Noland boundaries plus separate hard setup coverage through production scripts | `frontier-factory`; `factory-normal-noland`, `factory-hard-noland`, `factory-hard-setup` E2E | The targeted E2E routes own the modified hard-mode behavior; unchanged vanilla plumbing remains outside E2E scope. |
+| Battle Dome normal/hard initialization, mode-specific streak/record/championship data, first-through-final bracket generation and advancement, normal/hard trainer pools, player seeding, opponent preview and party levels, Tucker boundaries, singles/doubles flags, win/loss/retirement resolution, lost-state cleanup, and pause preparation; paired normal championship 4→5 and hard championship 2→3 Tucker boundaries with their expected ordinary trainer pools through production scripts | `frontier-dome`; `dome-normal-tucker`, `dome-hard-tucker` E2E | The paired E2E routes own the mode boundary difference; unchanged tournament plumbing remains outside E2E scope. |
+| Battle Arena normal/hard initialization, mode-isolated streak progression, first/middle/seventh and hardest trainer pools, Level 50/open-level parties, Arena battle flags, normal/hard Greta boundaries, lost/retirement cleanup, pause preparation, Mind and Skill point accounting, Body HP snapshots, judgment ties and forced results, and the production three-turn judgment trigger; paired normal 26→28 and hard 12→14 Greta boundaries with their expected ordinary trainer pools through production scripts | `frontier-arena`; `arena-normal-greta`, `arena-hard-greta` E2E | The paired E2E routes own the mode boundary difference; unchanged Arena battle plumbing is out of scope. |
+| Battle Palace normal/hard initialization, mode-isolated streak and record progression, shared first/middle/seventh and hardest trainer selection, Level 50 singles and open-level doubles parties and flags, normal/hard Spenser boundaries, lost/retirement cleanup, pause preparation, and real nature/HP/PP-driven move-group selection and fallback; paired normal 19→21 and hard 12→14 Spenser boundaries with their expected ordinary trainer pools through production scripts | `frontier-palace`; `palace-normal-spenser`, `palace-hard-spenser` E2E | The paired E2E routes own the mode boundary difference; unchanged Palace battle plumbing remains outside E2E scope. |
+| Battle Pike normal/hard initialization and mode isolation; hinted, constrained, healing-disabled, status, wild, single, hard, double, Brain, and final-room behavior; real random status infliction and reporting; partial/full healing and held-item restoration; wild table tiers, moves, Level 50/open scaling, and Keen Eye suppression; trainer pools, parties, and battle flags; normal/hard Lucy boundaries; streak/record/total progression; lost/retirement cleanup; and pause preparation; paired normal 24→28 and hard 10→14 Lucy boundaries with their expected ordinary trainer pools through production scripts | `frontier-pike`; `pike-normal-lucy`, `pike-hard-lucy` E2E | The paired E2E routes own the mode boundary difference; unrelated random Pike rooms remain outside E2E scope. |
+| Battle Pyramid normal/hard initialization and mode isolation; deterministic floor layout and object generation; trainer and item events; shared trainer-pool round boundaries; Level 50 and open-level wild tiers, moves, and level scaling; high-streak wild IV scaling; Pyramid battle flags and parties; party restoration after move mutation; light-radius progression and clamp; normal/hard Brandon boundaries; streak/record progression; escape-preserving and defeat cleanup state transitions; pause preparation; summit boundary; and floor/top location detection | `frontier-pyramid` | Paired normal/hard Brandon E2Es cover the final-floor trainer pools and summit boundary through production scripts. Unchanged full randomized-floor traversal is out of scope. |
 
-The remaining follow-ups require frame-driven, presentation, or initialized
-flash fixtures beyond the current C-level state suites. Replace each follow-up
-with named coverage when the corresponding harness exists.
+The remaining E2E follow-ups are limited to behavior changed by hard mode:
+hardest trainer-pool selection and shortened Frontier Brain boundaries. The
+Factory also owns the only modified rental-IV path. Unchanged vanilla facility
+plumbing, presentation, cancellation, traversal, and save/restart behavior are
+not E2E goals for this project.
 
 ## End-to-end harness development
 
@@ -58,38 +60,59 @@ make e2e-runner
 Run named gameplay scenarios through the same headless session path with:
 
 ```sh
-make e2e TESTS="tower-lobby-cancel tower-save-restart tower-normal-anabel tower-hard-anabel"
+make e2e TESTS="tower-normal-anabel tower-hard-anabel factory-normal-noland factory-hard-noland factory-hard-setup arena-normal-greta arena-hard-greta dome-normal-tucker dome-hard-tucker palace-normal-spenser palace-hard-spenser pike-normal-lucy pike-hard-lucy"
 ```
 
 Omitting `TESTS` runs every registered E2E scenario. Unknown or duplicate
-scenario names fail before execution. `tower-lobby-cancel` uses a dedicated
-`E2E_FIXTURE` ROM to create a checksummed flash save after production map
-initialization, destroys that emulator core, and starts the normal-entry
-E2E gameplay ROM with the generated save. It selects Continue through real input,
-interacts with the Singles attendant, cancels the Challenge / Info / Cancel
-menu with B, and asserts the map, player control, and challenge state.
-`tower-save-restart` enters a Singles Lv. 50 challenge, receives one assisted
-facility outcome, selects Rest, and exercises the production Frontier flash save. It
-destroys and recreates the emulator core with only the scenario-local save,
-selects Continue through real input, verifies the paused challenge data, and
-asserts that the Tower resumes the saved challenge and that exactly one
-assisted outcome occurred. `tower-normal-anabel` seeds the preserved vanilla
-boundary at 33 wins, and `tower-hard-anabel` seeds the shortened hard boundary
-at 19. Each enters through the real lobby and party UI, wins one ordinary
-battle followed by Anabel, verifies the expected 35 or 21 final streak in the
-correct save block, and requires the other mode's streak to remain unchanged.
+scenario names fail before execution. The scenarios intentionally cover only
+behavior changed by hard mode, not unchanged facility plumbing.
+The paired Tower scenarios share one configured route. `tower-normal-anabel`
+seeds streak 33 and verifies the normal 140–179 ordinary pool before Anabel at
+35; `tower-hard-anabel` seeds streak 19 and verifies the hardest 200–299 pool
+before Anabel at 21. Both start from a seeded active challenge, use exactly two
+assisted outcomes, and verify that the other mode's streak remains unchanged.
+The paired Factory scenarios share one configured route. They seed active
+challenges at normal streak 19 and hard streak 12 in the production pre-battle
+room, verify the 100–139 or 200–299 ordinary pool, then defeat Noland and finish
+at streak 21 or 14. A narrow E2E-only seam selects the first three valid
+generated rentals so host input remains reserved for production dialogue.
+`factory-hard-setup` enters a fresh hard Factory challenge only far enough to
+verify 31-IV rentals and an ordinary opponent from the hardest trainer pool;
+it does not replay the vanilla seven-battle route.
+The paired Arena scenarios share one configured route. `arena-normal-greta`
+seeds streak 26 and verifies the normal 120–159 ordinary pool before Greta at
+28; `arena-hard-greta` seeds streak 12 and verifies the hard 200–299 pool
+before Greta at 14. Both start from a seeded active challenge, assist exactly
+the ordinary battle and Greta, and verify mode-isolated streak progression.
+The paired Palace scenarios share one configured route. `palace-normal-spenser`
+seeds streak 19 and verifies the normal 100–139 ordinary pool before Spenser at
+21; `palace-hard-spenser` seeds streak 12 and verifies the hard 200–299 pool
+before Spenser at 14. Both start from a seeded active challenge, assist exactly
+the ordinary battle and Spenser, and verify mode-isolated streak progression.
+The paired Pike scenarios share one configured route. `pike-normal-lucy` seeds
+streak 24 and verifies the normal 80–119 ordinary pool before Lucy at 28;
+`pike-hard-lucy` seeds streak 10 and verifies the hard 200–299 pool before Lucy
+at 14. A narrow E2E-only seam selects the first single-battle room; Lucy room
+detection, both battles, room progression, dialogue, final-room handling, and
+lobby completion remain production-driven. Both routes finish at room counter
+14, assist exactly the ordinary battle and Lucy, and verify mode isolation.
+The paired Dome scenarios share one configured route. `dome-normal-tucker`
+seeds championship streak 4 and verifies ordinary tournament opponents from
+the combined normal 140–199 bracket pools before Tucker; `dome-hard-tucker`
+seeds championship streak 2 and verifies the hard 200–299 pool. Both use the
+production-generated bracket, assist exactly four outcomes, finish against
+Tucker, and verify mode-isolated championship progression.
 
 The assistance seam exists only in the E2E gameplay build and is restricted to
-Tower and Factory special trainer battles. Production still constructs the
+Tower, Factory, Dome, Arena, Palace, and Pike special trainer battles. Production still constructs the
 facility opponent and enters the ordinary facility end-of-battle handling, so
 the scenarios cover the surrounding scripts, state progression, warps,
 rewards, and saves without repeatedly exercising vanilla battle strategy. The
 release ROM contains neither the assisted task nor its outcome counter.
 
 CI runs each E2E scenario in a separate matrix job with a 30-minute job
-timeout. The seven-win route also has its own 108,000-frame bound. Run long
-scenarios separately when a local command host imposes a shorter aggregate
-wall-clock limit.
+timeout. Run long scenarios separately when a local command host imposes a
+shorter aggregate wall-clock limit.
 
 Run its host unit tests and live mGBA integration diagnostic with:
 
@@ -114,9 +137,13 @@ artifacts must not include ROM, ELF, map, symbol, mGBA binary, or shared
 build-bundle output.
 
 `tests/e2e_manifest.json` owns E2E selection independently from the C-suite
-manifest. Tower changes select all three Tower scenarios, save-system changes
-select `tower-save-restart`, E2E infrastructure changes select every scenario,
-and documentation-only or explicitly uncovered facility changes select none.
+manifest. Tower changes select every scenario because the assisted gameplay
+seam is implemented in the shared special-battle dispatcher, Factory changes
+select all three targeted Factory scenarios, Dome changes select both Tucker scenarios,
+Arena changes select both Greta scenarios,
+Palace changes select both Spenser scenarios,
+E2E infrastructure changes select every scenario, and
+documentation-only or explicitly uncovered facility changes select none.
 Unknown relevant gameplay paths conservatively select every E2E scenario.
 
 CI runs selected scenarios in a `fail-fast: false` matrix. Each matrix job
@@ -127,15 +154,16 @@ the documentation-only path. The stable `Tests / required` job requires either
 the complete selected E2E matrix or the no-scenarios job to pass, as well as
 successful artifact cleanup.
 
-Every scenario report records the commit SHA, release ROM SHA-256, pinned mGBA
-revision, scenario and fixture versions, fixed RNG seeds, RTC policy, driver
-response timeout, bounded-frame-wait policy, duration, status, and failed
-predicate. Failures are classified as assertion failures, driver timeouts, or
-runner crashes. The runner attempts a failure screenshot while the emulator is
-still responsive. Only JSON, logs, PNGs, and scenario-local saves are copied to
-the CI upload staging directory; ROM, ELF, map, symbol, and executable output
-is excluded. Workflow cleanup deletes both transient gameplay bundles and E2E
-diagnostics after matrix completion.
+Every scenario report records the commit SHA, release and gameplay ROM
+SHA-256 values, assisted-outcome policy, pinned mGBA revision, scenario and
+fixture versions, fixed RNG seeds, RTC policy, driver response timeout,
+bounded-frame-wait policy, duration, status, and failed predicate. Failures are
+classified as assertion failures, driver timeouts, or runner crashes. The
+runner attempts a failure screenshot while the emulator is still responsive.
+Only JSON, logs, PNGs, and scenario-local saves are copied to the CI upload
+staging directory; ROM, ELF, map, symbol, and executable output is excluded.
+Workflow cleanup deletes both transient gameplay bundles and E2E diagnostics
+after matrix completion.
 
 ## Determinism and diagnostics
 

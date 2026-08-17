@@ -8,6 +8,8 @@
 #include "frontier_util.h"
 #include "battle_tower.h"
 #include "random.h"
+#include "script.h"
+#include "task.h"
 #include "constants/battle_ai.h"
 #include "constants/battle_factory.h"
 #include "constants/battle_frontier.h"
@@ -20,6 +22,14 @@
 #include "constants/items.h"
 
 static bool8 sPerformedRentalSwap;
+
+#ifdef E2E_TESTING
+static void Task_E2EFinishFactoryRentalSelection(u8 taskId)
+{
+    DestroyTask(taskId);
+    ScriptContext_Enable();
+}
+#endif
 
 static void InitFactoryChallenge(void);
 static void GetBattleFactoryData(void);
@@ -312,6 +322,46 @@ static void FactoryDummy2(void)
 
 static void SelectInitialRentalMons(void)
 {
+#ifdef E2E_TESTING
+    if (VarGet(VAR_FRONTIER_FACILITY) == FRONTIER_FACILITY_FACTORY
+     && gSaveBlock2Ptr->frontier.challengeStatus == CHALLENGE_STATUS_SAVING
+     && gSaveBlock2Ptr->frontier.lvlMode == FRONTIER_LVL_50
+     && VarGet(VAR_FRONTIER_BATTLE_MODE) == FRONTIER_MODE_SINGLES
+     && gMapHeader.mapLayoutId == LAYOUT_BATTLE_FRONTIER_BATTLE_FACTORY_PRE_BATTLE_ROOM
+     && gSaveBlock2Ptr->frontier.selectedPartyMons[3] == 0xFAC1
+     && gSaveBlock2Ptr->frontier.rentalMons[0].monId != 0xFFFF
+     && gSaveBlock2Ptr->frontier.rentalMons[1].monId != 0xFFFF
+     && gSaveBlock2Ptr->frontier.rentalMons[2].monId != 0xFFFF)
+    {
+        u8 i;
+        u8 challengeNum = gSaveBlock2Ptr->frontier.frontierChallengeMode == FRONTIER_CHALLENGE_HARD
+                        ? 7 : *GetFactoryWinStreakPtr(FRONTIER_MODE_SINGLES, FRONTIER_LVL_50) / FRONTIER_STAGES_PER_CHALLENGE;
+        u8 rentalRank = GetNumPastRentalsRank(FRONTIER_MODE_SINGLES, FRONTIER_LVL_50);
+
+        gFacilityTrainerMons = gBattleFrontierMons;
+        for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
+        {
+            u16 monId = gSaveBlock2Ptr->frontier.rentalMons[i].monId;
+            u8 ivs = GetFactoryMonFixedIV(challengeNum + (i < rentalRank), FALSE);
+            CreateMonWithEVSpreadNatureOTID(&gPlayerParty[i],
+                                            gFacilityTrainerMons[monId].species,
+                                            FRONTIER_MAX_LEVEL_50,
+                                            gFacilityTrainerMons[monId].nature,
+                                            ivs,
+                                            gFacilityTrainerMons[monId].evSpread,
+                                            T1_READ_32(gSaveBlock2Ptr->playerTrainerId));
+            gSaveBlock2Ptr->frontier.rentalMons[i].personality = GetMonData(&gPlayerParty[i], MON_DATA_PERSONALITY);
+            gSaveBlock2Ptr->frontier.rentalMons[i].ivs = ivs;
+            gSaveBlock2Ptr->frontier.rentalMons[i].abilityNum = GetMonData(&gPlayerParty[i], MON_DATA_ABILITY_NUM);
+        }
+        gSpecialVar_0x8005 = 1;
+        SetPlayerAndOpponentParties();
+        CalculatePlayerPartyCount();
+        gSpecialVar_Result = FALSE;
+        CreateTask(Task_E2EFinishFactoryRentalSelection, 1);
+        return;
+    }
+#endif
     ZeroPlayerPartyMons();
     DoBattleFactorySelectScreen();
 }

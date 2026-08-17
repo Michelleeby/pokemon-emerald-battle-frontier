@@ -557,6 +557,12 @@ bool8 StandardWildEncounter(u16 curMetatileBehavior, u16 prevMetatileBehavior)
     if (sWildEncountersDisabled == TRUE)
         return FALSE;
 
+#ifdef E2E_TESTING
+    if (gMapHeader.mapLayoutId == LAYOUT_BATTLE_FRONTIER_BATTLE_PYRAMID_FLOOR
+     && gSaveBlock2Ptr->frontier.selectedPartyMons[3] == E2E_PYRAMID_ROUTE_TAG)
+        return FALSE;
+#endif
+
     headerId = GetCurrentMapWildMonHeaderId();
     if (headerId == HEADER_NONE)
     {

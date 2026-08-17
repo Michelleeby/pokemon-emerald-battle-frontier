@@ -1588,6 +1588,22 @@ void GenerateBattlePyramidFloorLayout(u16 *backupMapData, bool8 setPlayerPositio
             layoutMap += mapLayout->width;
         }
     }
+#ifdef E2E_TESTING
+    if (gSaveBlock2Ptr->frontier.selectedPartyMons[3] == E2E_PYRAMID_ROUTE_TAG)
+    {
+        u16 playerX = gSaveBlock1Ptr->pos.x;
+        u16 playerY = gSaveBlock1Ptr->pos.y;
+        u16 *playerTile = &backupMapData[(playerY + MAP_OFFSET) * gBackupMapLayout.width
+                                      + playerX + MAP_OFFSET];
+
+        *playerTile = METATILE_BattlePyramid_Floor;
+        playerTile[-gBackupMapLayout.width] = METATILE_BattlePyramid_Floor;
+        playerTile[1] = METATILE_BattlePyramid_Exit;
+        gSaveBlock1Ptr->objectEventTemplates[0].x = playerX;
+        gSaveBlock1Ptr->objectEventTemplates[0].y = playerY - 1;
+        gSaveBlock1Ptr->objectEventTemplates[0].movementType = MOVEMENT_TYPE_FACE_DOWN;
+    }
+#endif
     RunOnLoadMapScript();
     Free(floorLayoutOffsets);
 }

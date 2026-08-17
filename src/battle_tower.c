@@ -2098,6 +2098,10 @@ void DoSpecialTrainerBattle(void)
             gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
         if (gTrainerBattleOpponent_A == TRAINER_FRONTIER_BRAIN)
             FillFrontierTrainerParty(DOME_BATTLE_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
         CreateTask(Task_StartBattleAfterTransition, 1);
         CreateTask_PlayMapChosenOrBattleBGM(0);
         BattleTransition_StartOnField(GetSpecialBattleTransition(B_TRANSITION_GROUP_B_DOME));
@@ -2110,6 +2114,10 @@ void DoSpecialTrainerBattle(void)
             FillFrontierTrainerParty(FRONTIER_PARTY_SIZE);
         else
             FillTentTrainerParty(FRONTIER_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif
@@ -2123,6 +2131,10 @@ void DoSpecialTrainerBattle(void)
             FillFrontierTrainerParty(FRONTIER_PARTY_SIZE);
         else
             FillTentTrainerParty(FRONTIER_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif
@@ -2151,6 +2163,10 @@ void DoSpecialTrainerBattle(void)
     case SPECIAL_BATTLE_PIKE_SINGLE:
         gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_BATTLE_TOWER;
         FillFrontierTrainerParty(FRONTIER_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif
@@ -2161,6 +2177,10 @@ void DoSpecialTrainerBattle(void)
     case SPECIAL_BATTLE_PYRAMID:
         gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_PYRAMID;
         FillFrontierTrainerParty(FRONTIER_PARTY_SIZE);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif
@@ -2171,6 +2191,10 @@ void DoSpecialTrainerBattle(void)
     case SPECIAL_BATTLE_PIKE_DOUBLE:
         gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_BATTLE_TOWER | BATTLE_TYPE_DOUBLE | BATTLE_TYPE_TWO_OPPONENTS;
         FillFrontierTrainersParties(1);
+#ifdef E2E_TESTING
+        CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+        break;
+#endif
 #ifdef TESTING
         return;
 #endif

@@ -18,23 +18,32 @@ class E2ESelectionTests(unittest.TestCase):
         self.assertEqual(
             selected_scenarios([]),
             [
+                "arena-hard-greta",
+                "arena-normal-greta",
+                "dome-hard-tucker",
+                "dome-normal-tucker",
                 "factory-hard-noland",
+                "factory-hard-setup",
                 "factory-normal-noland",
+                "palace-hard-spenser",
+                "palace-normal-spenser",
+                "pike-hard-lucy",
+                "pike-normal-lucy",
+                "pyramid-hard-brandon",
+                "pyramid-normal-brandon",
                 "tower-hard-anabel",
-                "tower-lobby-cancel",
                 "tower-normal-anabel",
-                "tower-save-restart",
             ],
         )
 
     def test_named_selection_is_preserved(self) -> None:
         self.assertEqual(
-            selected_scenarios(["tower-lobby-cancel"]), ["tower-lobby-cancel"]
+            selected_scenarios(["tower-hard-anabel"]), ["tower-hard-anabel"]
         )
 
-    def test_restart_scenario_can_be_selected(self) -> None:
+    def test_factory_setup_scenario_can_be_selected(self) -> None:
         self.assertEqual(
-            selected_scenarios(["tower-save-restart"]), ["tower-save-restart"]
+            selected_scenarios(["factory-hard-setup"]), ["factory-hard-setup"]
         )
 
     def test_unknown_scenario_is_rejected(self) -> None:
@@ -43,7 +52,7 @@ class E2ESelectionTests(unittest.TestCase):
 
     def test_duplicate_scenario_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "duplicate E2E scenario"):
-            selected_scenarios(["tower-lobby-cancel", "tower-lobby-cancel"])
+            selected_scenarios(["tower-hard-anabel", "tower-hard-anabel"])
 
     def test_failure_status_distinguishes_timeout_and_runner_crash(self) -> None:
         self.assertEqual(failure_status(DriverTimeout("late")), "timed-out")
@@ -86,13 +95,13 @@ class E2ESelectionTests(unittest.TestCase):
                 mock.patch.object(run_e2e, "UPLOAD_ROOT", root / "upload"),
                 mock.patch.object(run_e2e, "RELEASE_ROM", rom),
                 mock.patch.object(run_e2e, "GAMEPLAY_ROM", rom),
-                mock.patch.dict(run_e2e.SCENARIOS, {"tower-lobby-cancel": fail}, clear=True),
+                mock.patch.dict(run_e2e.SCENARIOS, {"tower-hard-anabel": fail}, clear=True),
                 mock.patch.object(run_e2e, "commit_sha", return_value="abc123"),
             ):
-                self.assertEqual(run_e2e.main(["tower-lobby-cancel"]), 1)
+                self.assertEqual(run_e2e.main(["tower-hard-anabel"]), 1)
 
             report = json.loads(
-                (root / "artifacts" / "tower-lobby-cancel" / "report.json").read_text()
+                (root / "artifacts" / "tower-hard-anabel" / "report.json").read_text()
             )
             self.assertEqual(report["commit_sha"], "abc123")
             self.assertEqual(report["failed_predicate"], "expected field control")
@@ -130,18 +139,18 @@ class E2ESelectionTests(unittest.TestCase):
                     mock.patch.object(run_e2e, "GAMEPLAY_ROM", rom),
                     mock.patch.dict(
                         run_e2e.SCENARIOS,
-                        {"tower-lobby-cancel": fail},
+                        {"tower-hard-anabel": fail},
                         clear=True,
                     ),
                     mock.patch.object(run_e2e, "commit_sha", return_value="abc123"),
                 ):
-                    self.assertEqual(run_e2e.main(["tower-lobby-cancel"]), 1)
+                    self.assertEqual(run_e2e.main(["tower-hard-anabel"]), 1)
 
                 report = json.loads(
                     (
                         root
                         / "artifacts"
-                        / "tower-lobby-cancel"
+                        / "tower-hard-anabel"
                         / "report.json"
                     ).read_text()
                 )
