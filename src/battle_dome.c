@@ -38,6 +38,7 @@
 #include "constants/abilities.h"
 #include "constants/songs.h"
 #include "constants/battle_frontier.h"
+#include "constants/items.h"
 #include "constants/rgb.h"
 
 #define TAG_BUTTONS 0
@@ -2643,8 +2644,19 @@ static void CreateDomeOpponentMon(u8 monPartyId, u16 tournamentTrainerId, u8 tou
     }
 
     SetMonData(&gEnemyParty[monPartyId], MON_DATA_FRIENDSHIP, &friendship);
-    SetMonData(&gEnemyParty[monPartyId], MON_DATA_HELD_ITEM,
-               &gBattleFrontierHeldItems[gFacilityTrainerMons[DOME_MONS[tournamentTrainerId][tournamentMonId]].itemTableId]);
+#ifdef CAPTURE_GAMEPLAY
+    if (DOME_TRAINERS[tournamentTrainerId].trainerId == TRAINER_FRONTIER_BRAIN
+        && tournamentMonId == 0)
+    {
+        u16 heldItem = ITEM_NONE;
+        SetMonData(&gEnemyParty[monPartyId], MON_DATA_HELD_ITEM, &heldItem);
+    }
+    else
+#endif
+    {
+        SetMonData(&gEnemyParty[monPartyId], MON_DATA_HELD_ITEM,
+                   &gBattleFrontierHeldItems[gFacilityTrainerMons[DOME_MONS[tournamentTrainerId][tournamentMonId]].itemTableId]);
+    }
 }
 
 static void CreateDomeOpponentMons(u16 tournamentTrainerId)
@@ -2657,7 +2669,11 @@ static void CreateDomeOpponentMons(u16 tournamentTrainerId)
     selectedMonBits = GetDomeTrainerSelectedMons(tournamentTrainerId);
     otId = Random32();
 
-    if (Random() % 10 > 5)
+    if (
+#ifdef CAPTURE_GAMEPLAY
+        DOME_TRAINERS[tournamentTrainerId].trainerId == TRAINER_FRONTIER_BRAIN ||
+#endif
+        Random() % 10 > 5)
     {
         // Create mon if it was selected, starting from front
         for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
@@ -2695,6 +2711,11 @@ static void CreateDomeOpponentMons(u16 tournamentTrainerId)
 int GetDomeTrainerSelectedMons(u16 tournamentTrainerId)
 {
     int selectedMonBits;
+
+#ifdef CAPTURE_GAMEPLAY
+    if (DOME_TRAINERS[tournamentTrainerId].trainerId == TRAINER_FRONTIER_BRAIN)
+        return (1 << 0) | (1 << 1); // Swampert and Salamence.
+#endif
     if (Random() & 1)
     {
         selectedMonBits = SelectOpponentMons_Good(tournamentTrainerId, FALSE);

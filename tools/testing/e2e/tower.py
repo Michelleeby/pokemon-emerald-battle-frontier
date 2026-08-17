@@ -71,12 +71,14 @@ def create_tower_lobby_save(
 ) -> None:
     fixture_symbols = require_symbols(load_symbols(FIXTURE_ELF), "gE2EFixtureStatus")
     with Session(FIXTURE_ROM, artifact_dir / "fixture", save=save) as fixture:
+        keys = []
         if anabel_mode == "normal":
-            fixture.set_keys("START")
+            keys.append("START")
         elif anabel_mode == "hard":
-            fixture.set_keys("SELECT")
+            keys.append("SELECT")
         elif anabel_mode is not None:
             raise ValueError(f"unknown Tower Anabel fixture mode: {anabel_mode}")
+        fixture.set_keys(*keys)
         wait_for_value(
             fixture,
             fixture_symbols["gE2EFixtureStatus"],

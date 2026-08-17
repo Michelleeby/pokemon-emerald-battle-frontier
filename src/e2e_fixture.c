@@ -7,6 +7,7 @@
 #include "new_game.h"
 #include "overworld.h"
 #include "field_player_avatar.h"
+#include "frontier_fixture.h"
 #include "pokemon.h"
 #include "random.h"
 #include "save.h"
@@ -30,35 +31,6 @@
 // Read by the host harness to stop fixture generation deterministically.
 EWRAM_DATA volatile u32 gE2EFixtureStatus = E2E_FIXTURE_RUNNING;
 
-static void E2E_SaveFrontierLobbyFixture(void)
-{
-    PlayerFaceDirection(DIR_NORTH);
-    if (TrySavingData(SAVE_NORMAL) == SAVE_STATUS_OK)
-        gE2EFixtureStatus = E2E_FIXTURE_SAVED;
-    else
-        gE2EFixtureStatus = E2E_FIXTURE_FAILED;
-
-    gFieldCallback = NULL;
-    SetMainCallback2(NULL);
-}
-
-static void E2E_SeedActiveFrontierChallenge(u8 facility, u8 challengeMode)
-{
-    u32 i;
-
-    VarSet(VAR_FRONTIER_FACILITY, facility);
-    VarSet(VAR_FRONTIER_BATTLE_MODE, FRONTIER_MODE_SINGLES);
-    gSaveBlock2Ptr->frontier.challengeStatus = CHALLENGE_STATUS_SAVING;
-    gSaveBlock2Ptr->frontier.lvlMode = FRONTIER_LVL_50;
-    gSaveBlock2Ptr->frontier.challengePaused = FALSE;
-    gSaveBlock2Ptr->frontier.disableRecordBattle = FALSE;
-    gSaveBlock2Ptr->frontier.curChallengeBattleNum = 0;
-    gSaveBlock2Ptr->frontier.frontierChallengeMode = challengeMode;
-    for (i = 0; i < FRONTIER_PARTY_SIZE; i++)
-        gSaveBlock2Ptr->frontier.selectedPartyMons[i] = i + 1;
-    SavePlayerParty();
-}
-
 void E2E_CreateFrontierLobbyFixture(void)
 {
     static const u8 sPlayerName[] = _("E2ETEST");
@@ -66,15 +38,7 @@ void E2E_CreateFrontierLobbyFixture(void)
     s16 x;
     s16 y;
 
-    SetSaveBlocksPointers(0);
-    Save_ResetSaveCounters();
-    Sav2_ClearSetDefault();
-    NewGameInitData();
-
-    StringCopy(gSaveBlock2Ptr->playerName, sPlayerName);
-    SetTrainerId(0x12345678, gSaveBlock2Ptr->playerTrainerId);
-    SeedRng(0x1234);
-    SeedRng2(0x5678);
+    FrontierFixture_Init(sPlayerName, FALSE);
 
     CreateMon(&gPlayerParty[0], SPECIES_TREECKO, 50, 31, TRUE,
               0x11111111, OT_ID_PLAYER_ID, 0);
@@ -122,7 +86,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_PIKE_THREE_PATH_ROOM;
             x = 6;
             y = 10;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_PIKE,
                 JOY_HELD(SELECT_BUTTON) ? FRONTIER_CHALLENGE_HARD
                                         : FRONTIER_CHALLENGE_NORMAL);
@@ -148,7 +112,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             y = 6;
             if (JOY_HELD(SELECT_BUTTON))
             {
-                E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                     FRONTIER_FACILITY_PALACE,
                     FRONTIER_CHALLENGE_HARD);
                 gSaveBlock1Ptr->frontierHardMode.palaceWinStreakActiveFlags =
@@ -158,7 +122,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             }
             else
             {
-                E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                     FRONTIER_FACILITY_PALACE,
                     FRONTIER_CHALLENGE_NORMAL);
                 gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
@@ -175,7 +139,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_PYRAMID_FLOOR;
             x = 1;
             y = 1;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_PYRAMID,
                 JOY_HELD(SELECT_BUTTON) ? FRONTIER_CHALLENGE_HARD
                                         : FRONTIER_CHALLENGE_NORMAL);
@@ -201,7 +165,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_DOME_PRE_BATTLE_ROOM;
             x = 5;
             y = 7;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_DOME,
                 FRONTIER_CHALLENGE_HARD);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
@@ -216,7 +180,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_DOME_PRE_BATTLE_ROOM;
             x = 5;
             y = 7;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_DOME,
                 FRONTIER_CHALLENGE_NORMAL);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
@@ -240,7 +204,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_BATTLE_ROOM;
             x = 7;
             y = 5;
-            E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_ARENA,
                 FRONTIER_CHALLENGE_HARD);
             gSaveBlock1Ptr->frontierHardMode.arenaWinStreakActiveFlags =
@@ -253,7 +217,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_ARENA_BATTLE_ROOM;
             x = 7;
             y = 5;
-            E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_ARENA,
                 FRONTIER_CHALLENGE_NORMAL);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |= STREAK_ARENA_50;
@@ -273,7 +237,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_PRE_BATTLE_ROOM;
             x = 8;
             y = 13;
-            E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_FACTORY,
                 FRONTIER_CHALLENGE_HARD);
             gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0xFAC1;
@@ -287,7 +251,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_FACTORY_PRE_BATTLE_ROOM;
             x = 8;
             y = 13;
-            E2E_SeedActiveFrontierChallenge(
+                FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_FACTORY,
                 FRONTIER_CHALLENGE_NORMAL);
             gSaveBlock2Ptr->frontier.selectedPartyMons[3] = 0xFAC1;
@@ -310,7 +274,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_BATTLE_ROOM;
             x = 5;
             y = 8;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_TOWER,
                 FRONTIER_CHALLENGE_HARD);
             gSaveBlock1Ptr->frontierHardMode.towerWinStreakActiveFlags =
@@ -323,7 +287,7 @@ void E2E_CreateFrontierLobbyFixture(void)
             map = MAP_BATTLE_FRONTIER_BATTLE_TOWER_BATTLE_ROOM;
             x = 5;
             y = 8;
-            E2E_SeedActiveFrontierChallenge(
+            FrontierFixture_SeedActiveChallenge(
                 FRONTIER_FACILITY_TOWER,
                 FRONTIER_CHALLENGE_NORMAL);
             gSaveBlock2Ptr->frontier.winStreakActiveFlags |=
@@ -339,13 +303,7 @@ void E2E_CreateFrontierLobbyFixture(void)
         }
     }
 
-    SetWarpDestination(MAP_GROUP(map), MAP_NUM(map), WARP_ID_NONE, x, y);
-    WarpIntoMap();
-    ResetInitialPlayerAvatarState();
-    ScriptContext_Init();
-    UnlockPlayerFieldControls();
-    gFieldCallback = E2E_SaveFrontierLobbyFixture;
-    SetMainCallback2(CB2_LoadMap);
+    FrontierFixture_LoadMapAndSave(map, x, y, &gE2EFixtureStatus);
 }
 
 #endif

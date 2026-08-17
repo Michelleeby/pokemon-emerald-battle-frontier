@@ -188,15 +188,22 @@ static void CB2_ReturnFromChooseHalfParty(void)
 void ChoosePartyForBattleFrontier(void)
 {
 #ifdef E2E_TESTING
-    if (gSaveBlock2Ptr->frontier.challengeStatus == CHALLENGE_STATUS_SAVING
-        && gSaveBlock2Ptr->frontier.domeLvlMode == gSaveBlock2Ptr->frontier.lvlMode + 1
-        && gSaveBlock2Ptr->frontier.selectedPartyMons[3] == 0x0201)
     {
-        gSelectedOrderFromParty[0] = 1;
-        gSelectedOrderFromParty[1] = 2;
-        gSpecialVar_Result = TRUE;
-        SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
-        return;
+        u8 first = gSaveBlock2Ptr->frontier.selectedPartyMons[3];
+        u8 second = gSaveBlock2Ptr->frontier.selectedPartyMons[3] >> 8;
+
+        if (gSaveBlock2Ptr->frontier.challengeStatus == CHALLENGE_STATUS_SAVING
+            && gSaveBlock2Ptr->frontier.domeLvlMode == gSaveBlock2Ptr->frontier.lvlMode + 1
+            && first >= 1 && first <= FRONTIER_PARTY_SIZE
+            && second >= 1 && second <= FRONTIER_PARTY_SIZE
+            && first != second)
+        {
+            gSelectedOrderFromParty[0] = first;
+            gSelectedOrderFromParty[1] = second;
+            gSpecialVar_Result = TRUE;
+            SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
+            return;
+        }
     }
 #endif
     gMain.savedCallback = CB2_ReturnFromChooseBattleFrontierParty;

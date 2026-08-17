@@ -8,6 +8,8 @@ KEEP_TEMPS  ?= 0
 TESTING     ?= 0
 E2E_TESTING ?= 0
 E2E_FIXTURE ?= 0
+CAPTURE_FIXTURE ?= 0
+CAPTURE_GAMEPLAY ?= 0
 TEST_SUITE  ?=
 TEST_MIN_EWRAM_FREE ?= 8192
 TEST_MIN_IWRAM_STACK ?= 1536
@@ -34,6 +36,24 @@ ifeq ($(E2E_TESTING),1)
   else
     FILE_NAME := build/e2e/gameplay/pokeemerald
   endif
+endif
+
+ifeq ($(CAPTURE_FIXTURE),1)
+  ifeq ($(TESTING),1)
+    $(error TESTING and CAPTURE_FIXTURE are mutually exclusive)
+  endif
+  E2E_TESTING := 1
+  MODERN := 1
+  FILE_NAME := build/capture/fixtures/battle-dome-tucker
+endif
+
+ifeq ($(CAPTURE_GAMEPLAY),1)
+  ifeq ($(TESTING),1)
+    $(error TESTING and CAPTURE_GAMEPLAY are mutually exclusive)
+  endif
+  E2E_TESTING := 1
+  MODERN := 1
+  FILE_NAME := build/capture/gameplay/pokeemerald
 endif
 
 # Builds the ROM using a modern compiler
@@ -115,6 +135,10 @@ ifeq ($(E2E_TESTING),1)
   MODERN_MAP_NAME := $(FILE_NAME).map
   ifeq ($(E2E_FIXTURE),1)
     MODERN_OBJ_DIR_NAME := build/e2e-fixture-obj
+  else ifeq ($(CAPTURE_FIXTURE),1)
+    MODERN_OBJ_DIR_NAME := build/capture-fixture-obj
+  else ifeq ($(CAPTURE_GAMEPLAY),1)
+    MODERN_OBJ_DIR_NAME := build/capture-gameplay-obj
   else
     MODERN_OBJ_DIR_NAME := build/e2e-gameplay-obj
   endif
@@ -162,6 +186,12 @@ ifeq ($(E2E_TESTING),1)
   CPPFLAGS += -DE2E_TESTING=1
   ifeq ($(E2E_FIXTURE),1)
     CPPFLAGS += -DE2E_FIXTURE=1
+  endif
+  ifeq ($(CAPTURE_FIXTURE),1)
+    CPPFLAGS += -DCAPTURE_FIXTURE=1
+  endif
+  ifeq ($(CAPTURE_GAMEPLAY),1)
+    CPPFLAGS += -DCAPTURE_GAMEPLAY=1
   endif
 endif
 ifeq ($(MODERN),0)
@@ -211,7 +241,7 @@ MAKEFLAGS += --no-print-directory
 .DELETE_ON_ERROR:
 
 RULES_NO_SCAN += libagbsyscall clean clean-assets clean-test tidy tidymodern tidynonmodern generated clean-generated list-tests
-.PHONY: all rom modern compare retroid clean-e2e check check-all list-tests test-roms e2e e2e-runner check-e2e-runner e2e-fixture-rom e2e-gameplay-rom
+.PHONY: all rom modern compare retroid clean-e2e check check-all list-tests test-roms e2e e2e-runner check-e2e-runner e2e-fixture-rom e2e-gameplay-rom capture-fixture-rom capture-gameplay-rom
 .PHONY: $(RULES_NO_SCAN)
 
 infoshell = $(foreach line, $(shell $1 | sed "s/ /__SPACE__/g"), $(info $(subst __SPACE__, ,$(line))))
@@ -247,8 +277,14 @@ endif
 # Collect sources
 C_SRCS_IN := $(wildcard $(C_SUBDIR)/*.c $(C_SUBDIR)/*/*.c $(C_SUBDIR)/*/*/*.c)
 C_SRCS := $(foreach src,$(C_SRCS_IN),$(if $(findstring .inc.c,$(src)),,$(src)))
-ifneq ($(E2E_TESTING),1)
+ifneq ($(E2E_FIXTURE),1)
   C_SRCS := $(filter-out src/e2e_fixture.c,$(C_SRCS))
+endif
+ifneq ($(CAPTURE_FIXTURE),1)
+  C_SRCS := $(filter-out src/capture_fixture.c,$(C_SRCS))
+endif
+ifneq ($(E2E_TESTING),1)
+  C_SRCS := $(filter-out src/frontier_fixture.c,$(C_SRCS))
 endif
 C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
 
@@ -504,6 +540,14 @@ e2e-fixture-rom:
 e2e-gameplay-rom:
 	@mkdir -p build/e2e/gameplay
 	$(MAKE) E2E_TESTING=1 rom
+
+capture-fixture-rom:
+	@mkdir -p build/capture/fixtures
+	$(MAKE) CAPTURE_FIXTURE=1 rom
+
+capture-gameplay-rom:
+	@mkdir -p build/capture/gameplay
+	$(MAKE) CAPTURE_GAMEPLAY=1 rom
 
 e2e: rom e2e-runner e2e-fixture-rom e2e-gameplay-rom
 	python3 tools/testing/run_e2e.py $(TESTS)

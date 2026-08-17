@@ -15,6 +15,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +35,11 @@ struct Driver
     const char *savePath;
     bool configInitialized;
     bool romLoaded;
+    bool captureActive;
+    char captureDir[PATH_MAX];
+    uint32_t captureStride;
+    uint32_t captureTick;
+    uint64_t captureIndex;
 };
 
 static void LogToStderr(struct mLogger *logger, int category, enum mLogLevel level,
@@ -57,8 +63,56 @@ static void Reply(const char *status, const char *detail)
     fflush(stdout);
 }
 
+static bool CaptureFrame(struct Driver *driver)
+{
+    char path[PATH_MAX];
+    struct VFile *file;
+    bool success;
+    int length;
+
+    length = snprintf(path, sizeof(path), "%s/frame-%08" PRIu64 ".png",
+                      driver->captureDir, driver->captureIndex);
+    if (length < 0 || (size_t)length >= sizeof(path))
+        return false;
+
+    file = VFileOpen(path, O_CREAT | O_TRUNC | O_WRONLY);
+    if (file == NULL)
+        return false;
+    success = mCoreTakeScreenshotVF(driver->core, file);
+    file->close(file);
+    if (!success)
+        return false;
+
+    driver->captureIndex++;
+    return true;
+}
+
+static bool RunFrame(struct Driver *driver)
+{
+    driver->core->runFrame(driver->core);
+    if (!driver->captureActive)
+        return true;
+
+    driver->captureTick++;
+    if (driver->captureTick < driver->captureStride)
+        return true;
+
+    driver->captureTick = 0;
+    if (CaptureFrame(driver))
+        return true;
+
+    driver->captureActive = false;
+    return false;
+}
+
 static void DestroyCore(struct Driver *driver)
 {
+    driver->captureActive = false;
+    driver->captureDir[0] = '\0';
+    driver->captureStride = 0;
+    driver->captureTick = 0;
+    driver->captureIndex = 0;
+
     if (driver->core == NULL)
         return;
 
@@ -225,7 +279,13 @@ static bool RunCommand(struct Driver *driver, char *line)
             return true;
         }
         for (i = 0; i < first; i++)
-            driver->core->runFrame(driver->core);
+        {
+            if (!RunFrame(driver))
+            {
+                Reply("ERR", "capture-write-failed");
+                return true;
+            }
+        }
         snprintf(detail, sizeof(detail), "frame=%" PRIu32, driver->core->frameCounter(driver->core));
         Reply("OK", detail);
         return true;
@@ -261,10 +321,23 @@ static bool RunCommand(struct Driver *driver, char *line)
         }
         driver->core->setKeys(driver->core, first);
         for (i = 0; i < second; i++)
-            driver->core->runFrame(driver->core);
+        {
+            if (!RunFrame(driver))
+            {
+                driver->core->setKeys(driver->core, 0);
+                Reply("ERR", "capture-write-failed");
+                return true;
+            }
+        }
         driver->core->setKeys(driver->core, 0);
         for (i = 0; i < third; i++)
-            driver->core->runFrame(driver->core);
+        {
+            if (!RunFrame(driver))
+            {
+                Reply("ERR", "capture-write-failed");
+                return true;
+            }
+        }
         snprintf(detail, sizeof(detail), "frame=%" PRIu32, driver->core->frameCounter(driver->core));
         Reply("OK", detail);
         return true;
@@ -314,8 +387,72 @@ static bool RunCommand(struct Driver *driver, char *line)
                 Reply("ERR", detail);
                 return true;
             }
-            driver->core->runFrame(driver->core);
+            if (!RunFrame(driver))
+            {
+                Reply("ERR", "capture-write-failed");
+                return true;
+            }
         }
+    }
+
+    if (strcmp(command, "CAPTURE_START") == 0)
+    {
+        char *directory = strtok_r(NULL, " \t\r\n", &context);
+        char *stride = strtok_r(NULL, " \t\r\n", &context);
+        size_t directoryLength;
+
+        if (directory == NULL || !ParseU32(stride, &first) || first == 0
+         || !RequireEnd(strtok_r(NULL, " \t\r\n", &context)))
+        {
+            Reply("ERR", "usage CAPTURE_START directory stride");
+            return true;
+        }
+        if (driver->captureActive)
+        {
+            Reply("ERR", "capture-already-active");
+            return true;
+        }
+        directoryLength = strlen(directory);
+        if (directoryLength == 0 || directoryLength >= sizeof(driver->captureDir))
+        {
+            Reply("ERR", "capture-directory-invalid");
+            return true;
+        }
+
+        memcpy(driver->captureDir, directory, directoryLength + 1);
+        driver->captureStride = first;
+        driver->captureTick = 0;
+        driver->captureIndex = 0;
+        if (!CaptureFrame(driver))
+        {
+            driver->captureDir[0] = '\0';
+            driver->captureStride = 0;
+            Reply("ERR", "capture-write-failed");
+            return true;
+        }
+        driver->captureActive = true;
+        snprintf(detail, sizeof(detail), "stride=%" PRIu32 " frames=%" PRIu64,
+                 driver->captureStride, driver->captureIndex);
+        Reply("OK", detail);
+        return true;
+    }
+
+    if (strcmp(command, "CAPTURE_STOP") == 0
+     && RequireEnd(strtok_r(NULL, " \t\r\n", &context)))
+    {
+        if (!driver->captureActive)
+        {
+            Reply("ERR", "capture-not-active");
+            return true;
+        }
+        driver->captureActive = false;
+        snprintf(detail, sizeof(detail), "frames=%" PRIu64, driver->captureIndex);
+        driver->captureDir[0] = '\0';
+        driver->captureStride = 0;
+        driver->captureTick = 0;
+        driver->captureIndex = 0;
+        Reply("OK", detail);
+        return true;
     }
 
     if (strcmp(command, "SCREENSHOT") == 0)

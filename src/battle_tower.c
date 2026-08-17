@@ -2099,8 +2099,16 @@ void DoSpecialTrainerBattle(void)
         if (gTrainerBattleOpponent_A == TRAINER_FRONTIER_BRAIN)
             FillFrontierTrainerParty(DOME_BATTLE_PARTY_SIZE);
 #ifdef E2E_TESTING
+#ifdef CAPTURE_GAMEPLAY
+        if (gTrainerBattleOpponent_A != TRAINER_FRONTIER_BRAIN)
+        {
+            CreateTask(Task_E2EAutoWinFacilityBattle, 1);
+            break;
+        }
+#else
         CreateTask(Task_E2EAutoWinFacilityBattle, 1);
         break;
+#endif
 #endif
         CreateTask(Task_StartBattleAfterTransition, 1);
         CreateTask_PlayMapChosenOrBattleBGM(0);

@@ -125,6 +125,13 @@ void AgbMain(void)
     }
 #endif
 
+#ifdef CAPTURE_FIXTURE
+    {
+        extern void Capture_CreateBattleDomeTuckerFixture(void);
+        SetMainCallback2(Capture_CreateBattleDomeTuckerFixture);
+    }
+#endif
+
     gSoftResetDisabled = FALSE;
 
     if (gFlashMemoryPresent != TRUE)

@@ -27,12 +27,14 @@ def create_dome_tournament_save(
 ) -> None:
     fixture_symbols = require_symbols(load_symbols(FIXTURE_ELF), "gE2EFixtureStatus")
     with Session(FIXTURE_ROM, artifact_dir / "fixture", save=save) as fixture:
+        keys = ["L"]
         if tucker_mode == "normal":
-            fixture.set_keys("L", "START")
+            keys.append("START")
         elif tucker_mode == "hard":
-            fixture.set_keys("L", "SELECT")
+            keys.append("SELECT")
         else:
             raise ValueError(f"unknown Dome Tucker fixture mode: {tucker_mode}")
+        fixture.set_keys(*keys)
         wait_for_value(
             fixture,
             fixture_symbols["gE2EFixtureStatus"],
