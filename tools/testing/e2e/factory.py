@@ -123,7 +123,7 @@ def start_factory_singles_level_50(
 ) -> None:
     """Enter a Singles Lv. 50 Factory challenge through production menus."""
 
-    game.press("A", held_frames=1, released_frames=2)
+    game.press("A", held_frames=1, released_frames=29)
     wait_for_value(game, lock_field_controls, 1)
     advance_until(game, special_result, 0xFF, "A")
 
