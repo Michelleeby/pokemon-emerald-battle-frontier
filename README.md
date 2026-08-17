@@ -28,3 +28,15 @@ opens the stat presets; on the Moves page, it clears the selected move.
 ## Building
 
 See [INSTALL.md](INSTALL.md) for toolchain setup and build instructions.
+
+## Releases
+
+Download the BPS patch and checksum manifest from the
+[latest release](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/releases/latest).
+Apply the patch to a clean US Pokémon Emerald ROM with SHA-1
+`f3ae088181bf583e55daf962a92bb46f4f1d07b7`. RomPatcher.js can apply BPS
+patches in a browser or from its Node.js command-line interface.
+
+Production ROM SHA-1: `94dd919efb13876a9bfa53a5787f3d294281f3a8`
+
+The original or patched ROM is not distributed by this project.

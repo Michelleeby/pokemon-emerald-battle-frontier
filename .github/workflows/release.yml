@@ -1,0 +1,179 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AGBCC_REVISION: da598c1d918402c42c0c0d7128ba14567f3175e9
+  VANILLA_REVISION: 83df84e40623b79281f2397faa611cbf044170bd
+  ROM_PATCHER_REVISION: 91e522e247f709e894761157ccba3189004d0859
+  VANILLA_SHA1: f3ae088181bf583e55daf962a92bb46f4f1d07b7
+  PATCH_NAME: pokemon-emerald-battle-frontier.bps
+
+jobs:
+  release:
+    name: Release / build and verify BPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout production source
+        uses: actions/checkout@v6
+
+      - name: Restore agbcc
+        id: agbcc-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: tools/agbcc
+          key: ${{ runner.os }}-${{ runner.arch }}-agbcc-${{ env.AGBCC_REVISION }}
+
+      - name: Checkout agbcc
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: pret/agbcc
+          ref: ${{ env.AGBCC_REVISION }}
+          path: agbcc
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
+
+      - name: Build and install agbcc
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        working-directory: agbcc
+        run: |
+          ./build.sh
+          ./install.sh ..
+
+      - name: Save agbcc
+        if: steps.agbcc-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: tools/agbcc
+          key: ${{ runner.os }}-${{ runner.arch }}-agbcc-${{ env.AGBCC_REVISION }}
+
+      - name: Build production ROM
+        run: make -j"$(nproc)"
+
+      - name: Verify documented production SHA-1
+        run: |
+          production_sha1="$(sha1sum pokeemerald.gba | cut -d ' ' -f 1)"
+          grep -Fqx "Production ROM SHA-1: \`$production_sha1\`" README.md
+          echo "PRODUCTION_SHA1=$production_sha1" >> "$GITHUB_ENV"
+
+      - name: Checkout pinned vanilla source
+        uses: actions/checkout@v6
+        with:
+          repository: pret/pokeemerald
+          ref: ${{ env.VANILLA_REVISION }}
+          path: vanilla
+
+      - name: Install agbcc into vanilla checkout
+        run: |
+          mkdir -p vanilla/tools
+          cp -a tools/agbcc vanilla/tools/agbcc
+
+      - name: Build and verify vanilla ROM
+        run: |
+          make -C vanilla -j"$(nproc)"
+          make -C vanilla compare
+          echo "$VANILLA_SHA1  vanilla/pokeemerald.gba" | sha1sum --check --strict
+
+      - name: Checkout pinned RomPatcher.js
+        uses: actions/checkout@v6
+        with:
+          repository: marcrobledo/RomPatcher.js
+          ref: ${{ env.ROM_PATCHER_REVISION }}
+          path: rom-patcher
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Install locked RomPatcher.js dependencies
+        run: |
+          cp tools/release/rom-patcher.package-lock.json rom-patcher/package-lock.json
+          npm --prefix rom-patcher ci --ignore-scripts --no-audit --no-fund
+
+      - name: Prepare release staging
+        run: mkdir -p release
+
+      - name: Create and verify BPS patch
+        working-directory: release
+        run: |
+          cp ../pokeemerald.gba pokemon-emerald-battle-frontier.gba
+          node ../rom-patcher/index.js create \
+            ../vanilla/pokeemerald.gba \
+            pokemon-emerald-battle-frontier.gba \
+            --format bps
+          test -s "$PATCH_NAME"
+          node ../rom-patcher/index.js patch \
+            ../vanilla/pokeemerald.gba \
+            "$PATCH_NAME" \
+            --validate-checksum \
+            --output-suffix
+          test -f "pokeemerald (patched).gba"
+          cmp pokemon-emerald-battle-frontier.gba "pokeemerald (patched).gba"
+          echo "$PRODUCTION_SHA1  pokeemerald (patched).gba" | sha1sum --check --strict
+
+      - name: Write checksum manifest
+        working-directory: release
+        run: |
+          production_sha256="$(sha256sum pokemon-emerald-battle-frontier.gba | cut -d ' ' -f 1)"
+          patch_sha1="$(sha1sum "$PATCH_NAME" | cut -d ' ' -f 1)"
+          patch_sha256="$(sha256sum "$PATCH_NAME" | cut -d ' ' -f 1)"
+          {
+            echo "Required vanilla ROM"
+            echo "SHA-1  $VANILLA_SHA1"
+            echo
+            echo "Patched production ROM"
+            echo "SHA-1  $PRODUCTION_SHA1"
+            echo "SHA-256  $production_sha256"
+            echo
+            echo "$PATCH_NAME"
+            echo "SHA-1  $patch_sha1"
+            echo "SHA-256  $patch_sha256"
+          } > checksums.txt
+          cat checksums.txt
+          {
+            echo "### Verified release candidate"
+            echo
+            echo "- Production SHA-1: \`$PRODUCTION_SHA1\`"
+            echo "- Patch SHA-1: \`$patch_sha1\`"
+            echo "- Patch SHA-256: \`$patch_sha256\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove ROM files from release staging
+        run: rm -f release/*.gba
+
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" \
+              "release/$PATCH_NAME" \
+              release/checksums.txt \
+              --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              "release/$PATCH_NAME" \
+              release/checksums.txt \
+              --verify-tag \
+              --generate-notes \
+              --title "Pokémon Emerald: Battle Frontier $GITHUB_REF_NAME"
+          fi

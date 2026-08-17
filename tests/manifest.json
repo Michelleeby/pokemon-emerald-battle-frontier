@@ -82,5 +82,5 @@
     }
   ],
   "relevant_paths": ["src/**", "include/**", "data/**", "asm/**"],
-  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes"]
+  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes", ".github/workflows/release.yml", "tools/release/**"]
 }
