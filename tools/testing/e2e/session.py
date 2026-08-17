@@ -221,6 +221,25 @@ class Session:
         self._command(f"SCREENSHOT {path}")
         return path
 
+    def capture_start(self, directory: Path, *, stride: int = 2) -> Path:
+        path = Path(directory).resolve()
+        if any(char.isspace() for char in str(path)):
+            raise ValueError("capture directory must not contain whitespace")
+        if stride <= 0 or stride > 0xFFFFFFFF:
+            raise ValueError("capture stride must be between 1 and 4294967295")
+        path.mkdir(parents=True, exist_ok=True)
+        self._command(f"CAPTURE_START {path} {stride}")
+        return path
+
+    def capture_stop(self) -> int:
+        response = self._command("CAPTURE_STOP")
+        try:
+            return int(parse_fields(response)["frames"], 0)
+        except (KeyError, ValueError) as error:
+            raise ProtocolError(
+                f"CAPTURE_STOP response has no valid frame count: {response}"
+            ) from error
+
     def restart(self) -> int:
         return self._frame_from(self._command("RESTART"))
 
