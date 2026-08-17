@@ -29,7 +29,12 @@ class SelectorTests(unittest.TestCase):
         return select_suites(list(files), self.manifest)
 
     def test_documentation_only_selects_no_suites(self) -> None:
-        result = self.select("README.md", "docs/testing.md", "plans/notes.md")
+        result = self.select(
+            "README.md",
+            "docs/testing.md",
+            "plans/notes.md",
+            "tests/README.md",
+        )
         self.assertEqual(result["suites"], [])
         self.assertFalse(result["full"])
 
