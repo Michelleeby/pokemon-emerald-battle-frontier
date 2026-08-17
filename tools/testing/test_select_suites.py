@@ -33,6 +33,19 @@ class SelectorTests(unittest.TestCase):
         self.assertEqual(result["suites"], [])
         self.assertFalse(result["full"])
 
+    def test_release_only_selects_no_gameplay_or_e2e_tests(self) -> None:
+        files = [
+            ".github/workflows/release.yml",
+            "README.md",
+            "tools/release/rom-patcher.package-lock.json",
+        ]
+        result = select_suites(files, self.manifest)
+        e2e_result = select_e2e_scenarios(files, self.e2e_manifest)
+        self.assertEqual(result["suites"], [])
+        self.assertFalse(result["full"])
+        self.assertEqual(e2e_result["scenarios"], [])
+        self.assertFalse(e2e_result["full"])
+
     def test_tower_change_selects_tower_and_dependencies(self) -> None:
         result = self.select("src/battle_tower.c")
         self.assertEqual(

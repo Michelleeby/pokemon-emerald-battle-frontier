@@ -84,5 +84,5 @@
     }
   ],
   "relevant_paths": ["src/**", "include/**", "data/**", "asm/**", "tools/testing/**", ".github/workflows/test*.yml", "Makefile"],
-  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes", "tests/manifest.json"]
+  "ignored_paths": ["*.md", "docs/**", "plans/**", "README*", "LICENSE*", ".gitignore", ".gitattributes", "tests/manifest.json", ".github/workflows/release.yml", "tools/release/**"]
 }
