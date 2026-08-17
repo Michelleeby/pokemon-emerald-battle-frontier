@@ -108,6 +108,15 @@ def run_noland_route(artifact_dir: Path, mode: NolandMode) -> None:
             raise ScenarioFailure("Factory challenge is not in the active saving state")
 
         for _ in range(300):
+            save_block1 = game.read(symbols["gSaveBlock1Ptr"])
+            save_block2 = game.read(symbols["gSaveBlock2Ptr"])
+            if not (
+                0x02000000 <= save_block1 < 0x02040000
+                and 0x02000000 <= save_block2 < 0x02040000
+            ):
+                game.press("A", held_frames=1, released_frames=29)
+                continue
+            addresses = factory_addresses(save_block1, save_block2)
             trainer = game.read(symbols["gTrainerBattleOpponent_A"], width=16)
             if (
                 game.read(symbols["gPlayerPartyCount"], width=8) == 3
