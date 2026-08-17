@@ -101,6 +101,11 @@ struct TeamLabScreen
 
 static EWRAM_DATA struct TeamLabScreen *sTeamLabScreen = NULL;
 
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u32 gE2ETeamLabSaveCount = 0;
+EWRAM_DATA volatile struct TeamLabMonBuild gE2ETeamLabSavedBuild = {0};
+#endif
+
 static void CB2_InitTeamLabScreen(void);
 static void CB2_TeamLabScreen(void);
 static void VBlankCB_TeamLabScreen(void);
@@ -914,6 +919,10 @@ static void HandleTeamLabNormalInput(u8 taskId)
         }
         gPlayerParty[sTeamLabScreen->partyIndex] = sTeamLabScreen->preview;
         CalculatePlayerPartyCount();
+#ifdef E2E_TESTING
+        gE2ETeamLabSavedBuild = sTeamLabScreen->draft;
+        gE2ETeamLabSaveCount++;
+#endif
         BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
         gTasks[taskId].func = Task_ExitTeamLabScreen;
         PlaySE(SE_SELECT);

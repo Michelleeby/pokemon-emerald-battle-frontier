@@ -43,6 +43,7 @@
 #include "task.h"
 #include "text.h"
 #include "tv.h"
+
 #include "wallclock.h"
 #include "window.h"
 #include "constants/battle_frontier.h"
@@ -59,6 +60,10 @@
 #include "constants/mystery_gift.h"
 #include "constants/slot_machine.h"
 #include "constants/songs.h"
+
+#ifdef E2E_TESTING
+EWRAM_DATA volatile u32 gE2EPokenavPcReturnCount = 0;
+#endif
 #include "constants/moves.h"
 #include "constants/party_menu.h"
 #include "constants/battle_frontier.h"
@@ -1089,6 +1094,9 @@ static void PCTurnOffEffect(void)
     if (FlagGet(FLAG_SYS_PC_FROM_POKENAV))
     {
         FlagClear(FLAG_SYS_PC_FROM_POKENAV);
+#ifdef E2E_TESTING
+        gE2EPokenavPcReturnCount++;
+#endif
         return;
     }
 

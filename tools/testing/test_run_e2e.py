@@ -25,12 +25,16 @@ class E2ESelectionTests(unittest.TestCase):
                 "factory-hard-noland",
                 "factory-hard-setup",
                 "factory-normal-noland",
+                "frontier-intro-team-lab",
                 "palace-hard-spenser",
                 "palace-normal-spenser",
                 "pike-hard-lucy",
                 "pike-normal-lucy",
+                "pokenav-team-lab-access",
                 "pyramid-hard-brandon",
                 "pyramid-normal-brandon",
+                "team-lab-create-mon",
+                "team-lab-edit-stats",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
             ],
@@ -44,6 +48,12 @@ class E2ESelectionTests(unittest.TestCase):
     def test_factory_setup_scenario_can_be_selected(self) -> None:
         self.assertEqual(
             selected_scenarios(["factory-hard-setup"]), ["factory-hard-setup"]
+        )
+
+    def test_team_lab_scenarios_can_be_selected(self) -> None:
+        self.assertEqual(
+            selected_scenarios(["team-lab-create-mon", "team-lab-edit-stats"]),
+            ["team-lab-create-mon", "team-lab-edit-stats"],
         )
 
     def test_unknown_scenario_is_rejected(self) -> None:
