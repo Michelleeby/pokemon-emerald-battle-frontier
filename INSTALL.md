@@ -1,6 +1,6 @@
 # Developer build instructions
 
-These instructions build Pokémon Emerald: Battle Frontier from source with the
+These instructions build Pokémon Emerald Battle Frontier from source with the
 legacy, byte-matching `agbcc` toolchain. The workflow has been verified on
 Ubuntu 24.04 under WSL2.
 
@@ -39,7 +39,7 @@ generated files under `pokeemerald/tools/agbcc` must not be committed.
 
 ```sh
 cd ../pokeemerald
-make -j2
+make
 ```
 
 The output is `pokeemerald.gba`. A successful production build has this SHA-1:
