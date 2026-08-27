@@ -73,6 +73,15 @@ enum
     WIN_TEAM_LAB_COUNT,
 };
 
+enum
+{
+    TEAM_LAB_CONTENT_WIDTH = 14 * 8,
+    TEAM_LAB_CONTENT_PADDING = 8,
+    TEAM_LAB_BUILD_VALUE_X = 58,
+    TEAM_LAB_BUILD_ROW_HEIGHT = 16,
+    TEAM_LAB_SMALL_LINE_HEIGHT = 14,
+};
+
 struct TeamLabScreen
 {
     MainCallback returnCallback;
@@ -168,7 +177,7 @@ static const struct WindowTemplate sTeamLabWindowTemplates[] =
         .bg = 0,
         .tilemapLeft = 15,
         .tilemapTop = 1,
-        .width = 14,
+        .width = TEAM_LAB_CONTENT_WIDTH / 8,
         .height = 14,
         .paletteNum = 15,
         .baseBlock = 23,
@@ -276,9 +285,10 @@ static void PrintSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
     AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, text);
 }
 
-static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 maxWidth)
+static u8 PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 maxWidth)
 {
     u8 line[64];
+    u8 lineCount = 0;
 
     while (*text != EOS)
     {
@@ -316,11 +326,14 @@ static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 ma
 
         line[lineLength] = EOS;
         PrintSmallText(windowId, line, x, y);
-        y += 14;
+        y += TEAM_LAB_SMALL_LINE_HEIGHT;
+        lineCount++;
 
         if (*text == CHAR_NEWLINE)
             text++;
     }
+
+    return lineCount;
 }
 
 static void PrintSelectedSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
@@ -543,6 +556,7 @@ static void DrawTeamLabBuildPage(void)
         sText_TeamLabItem,
     };
     u8 i;
+    u8 y = 17;
 
     PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabBuild, 0, 1);
     ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.level, STR_CONV_MODE_LEFT_ALIGN, 3);
@@ -553,16 +567,26 @@ static void DrawTeamLabBuildPage(void)
     values[4] = sTeamLabScreen->draft.heldItem == ITEM_NONE ? sText_TeamLabNone : GetItemName(sTeamLabScreen->draft.heldItem);
     for (i = 0; i < TEAM_LAB_BUILD_COUNT; i++)
     {
-        u8 y = 17 + i * 16;
-
         if (i == sTeamLabScreen->buildFocus)
         {
             PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, y);
-            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], TEAM_LAB_CONTENT_PADDING, y);
         }
         else
-            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, values[i], 58, y);
+            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, labels[i], TEAM_LAB_CONTENT_PADDING, y);
+
+        if (i == TEAM_LAB_BUILD_ABILITY)
+        {
+            u8 lineCount = PrintWrappedSmallText(WIN_TEAM_LAB_CONTENT, values[i], TEAM_LAB_BUILD_VALUE_X, y,
+                                                 TEAM_LAB_CONTENT_WIDTH - TEAM_LAB_BUILD_VALUE_X - TEAM_LAB_CONTENT_PADDING);
+
+            if (lineCount > 1)
+                y += (lineCount - 1) * TEAM_LAB_SMALL_LINE_HEIGHT;
+        }
+        else
+            PrintSmallText(WIN_TEAM_LAB_CONTENT, values[i], TEAM_LAB_BUILD_VALUE_X, y);
+
+        y += TEAM_LAB_BUILD_ROW_HEIGHT;
     }
 }
 
