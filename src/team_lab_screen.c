@@ -73,6 +73,18 @@ enum
     WIN_TEAM_LAB_COUNT,
 };
 
+enum
+{
+    TEAM_LAB_CONTENT_WIDTH = 14 * 8,
+    TEAM_LAB_CONTENT_HEIGHT = 16 * 8,
+    TEAM_LAB_CONTENT_BASE_BLOCK = 23,
+    TEAM_LAB_CONTENT_PADDING = 8,
+    TEAM_LAB_BUILD_VALUE_X = 58,
+    TEAM_LAB_BUILD_ROW_HEIGHT = 16,
+    TEAM_LAB_BUILD_LINE_HEIGHT = 10,
+    TEAM_LAB_SMALL_LINE_HEIGHT = 14,
+};
+
 struct TeamLabScreen
 {
     MainCallback returnCallback;
@@ -168,10 +180,10 @@ static const struct WindowTemplate sTeamLabWindowTemplates[] =
         .bg = 0,
         .tilemapLeft = 15,
         .tilemapTop = 1,
-        .width = 14,
-        .height = 14,
+        .width = TEAM_LAB_CONTENT_WIDTH / 8,
+        .height = TEAM_LAB_CONTENT_HEIGHT / 8,
         .paletteNum = 15,
-        .baseBlock = 23,
+        .baseBlock = TEAM_LAB_CONTENT_BASE_BLOCK,
     },
     [WIN_TEAM_LAB_DETAIL] = {
         .bg = 0,
@@ -180,7 +192,7 @@ static const struct WindowTemplate sTeamLabWindowTemplates[] =
         .width = 12,
         .height = 5,
         .paletteNum = 15,
-        .baseBlock = 219,
+        .baseBlock = TEAM_LAB_CONTENT_BASE_BLOCK + TEAM_LAB_CONTENT_WIDTH / 8 * TEAM_LAB_CONTENT_HEIGHT / 8,
     },
     DUMMY_WIN_TEMPLATE,
 };
@@ -276,9 +288,10 @@ static void PrintSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
     AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, text);
 }
 
-static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 maxWidth)
+static u8 PrintWrappedText(u8 windowId, u8 fontId, const u8 *text, u8 x, u8 y, u8 maxWidth, u8 lineHeight)
 {
     u8 line[64];
+    u8 lineCount = 0;
 
     while (*text != EOS)
     {
@@ -290,6 +303,8 @@ static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 ma
 
         while (*text != EOS && *text != CHAR_NEWLINE)
         {
+            u8 fitLength;
+            u8 i;
             u8 wordLength = 0;
             u8 candidateLength;
 
@@ -300,13 +315,41 @@ static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 ma
                 wordLength++;
 
             candidateLength = lineLength + (lineLength != 0) + wordLength;
-            if (lineLength != 0)
-                line[lineLength] = CHAR_SPACE;
-            memcpy(&line[lineLength + (lineLength != 0)], wordStart, wordLength);
-            line[candidateLength] = EOS;
+            if (candidateLength < ARRAY_COUNT(line))
+            {
+                if (lineLength != 0)
+                    line[lineLength] = CHAR_SPACE;
+                memcpy(&line[lineLength + (lineLength != 0)], wordStart, wordLength);
+                line[candidateLength] = EOS;
+            }
 
-            if (lineLength != 0 && GetStringWidth(FONT_SMALL, line, 0) > maxWidth)
+            if (lineLength != 0
+             && (candidateLength >= ARRAY_COUNT(line) || GetStringWidth(fontId, line, 0) > maxWidth))
                 break;
+
+            if (lineLength == 0
+             && (candidateLength >= ARRAY_COUNT(line) || GetStringWidth(fontId, line, 0) > maxWidth))
+            {
+                fitLength = 0;
+                for (i = 1; i <= wordLength && i + 1 < ARRAY_COUNT(line); i++)
+                {
+                    memcpy(line, wordStart, i);
+                    line[i] = CHAR_HYPHEN;
+                    line[i + 1] = EOS;
+                    if (GetStringWidth(fontId, line, 0) > maxWidth)
+                        break;
+                    fitLength = i;
+                }
+
+                if (fitLength == 0)
+                    fitLength = 1;
+                memcpy(line, wordStart, fitLength);
+                line[fitLength] = CHAR_HYPHEN;
+                line[fitLength + 1] = EOS;
+                lineLength = fitLength + 1;
+                text += fitLength;
+                break;
+            }
 
             lineLength = candidateLength;
             text += wordLength;
@@ -315,12 +358,27 @@ static void PrintWrappedSmallText(u8 windowId, const u8 *text, u8 x, u8 y, u8 ma
         }
 
         line[lineLength] = EOS;
-        PrintSmallText(windowId, line, x, y);
-        y += 14;
+        AddTextPrinterParameterized4(windowId, fontId, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, line);
+        y += lineHeight;
+        lineCount++;
 
         if (*text == CHAR_NEWLINE)
             text++;
     }
+
+    return lineCount;
+}
+
+static u8 PrintWrappedBuildValue(const u8 *text, u8 y)
+{
+    u8 lineCount = PrintWrappedText(WIN_TEAM_LAB_CONTENT, FONT_SMALL_NARROW, text, TEAM_LAB_BUILD_VALUE_X, y,
+                                    TEAM_LAB_CONTENT_WIDTH - TEAM_LAB_BUILD_VALUE_X - TEAM_LAB_CONTENT_PADDING,
+                                    TEAM_LAB_BUILD_LINE_HEIGHT);
+
+    if (lineCount > 1)
+        return TEAM_LAB_BUILD_ROW_HEIGHT + (lineCount - 1) * TEAM_LAB_BUILD_LINE_HEIGHT;
+    else
+        return TEAM_LAB_BUILD_ROW_HEIGHT;
 }
 
 static void PrintSelectedSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
@@ -543,6 +601,7 @@ static void DrawTeamLabBuildPage(void)
         sText_TeamLabItem,
     };
     u8 i;
+    u8 y = 17;
 
     PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabBuild, 0, 1);
     ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.level, STR_CONV_MODE_LEFT_ALIGN, 3);
@@ -553,16 +612,15 @@ static void DrawTeamLabBuildPage(void)
     values[4] = sTeamLabScreen->draft.heldItem == ITEM_NONE ? sText_TeamLabNone : GetItemName(sTeamLabScreen->draft.heldItem);
     for (i = 0; i < TEAM_LAB_BUILD_COUNT; i++)
     {
-        u8 y = 17 + i * 16;
-
         if (i == sTeamLabScreen->buildFocus)
         {
             PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gText_SelectorArrow2, 0, y);
-            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
+            PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, labels[i], TEAM_LAB_CONTENT_PADDING, y);
         }
         else
-            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, labels[i], 8, y);
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, values[i], 58, y);
+            PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, labels[i], TEAM_LAB_CONTENT_PADDING, y);
+
+        y += PrintWrappedBuildValue(values[i], y);
     }
 }
 
@@ -678,7 +736,9 @@ static void DrawTeamLabModal(void)
         PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabChooseAbility, 0, 1);
         for (i = 0; i < abilityCount; i++)
             DrawModalChoice(gAbilityNames[GetAbilityBySpecies(sTeamLabScreen->draft.species, i)], i, 21 + i * 18);
-        PrintWrappedSmallText(WIN_TEAM_LAB_CONTENT, gAbilityDescriptionPointers[GetAbilityBySpecies(sTeamLabScreen->draft.species, sTeamLabScreen->modalCursor)], 0, 65, 14 * 8);
+        PrintWrappedText(WIN_TEAM_LAB_CONTENT, FONT_SMALL,
+                         gAbilityDescriptionPointers[GetAbilityBySpecies(sTeamLabScreen->draft.species, sTeamLabScreen->modalCursor)],
+                         0, 65, TEAM_LAB_CONTENT_WIDTH, TEAM_LAB_SMALL_LINE_HEIGHT);
         break;
     }
     case TEAM_LAB_MODE_STAT_PRESET:
