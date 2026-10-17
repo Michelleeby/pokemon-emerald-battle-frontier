@@ -55,6 +55,7 @@ dependencies. The suites cover:
 | `new-game-tutorial` | New-game state and guided-introduction behavior |
 | `save-load` | Party and project-specific save fields |
 | `battle-shared` | Shared battle setup and controller commands |
+| `audio-settings` | Audio save compatibility, music catalog, battle scope, and cosmetic random selection |
 | `frontier-tower` | Tower modes, parties, pools, progression, and Anabel boundaries |
 | `frontier-factory` | Rentals, swaps, opponents, progression, and Noland boundaries |
 | `frontier-dome` | Tournament generation, advancement, and Tucker boundaries |
@@ -78,6 +79,7 @@ scenarios cover:
 - Hard-mode Factory rental setup
 - Pokémon Lab creation and stat editing
 - Pokémon Lab PP editing, Max All, and save/discard behavior
+- Nested Audio options, music preview, pool selection, and preference saving
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal
 

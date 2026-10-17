@@ -15,6 +15,7 @@ import time
 from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
+from e2e.audio_options import run as run_audio_options
 from e2e.arena_hard_greta import run as run_arena_hard_greta
 from e2e.arena_normal_greta import run as run_arena_normal_greta
 from e2e.dome_hard_tucker import run as run_dome_hard_tucker
@@ -51,6 +52,7 @@ ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
     "arena-hard-greta": run_arena_hard_greta,
     "arena-normal-greta": run_arena_normal_greta,
+    "audio-options": run_audio_options,
     "dome-hard-tucker": run_dome_hard_tucker,
     "dome-normal-tucker": run_dome_normal_tucker,
     "factory-hard-noland": run_factory_hard_noland,

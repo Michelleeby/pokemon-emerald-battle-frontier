@@ -22,6 +22,7 @@
 #include "pokedex.h"
 #include "pokeblock.h"
 #include "pokemon.h"
+#include "audio_settings.h"
 #include "pokemon_animation.h"
 #include "pokemon_summary_screen.h"
 #include "pokemon_storage_system.h"
@@ -6510,7 +6511,10 @@ u16 GetBattleBGM(void)
         case TRAINER_CLASS_PYRAMID_KING:
             return MUS_VS_FRONTIER_BRAIN;
         default:
-            return MUS_VS_TRAINER;
+            if (gBattleTypeFlags & (BATTLE_TYPE_FIRST_BATTLE | BATTLE_TYPE_WALLY_TUTORIAL
+                                  | BATTLE_TYPE_RECORDED | BATTLE_TYPE_RECORDED_LINK))
+                return MUS_VS_TRAINER;
+            return AudioSettings_GetTrainerMusic(MUS_VS_TRAINER);
         }
     }
     else
@@ -6521,6 +6525,7 @@ u16 GetBattleBGM(void)
 
 void PlayBattleBGM(void)
 {
+    AudioSettings_ResetBattleMusic();
     ResetMapMusic();
     m4aMPlayAllStop();
     PlayBGM(GetBattleBGM());
@@ -6528,6 +6533,7 @@ void PlayBattleBGM(void)
 
 void PlayMapChosenOrBattleBGM(u16 songId)
 {
+    AudioSettings_ResetBattleMusic();
     ResetMapMusic();
     m4aMPlayAllStop();
     if (songId)
@@ -6543,6 +6549,7 @@ void CreateTask_PlayMapChosenOrBattleBGM(u16 songId)
 {
     u8 taskId;
 
+    AudioSettings_ResetBattleMusic();
     ResetMapMusic();
     m4aMPlayAllStop();
 

@@ -48,6 +48,7 @@
 #include "constants/flags.h"
 #include "constants/heal_locations.h"
 #include "constants/vars.h"
+#include "audio_settings.h"
 
 extern const u8 EventScript_ResetAllMapFlags[];
 
@@ -100,6 +101,7 @@ static void SetDefaultOptions(void)
     gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
     gSaveBlock2Ptr->optionsButtonMode = OPTIONS_BUTTON_MODE_LR;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
+    AudioSettings_InitDefaults();
 }
 
 static void ClearPokedexFlags(void)

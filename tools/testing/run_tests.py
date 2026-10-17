@@ -21,6 +21,7 @@ CORE_TESTS = (
     "new-game-tutorial",
     "save-load",
     "battle-shared",
+    "audio-settings",
     "frontier-tower",
     "frontier-factory",
     "frontier-dome",

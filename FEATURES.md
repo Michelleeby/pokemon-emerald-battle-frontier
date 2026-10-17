@@ -46,6 +46,17 @@ base, following the project's gameplay commit history.
   gender.
 - Present May first in avatar selection and in the title introduction.
 
+## Audio preferences
+
+- Open Audio from Options to set Mono/Stereo sound, trainer music, the music
+  pool.
+- Keep the original trainer music, choose a fixed battle theme, or pick a
+  random theme each battle without immediate repeats.
+- Choose Hoenn trainer and boss themes, include FireRed/LeafGreen trainer and
+  boss themes, or use all existing battle themes. Frontier Brains and other
+  special battles retain their original music.
+- Preview named tracks with Select before choosing them.
+
 ## Normal and Hard Frontier challenges
 
 - Choose Normal or Hard difficulty when entering any of the seven facilities:

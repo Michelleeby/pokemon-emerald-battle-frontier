@@ -1,9 +1,11 @@
 #include "global.h"
 #include "option_menu.h"
+#include "audio_settings.h"
 #include "bg.h"
 #include "gpu_regs.h"
 #include "international_string_util.h"
 #include "main.h"
+#include "m4a.h"
 #include "menu.h"
 #include "palette.h"
 #include "scanline_effect.h"
@@ -13,8 +15,10 @@
 #include "text.h"
 #include "text_window.h"
 #include "window.h"
+#include "sound.h"
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
+#include "constants/songs.h"
 
 #define tMenuSelection data[0]
 #define tTextSpeed data[1]
@@ -23,17 +27,35 @@
 #define tSound data[4]
 #define tButtonMode data[5]
 #define tWindowFrameType data[6]
+#define tAudioMenuSelection data[7]
+#define tAudioSound data[8]
+#define tAudioMusicMode data[9]
+#define tAudioPool data[10]
+#define tAudioTrack data[12]
+#define tPickerSelection data[13]
+#define tPickerScroll data[14]
+#define tPickerPriorMusic data[15]
+#define tPickerPool data[10]
 
 enum
 {
     MENUITEM_TEXTSPEED,
     MENUITEM_BATTLESCENE,
     MENUITEM_BATTLESTYLE,
-    MENUITEM_SOUND,
+    MENUITEM_AUDIO,
     MENUITEM_BUTTONMODE,
     MENUITEM_FRAMETYPE,
     MENUITEM_CANCEL,
     MENUITEM_COUNT,
+};
+
+enum
+{
+    AUDIOMENU_SOUND,
+    AUDIOMENU_TRAINER_MUSIC,
+    AUDIOMENU_POOL,
+    AUDIOMENU_BACK,
+    AUDIOMENU_COUNT,
 };
 
 enum
@@ -45,7 +67,8 @@ enum
 #define YPOS_TEXTSPEED    (MENUITEM_TEXTSPEED * 16)
 #define YPOS_BATTLESCENE  (MENUITEM_BATTLESCENE * 16)
 #define YPOS_BATTLESTYLE  (MENUITEM_BATTLESTYLE * 16)
-#define YPOS_SOUND        (MENUITEM_SOUND * 16)
+#define YPOS_AUDIO        (MENUITEM_AUDIO * 16)
+#define PICKER_VISIBLE_ROWS 7
 #define YPOS_BUTTONMODE   (MENUITEM_BUTTONMODE * 16)
 #define YPOS_FRAMETYPE    (MENUITEM_FRAMETYPE * 16)
 
@@ -53,6 +76,8 @@ static void Task_OptionMenuFadeIn(u8 taskId);
 static void Task_OptionMenuProcessInput(u8 taskId);
 static void Task_OptionMenuSave(u8 taskId);
 static void Task_OptionMenuFadeOut(u8 taskId);
+static void Task_AudioMenuProcessInput(u8 taskId);
+static void Task_TrainerMusicPickerProcessInput(u8 taskId);
 static void HighlightOptionMenuItem(u8 selection);
 static u8 TextSpeed_ProcessInput(u8 selection);
 static void TextSpeed_DrawChoices(u8 selection);
@@ -60,14 +85,20 @@ static u8 BattleScene_ProcessInput(u8 selection);
 static void BattleScene_DrawChoices(u8 selection);
 static u8 BattleStyle_ProcessInput(u8 selection);
 static void BattleStyle_DrawChoices(u8 selection);
-static u8 Sound_ProcessInput(u8 selection);
-static void Sound_DrawChoices(u8 selection);
 static u8 FrameType_ProcessInput(u8 selection);
 static void FrameType_DrawChoices(u8 selection);
 static u8 ButtonMode_ProcessInput(u8 selection);
 static void ButtonMode_DrawChoices(u8 selection);
-static void DrawHeaderText(void);
+static void DrawHeaderText(const u8 *title);
 static void DrawOptionMenuTexts(void);
+static void DrawOptionMenuChoice(const u8 *text, u8 x, u8 y, u8 style);
+static void DrawAudioOptionChoice(const u8 *text, u8 x, u8 y, bool8 selected);
+static void DrawOuterOptionChoices(u8 taskId);
+static void DrawAudioMenuTexts(void);
+static void DrawAudioMenuChoices(u8 taskId);
+static void DrawTrainerMusicPicker(u8 taskId);
+static void UpdatePickerScroll(u8 taskId, u8 count);
+static u16 GetCurrentBgmSong(void);
 static void DrawBgWindowFrames(void);
 
 EWRAM_DATA static bool8 sArrowPressed = FALSE;
@@ -75,13 +106,26 @@ EWRAM_DATA static bool8 sArrowPressed = FALSE;
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
 // note: this is only used in the Japanese release
 static const u8 sEqualSignGfx[] = INCGFX_U8("graphics/interface/option_menu_equals_sign.png", ".4bpp");
+static const u8 sTextAudio[] = _("AUDIO");
+static const u8 sTextPressA[] = _("PRESS A");
+static const u8 sTextTrainerMusicRow[] = _("TRAINER MUSIC");
+static const u8 sTextTrainerMusic[] = _("MUSIC SEL PREVIEW");
+static const u8 sTextMusicPool[] = _("MUSIC POOL");
+static const u8 sTextDefault[] = _("DEFAULT");
+static const u8 sTextRandom[] = _("RANDOM");
+static const u8 sTextPoolHoenn[] = _("HOENN");
+static const u8 sTextPoolKanto[] = _("HOENN+KANTO");
+static const u8 sTextPoolAll[] = _("ALL BATTLES");
+static const u8 sTextBack[] = _("BACK");
+static const u8 sAudioTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_GREEN, TEXT_COLOR_LIGHT_GREEN};
+static const u8 sAudioSelectedTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_RED, TEXT_COLOR_LIGHT_RED};
 
 static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
 {
     [MENUITEM_TEXTSPEED]   = gText_TextSpeed,
     [MENUITEM_BATTLESCENE] = gText_BattleScene,
     [MENUITEM_BATTLESTYLE] = gText_BattleStyle,
-    [MENUITEM_SOUND]       = gText_Sound,
+    [MENUITEM_AUDIO]       = sTextAudio,
     [MENUITEM_BUTTONMODE]  = gText_ButtonMode,
     [MENUITEM_FRAMETYPE]   = gText_Frame,
     [MENUITEM_CANCEL]      = gText_OptionMenuCancel,
@@ -209,7 +253,7 @@ void CB2_InitOptionMenu(void)
         break;
     case 6:
         PutWindowTilemap(WIN_HEADER);
-        DrawHeaderText();
+        DrawHeaderText(gText_Option);
         gMain.state++;
         break;
     case 7:
@@ -234,11 +278,15 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
         gTasks[taskId].tWindowFrameType = gSaveBlock2Ptr->optionsWindowFrameType;
+        gTasks[taskId].tAudioSound = gSaveBlock2Ptr->optionsSound;
+        gTasks[taskId].tAudioMusicMode = AudioSettings_GetTrainerMusicMode();
+        gTasks[taskId].tAudioPool = AudioSettings_GetMusicPool();
+        gTasks[taskId].tAudioTrack = AudioSettings_GetTrainerTrack();
 
         TextSpeed_DrawChoices(gTasks[taskId].tTextSpeed);
         BattleScene_DrawChoices(gTasks[taskId].tBattleSceneOff);
         BattleStyle_DrawChoices(gTasks[taskId].tBattleStyle);
-        Sound_DrawChoices(gTasks[taskId].tSound);
+        DrawOptionMenuChoice(sTextPressA, GetStringRightAlignXOffset(FONT_NORMAL, sTextPressA, 198), YPOS_AUDIO, 0);
         ButtonMode_DrawChoices(gTasks[taskId].tButtonMode);
         FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
         HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);
@@ -267,6 +315,16 @@ static void Task_OptionMenuProcessInput(u8 taskId)
     {
         if (gTasks[taskId].tMenuSelection == MENUITEM_CANCEL)
             gTasks[taskId].func = Task_OptionMenuSave;
+        else if (gTasks[taskId].tMenuSelection == MENUITEM_AUDIO)
+        {
+            gTasks[taskId].tAudioMenuSelection = AUDIOMENU_SOUND;
+            DrawAudioMenuTexts();
+            DrawAudioMenuChoices(taskId);
+            DrawHeaderText(sTextAudio);
+            HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
+            gTasks[taskId].func = Task_AudioMenuProcessInput;
+            CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
+        }
     }
     else if (JOY_NEW(B_BUTTON))
     {
@@ -315,13 +373,8 @@ static void Task_OptionMenuProcessInput(u8 taskId)
             if (previousOption != gTasks[taskId].tBattleStyle)
                 BattleStyle_DrawChoices(gTasks[taskId].tBattleStyle);
             break;
-        case MENUITEM_SOUND:
-            previousOption = gTasks[taskId].tSound;
-            gTasks[taskId].tSound = Sound_ProcessInput(gTasks[taskId].tSound);
-
-            if (previousOption != gTasks[taskId].tSound)
-                Sound_DrawChoices(gTasks[taskId].tSound);
-            break;
+        case MENUITEM_AUDIO:
+            return;
         case MENUITEM_BUTTONMODE:
             previousOption = gTasks[taskId].tButtonMode;
             gTasks[taskId].tButtonMode = ButtonMode_ProcessInput(gTasks[taskId].tButtonMode);
@@ -348,14 +401,184 @@ static void Task_OptionMenuProcessInput(u8 taskId)
     }
 }
 
+static void ReturnFromAudioMenu(u8 taskId)
+{
+    DrawHeaderText(gText_Option);
+    DrawOptionMenuTexts();
+    DrawOuterOptionChoices(taskId);
+    HighlightOptionMenuItem(MENUITEM_AUDIO);
+    gTasks[taskId].tMenuSelection = MENUITEM_AUDIO;
+    gTasks[taskId].func = Task_OptionMenuProcessInput;
+    CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
+}
+
+static void Task_AudioMenuProcessInput(u8 taskId)
+{
+    u8 previous;
+    bool8 redraw = FALSE;
+
+    if (JOY_NEW(A_BUTTON))
+    {
+        if (gTasks[taskId].tAudioMenuSelection == AUDIOMENU_TRAINER_MUSIC)
+        {
+            gTasks[taskId].tPickerPool = gTasks[taskId].tAudioPool;
+            gTasks[taskId].tPickerPriorMusic = GetCurrentBgmSong();
+            if (gTasks[taskId].tAudioMusicMode == AUDIO_TRAINER_MUSIC_FIXED)
+            {
+                gTasks[taskId].tPickerSelection = 2;
+                for (previous = 0; previous < AudioSettings_GetPoolTrackCount(gTasks[taskId].tPickerPool); previous++)
+                    if (AudioSettings_GetPoolTrack(gTasks[taskId].tPickerPool, previous) == gTasks[taskId].tAudioTrack)
+                        gTasks[taskId].tPickerSelection = previous + 2;
+            }
+            else if (gTasks[taskId].tAudioMusicMode == AUDIO_TRAINER_MUSIC_RANDOM)
+                gTasks[taskId].tPickerSelection = 1;
+            else
+                gTasks[taskId].tPickerSelection = 0;
+            gTasks[taskId].tPickerScroll = 0;
+            UpdatePickerScroll(taskId, AudioSettings_GetPoolTrackCount(gTasks[taskId].tPickerPool) + 2);
+            DrawTrainerMusicPicker(taskId);
+            DrawHeaderText(sTextTrainerMusic);
+            HighlightOptionMenuItem(gTasks[taskId].tPickerSelection - gTasks[taskId].tPickerScroll);
+            gTasks[taskId].func = Task_TrainerMusicPickerProcessInput;
+            redraw = TRUE;
+        }
+        else if (gTasks[taskId].tAudioMenuSelection == AUDIOMENU_BACK)
+            ReturnFromAudioMenu(taskId);
+    }
+    else if (JOY_NEW(B_BUTTON))
+    {
+        ReturnFromAudioMenu(taskId);
+    }
+    else if (JOY_NEW(DPAD_UP))
+    {
+        if (gTasks[taskId].tAudioMenuSelection == 0)
+            gTasks[taskId].tAudioMenuSelection = AUDIOMENU_BACK;
+        else
+            gTasks[taskId].tAudioMenuSelection--;
+        HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
+        DrawAudioMenuChoices(taskId);
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_DOWN))
+    {
+        if (gTasks[taskId].tAudioMenuSelection == AUDIOMENU_BACK)
+            gTasks[taskId].tAudioMenuSelection = 0;
+        else
+            gTasks[taskId].tAudioMenuSelection++;
+        HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
+        DrawAudioMenuChoices(taskId);
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        previous = 0xFF;
+        switch (gTasks[taskId].tAudioMenuSelection)
+        {
+        case AUDIOMENU_SOUND:
+            previous = gTasks[taskId].tAudioSound;
+            gTasks[taskId].tAudioSound ^= 1;
+            SetPokemonCryStereo(gTasks[taskId].tAudioSound);
+            break;
+        case AUDIOMENU_POOL:
+            previous = gTasks[taskId].tAudioPool;
+            if (JOY_NEW(DPAD_RIGHT))
+                gTasks[taskId].tAudioPool = (gTasks[taskId].tAudioPool + 1) % 3;
+            else if (JOY_NEW(DPAD_LEFT))
+                gTasks[taskId].tAudioPool = gTasks[taskId].tAudioPool == 0 ? 2 : gTasks[taskId].tAudioPool - 1;
+            if (gTasks[taskId].tAudioMusicMode == AUDIO_TRAINER_MUSIC_FIXED
+                && !AudioSettings_IsTrackInPool(gTasks[taskId].tAudioTrack, gTasks[taskId].tAudioPool))
+                gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_DEFAULT;
+            break;
+        }
+        if (previous != 0xFF)
+        {
+            DrawAudioMenuChoices(taskId);
+            redraw = TRUE;
+        }
+    }
+    if (redraw)
+        CopyWindowToVram(WIN_OPTIONS, COPYWIN_GFX);
+}
+
+static void Task_TrainerMusicPickerProcessInput(u8 taskId)
+{
+    u8 count = AudioSettings_GetPoolTrackCount(gTasks[taskId].tPickerPool) + 2;
+    u8 selected;
+    bool8 redraw = FALSE;
+
+    if (JOY_NEW(SELECT_BUTTON) && gTasks[taskId].tPickerSelection >= 2)
+    {
+        selected = AudioSettings_GetPoolTrack(gTasks[taskId].tPickerPool, gTasks[taskId].tPickerSelection - 2);
+        PlayBGM(AudioSettings_GetTrackSong(selected));
+    }
+    else if (JOY_NEW(A_BUTTON))
+    {
+        selected = gTasks[taskId].tPickerSelection;
+        PlayBGM(gTasks[taskId].tPickerPriorMusic);
+        if (selected == 0)
+            gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_DEFAULT;
+        else if (selected == 1)
+            gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_RANDOM;
+        else
+        {
+            gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_FIXED;
+            gTasks[taskId].tAudioTrack = AudioSettings_GetPoolTrack(gTasks[taskId].tPickerPool, selected - 2);
+        }
+        DrawAudioMenuTexts();
+        DrawAudioMenuChoices(taskId);
+        DrawHeaderText(sTextAudio);
+        HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
+        gTasks[taskId].func = Task_AudioMenuProcessInput;
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(B_BUTTON))
+    {
+        PlayBGM(gTasks[taskId].tPickerPriorMusic);
+        DrawAudioMenuTexts();
+        DrawAudioMenuChoices(taskId);
+        DrawHeaderText(sTextAudio);
+        HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
+        gTasks[taskId].func = Task_AudioMenuProcessInput;
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_UP))
+    {
+        if (gTasks[taskId].tPickerSelection == 0)
+            gTasks[taskId].tPickerSelection = count - 1;
+        else
+            gTasks[taskId].tPickerSelection--;
+        UpdatePickerScroll(taskId, count);
+        DrawTrainerMusicPicker(taskId);
+        HighlightOptionMenuItem(gTasks[taskId].tPickerSelection - gTasks[taskId].tPickerScroll);
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_DOWN))
+    {
+        if (gTasks[taskId].tPickerSelection + 1 >= count)
+            gTasks[taskId].tPickerSelection = 0;
+        else
+            gTasks[taskId].tPickerSelection++;
+        UpdatePickerScroll(taskId, count);
+        DrawTrainerMusicPicker(taskId);
+        HighlightOptionMenuItem(gTasks[taskId].tPickerSelection - gTasks[taskId].tPickerScroll);
+        redraw = TRUE;
+    }
+    if (redraw)
+        CopyWindowToVram(WIN_OPTIONS, COPYWIN_GFX);
+}
+
 static void Task_OptionMenuSave(u8 taskId)
 {
     gSaveBlock2Ptr->optionsTextSpeed = gTasks[taskId].tTextSpeed;
     gSaveBlock2Ptr->optionsBattleSceneOff = gTasks[taskId].tBattleSceneOff;
     gSaveBlock2Ptr->optionsBattleStyle = gTasks[taskId].tBattleStyle;
-    gSaveBlock2Ptr->optionsSound = gTasks[taskId].tSound;
+    gSaveBlock2Ptr->optionsSound = gTasks[taskId].tAudioSound;
     gSaveBlock2Ptr->optionsButtonMode = gTasks[taskId].tButtonMode;
     gSaveBlock2Ptr->optionsWindowFrameType = gTasks[taskId].tWindowFrameType;
+
+    AudioSettings_SetMusicPool(gTasks[taskId].tAudioPool);
+    AudioSettings_SetTrainerTrack(gTasks[taskId].tAudioTrack);
+    AudioSettings_SetTrainerMusicMode(gTasks[taskId].tAudioMusicMode);
 
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     gTasks[taskId].func = Task_OptionMenuFadeOut;
@@ -487,28 +710,118 @@ static void BattleStyle_DrawChoices(u8 selection)
     DrawOptionMenuChoice(gText_BattleStyleSet, GetStringRightAlignXOffset(FONT_NORMAL, gText_BattleStyleSet, 198), YPOS_BATTLESTYLE, styles[1]);
 }
 
-static u8 Sound_ProcessInput(u8 selection)
+static const u8 *GetAudioModeText(u8 mode, u8 track)
 {
-    if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
-    {
-        selection ^= 1;
-        SetPokemonCryStereo(selection);
-        sArrowPressed = TRUE;
-    }
-
-    return selection;
+    if (mode == AUDIO_TRAINER_MUSIC_RANDOM)
+        return sTextRandom;
+    if (mode == AUDIO_TRAINER_MUSIC_FIXED)
+        return AudioSettings_GetTrackName(track);
+    return sTextDefault;
 }
 
-static void Sound_DrawChoices(u8 selection)
+static const u8 *GetAudioPoolText(u8 pool)
 {
-    u8 styles[2];
+    if (pool == AUDIO_MUSIC_POOL_HOENN)
+        return sTextPoolHoenn;
+    if (pool == AUDIO_MUSIC_POOL_ALL_BATTLES)
+        return sTextPoolAll;
+    return sTextPoolKanto;
+}
 
-    styles[0] = 0;
-    styles[1] = 0;
-    styles[selection] = 1;
+static void DrawAudioValue(const u8 *text, u8 y, bool8 selected)
+{
+    DrawAudioOptionChoice(text, GetStringRightAlignXOffset(FONT_NORMAL, text, 198), y, selected);
+}
 
-    DrawOptionMenuChoice(gText_SoundMono, 104, YPOS_SOUND, styles[0]);
-    DrawOptionMenuChoice(gText_SoundStereo, GetStringRightAlignXOffset(FONT_NORMAL, gText_SoundStereo, 198), YPOS_SOUND, styles[1]);
+static void DrawAudioOptionChoice(const u8 *text, u8 x, u8 y, bool8 selected)
+{
+    AddTextPrinterParameterized3(WIN_OPTIONS, FONT_NORMAL, x, y + 1,
+                                 selected ? sAudioSelectedTextColors : sAudioTextColors,
+                                 TEXT_SKIP_DRAW, text);
+}
+
+static void DrawAudioMenuTexts(void)
+{
+    FillWindowPixelBuffer(WIN_OPTIONS, PIXEL_FILL(1));
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Sound, 8, 1, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextTrainerMusicRow, 8, 17, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextMusicPool, 8, 33, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextBack, 8, 49, TEXT_SKIP_DRAW, NULL);
+}
+
+static void DrawAudioMenuChoices(u8 taskId)
+{
+    u8 style;
+
+    DrawAudioMenuTexts();
+    style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_SOUND;
+    DrawAudioValue(gTasks[taskId].tAudioSound ? gText_SoundStereo : gText_SoundMono, 0, style);
+    style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_TRAINER_MUSIC;
+    DrawAudioValue(GetAudioModeText(gTasks[taskId].tAudioMusicMode, gTasks[taskId].tAudioTrack), 16, style);
+    style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_POOL;
+    DrawAudioValue(GetAudioPoolText(gTasks[taskId].tAudioPool), 32, style);
+}
+
+static void DrawOuterOptionChoices(u8 taskId)
+{
+    TextSpeed_DrawChoices(gTasks[taskId].tTextSpeed);
+    BattleScene_DrawChoices(gTasks[taskId].tBattleSceneOff);
+    BattleStyle_DrawChoices(gTasks[taskId].tBattleStyle);
+    DrawOptionMenuChoice(sTextPressA, GetStringRightAlignXOffset(FONT_NORMAL, sTextPressA, 198), YPOS_AUDIO, 0);
+    ButtonMode_DrawChoices(gTasks[taskId].tButtonMode);
+    FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
+}
+
+static void DrawTrainerMusicPicker(u8 taskId)
+{
+    u8 i;
+    u8 count = AudioSettings_GetPoolTrackCount(gTasks[taskId].tPickerPool) + 2;
+    u8 index;
+    const u8 *text;
+
+    FillWindowPixelBuffer(WIN_OPTIONS, PIXEL_FILL(1));
+    for (i = 0; i < PICKER_VISIBLE_ROWS; i++)
+    {
+        index = gTasks[taskId].tPickerScroll + i;
+        if (index >= count)
+            break;
+        if (index == 0)
+            text = sTextDefault;
+        else if (index == 1)
+            text = sTextRandom;
+        else
+            text = AudioSettings_GetTrackName(AudioSettings_GetPoolTrack(gTasks[taskId].tPickerPool, index - 2));
+        AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, text, 8, i * 16 + 1, TEXT_SKIP_DRAW, NULL);
+        if (index == gTasks[taskId].tPickerSelection)
+            DrawAudioOptionChoice(text, 8, i * 16, TRUE);
+    }
+}
+
+static u16 GetCurrentBgmSong(void)
+{
+    const struct SongHeader *songHeader = gMPlayInfo_BGM.songHeader;
+    u16 songId;
+
+    if (songHeader == NULL)
+        return GetCurrentMapMusic();
+    for (songId = 0; songId <= LAST_PHONEME_SONG; songId++)
+    {
+        if (gSongTable[songId].header == songHeader)
+            return songId;
+    }
+    return GetCurrentMapMusic();
+}
+
+static void UpdatePickerScroll(u8 taskId, u8 count)
+{
+    u8 maxScroll = count > PICKER_VISIBLE_ROWS ? count - PICKER_VISIBLE_ROWS : 0;
+
+    if (gTasks[taskId].tPickerSelection < gTasks[taskId].tPickerScroll)
+        gTasks[taskId].tPickerScroll = gTasks[taskId].tPickerSelection;
+    else if (gTasks[taskId].tPickerSelection >= gTasks[taskId].tPickerScroll + PICKER_VISIBLE_ROWS)
+        gTasks[taskId].tPickerScroll = gTasks[taskId].tPickerSelection - PICKER_VISIBLE_ROWS + 1;
+    if (gTasks[taskId].tPickerScroll > maxScroll)
+        gTasks[taskId].tPickerScroll = maxScroll;
 }
 
 static u8 FrameType_ProcessInput(u8 selection)
@@ -615,10 +928,10 @@ static void ButtonMode_DrawChoices(u8 selection)
     DrawOptionMenuChoice(gText_ButtonTypeLEqualsA, GetStringRightAlignXOffset(FONT_NORMAL, gText_ButtonTypeLEqualsA, 198), YPOS_BUTTONMODE, styles[2]);
 }
 
-static void DrawHeaderText(void)
+static void DrawHeaderText(const u8 *title)
 {
     FillWindowPixelBuffer(WIN_HEADER, PIXEL_FILL(1));
-    AddTextPrinterParameterized(WIN_HEADER, FONT_NORMAL, gText_Option, 8, 1, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_HEADER, FONT_NORMAL, title, 8, 1, TEXT_SKIP_DRAW, NULL);
     CopyWindowToVram(WIN_HEADER, COPYWIN_FULL);
 }
 

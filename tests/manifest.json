@@ -6,6 +6,7 @@
     "new-game-tutorial": {"dependencies": ["save-load"]},
     "save-load": {"dependencies": []},
     "battle-shared": {"dependencies": []},
+    "audio-settings": {"dependencies": ["save-load"]},
     "frontier-tower": {"dependencies": ["frontier-common"]},
     "frontier-factory": {"dependencies": ["frontier-common", "team-lab"]},
     "frontier-dome": {"dependencies": ["frontier-common"]},
@@ -64,6 +65,11 @@
       "name": "Team Lab",
       "paths": ["src/team_lab*.c", "include/team_lab.h"],
       "suites": ["team-lab"]
+    },
+    {
+      "name": "shared audio settings and battle sound",
+      "paths": ["src/audio*.c", "include/audio*.h", "src/option_menu.c", "src/pokemon.c", "src/battle_gfx_sfx_util.c"],
+      "suites": "all"
     },
     {
       "name": "new game and tutorial",
