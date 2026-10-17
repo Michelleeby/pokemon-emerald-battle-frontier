@@ -354,28 +354,20 @@ static u32 HandleCantOpenRibbonsInput(struct Pokenav_Menu *menu)
     return POKENAV_MENU_FUNC_NONE;
 }
 
-static void Task_WaitFadeAccessPC(u8 taskId)
+static void AccessPCFromPokenav(void)
 {
-    if (!WaitForPokenavShutdownFade())
-    {
 #ifdef E2E_TESTING
-        gE2EPokenavPcOpenCount++;
+    gE2EPokenavPcOpenCount++;
 #endif
-        ScriptContext_SetupScript(EventScript_PCMainMenu);
-        DestroyTask(taskId);
-    }
+    ScriptContext_SetupScript(EventScript_PCMainMenu);
 }
 
-static void Task_WaitFadeOpenTeamLabParty(u8 taskId)
+static void OpenTeamLabFromPokenav(void)
 {
-    if (!WaitForPokenavShutdownFade())
-    {
 #ifdef E2E_TESTING
-        gE2EPokenavTeamLabOpenCount++;
+    gE2EPokenavTeamLabOpenCount++;
 #endif
-        OpenTeamLabPartyMenu();
-        DestroyTask(taskId);
-    }
+    OpenTeamLabPartyMenu();
 }
 
 static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
@@ -390,7 +382,7 @@ static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
         switch (sMenuItems[menu->menuType][menu->cursorPos])
         {
         case POKENAV_MENUITEM_CONDITION_TEAM_LAB:
-            CreateTask(Task_WaitFadeOpenTeamLabParty, 0);
+            SetPokenavExitCallback(OpenTeamLabFromPokenav);
             return POKENAV_MENU_FUNC_EXIT;
         case POKENAV_MENUITEM_CONDITION_SEARCH:
             menu->menuType = POKENAV_MENU_TYPE_CONDITION_SEARCH;
@@ -400,7 +392,7 @@ static u32 HandleConditionMenuInput(struct Pokenav_Menu *menu)
             return POKENAV_MENU_FUNC_OPEN_CONDITION_SEARCH;
         case POKENAV_MENUITEM_CONDITION_ACCESS_PC:
             FlagSet(FLAG_SYS_PC_FROM_POKENAV);
-            CreateTask(Task_WaitFadeAccessPC, 0);
+            SetPokenavExitCallback(AccessPCFromPokenav);
             return POKENAV_MENU_FUNC_EXIT;
         case POKENAV_MENUITEM_CONDITION_PARTY:
             menu->helpBarIndex = 0;
