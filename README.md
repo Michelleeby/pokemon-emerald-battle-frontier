@@ -1,6 +1,6 @@
 # Pokémon Emerald Battle Frontier
 
-Start your Pokémon journey at the Battle Frontier. Build your team with the in-game Pokémon Lab Editor. Choose from a new "Hard" challenge mode, and pursue all seven Frontier Symbols.
+Start at the Battle Frontier. Use the Pokémon Lab to build your team, choose Normal or Hard challenges, and work toward all seven Frontier Symbols.
 
 <p align="center">
   <img src="assets/frontier-arrival.gif" width="49%" alt="Arrival at the Battle Frontier">
@@ -19,7 +19,7 @@ Start your Pokémon journey at the Battle Frontier. Build your team with the in-
   <tr>
     <td valign="top">
       <img src="assets/pokemon-lab-editor-tutorial.gif" width="100%" alt="Pokémon Lab editor">
-      <p>Create a Pokémon in an open party slot or refine an existing party member.</p>
+      <p>Create a Pokémon in an open party slot or edit one already in your party.</p>
       <ul>
         <li>Choose species, nature, ability, level, and held item</li>
         <li>Edit IVs and EVs with live stat previews and useful presets</li>
@@ -29,7 +29,7 @@ Start your Pokémon journey at the Battle Frontier. Build your team with the in-
     </td>
     <td valign="top">
       <img src="assets/frontier-hard-mode.gif" width="100%" alt="Hard mode challenge">
-      <p>Take a faster route to the Frontier's most demanding battles.</p>
+      <p>Hard mode brings the Frontier's most demanding battles earlier in each challenge.</p>
       <ul>
         <li>Available at all seven Battle Frontier facilities</li>
         <li>Uses the strongest Frontier trainer pools</li>
@@ -40,13 +40,13 @@ Start your Pokémon journey at the Battle Frontier. Build your team with the in-
   </tr>
 </table>
 
-[Read the full list of features here.](FEATURES.md)
+See [FEATURES.md](FEATURES.md) for the full list of gameplay changes.
 
 ## Install and play
 
-Releases contain a BPS patch and `checksums.txt`. They do not contain an
-original or patched ROM. You must supply your own legally obtained copy of the
-supported game.
+Each release includes a BPS patch and `checksums.txt`. Apply the patch to
+your own legally obtained copy of the supported game to create a playable ROM.
+Releases do not include original or patched ROM files.
 
 ### Supported base ROM
 
@@ -64,29 +64,31 @@ Required base ROM SHA-1: f3ae088181bf583e55daf962a92bb46f4f1d07b7
    [latest release](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/releases/latest).
 2. Open [Rom Patcher JS](https://www.marcrobledo.com/RomPatcher.js/). Patching
    is performed locally in your browser.
-3. Select your verified Pokémon Emerald ROM as the ROM file and the downloaded
-   `.bps` file as the patch, then apply the patch.
+3. Select your verified Pokémon Emerald ROM as the ROM file. Select the
+   downloaded `.bps` file as the patch, then apply it.
 4. Save the patched ROM and verify its SHA-1 before playing:
 
 ```text
-Production ROM SHA-1: `94dd919efb13876a9bfa53a5787f3d294281f3a8`
+Production ROM SHA-1: 94dd919efb13876a9bfa53a5787f3d294281f3a8
 ```
 
-The BPS format validates that the selected base ROM is correct. If patching
-fails, verify the base ROM's SHA-1 and make sure it is clean and unmodified.
+The BPS patch checks that the selected base ROM is correct before applying
+changes. If patching fails, check the base ROM's SHA-1 and confirm that the ROM
+is unmodified.
 
 ## Report a bug
 
 Search the [existing issues](https://github.com/Michelleeby/pokemon-emerald-battle-frontier/issues)
-before opening a new one. Include a clear description, the steps needed to
-reproduce the problem, the facility and challenge mode involved, and your
-emulator or hardware. Do not attach or link to ROM files.
+before opening a new one. Describe what happened and the steps needed to
+reproduce it. Include the facility, challenge mode, and emulator or hardware
+you were using so the problem can be checked under the same conditions. Do not
+attach or link to ROM files.
 
 ## Build from source
 
-This project uses the legacy `agbcc` toolchain. On Ubuntu or WSL2, install the
-host dependencies, build the sibling `agbcc` checkout, install it into this
-checkout, and run `make`:
+This project uses the legacy `agbcc` toolchain. On Ubuntu or WSL2, install
+the host dependencies, then build `agbcc` from the sibling checkout. Install
+its compiler and libraries into this checkout before running `make`:
 
 ```sh
 sudo apt-get update
@@ -98,8 +100,9 @@ cd ../pokeemerald
 make -j2
 ```
 
-The resulting development build is `pokeemerald.gba`. See
-[INSTALL.md](INSTALL.md) for repository setup, verification, and test commands.
+This produces the development ROM, `pokeemerald.gba`. See
+[INSTALL.md](INSTALL.md) for repository setup, build verification, and test
+commands.
 
 ## Credits
 
