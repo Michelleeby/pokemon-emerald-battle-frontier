@@ -21,6 +21,7 @@ from tools.testing.save_fixture import (
     SAVE_SIZE,
     SaveFixtureError,
     calculate_checksum,
+    compare_protected_state,
     extract_protected_state,
     import_fixture,
     parse_save,
@@ -99,6 +100,23 @@ class SaveFixtureTests(unittest.TestCase):
         raw[SECTOR_SIZE * 2 + 17] ^= 0xFF
         with self.assertRaisesRegex(SaveFixtureError, "no complete valid save slot"):
             parse_save(bytes(raw))
+
+    def test_both_saveblock1_pokedex_mirrors_are_protected(self) -> None:
+        for logical_offset, field in ((0x988, "pokedex_seen1"), (0x3B24, "pokedex_seen2")):
+            raw = bytearray(_save([(0, 7)]))
+            section_id = 1 + logical_offset // SECTION_SIZES[1]
+            section_offset = logical_offset % SECTION_SIZES[1]
+            physical = (section_id + 3) % NUM_SECTORS
+            start = physical * SECTOR_SIZE
+            raw[start + section_offset] ^= 1
+            data = raw[start:start + SECTION_SIZES[section_id]]
+            struct.pack_into("<H", raw, start + SECTOR_CHECKSUM_OFFSET,
+                             calculate_checksum(data))
+            expected = extract_protected_state(parse_save(_save([(0, 7)])))
+            actual = extract_protected_state(parse_save(bytes(raw)))
+            self.assertNotEqual(expected[field], actual[field])
+            with self.assertRaisesRegex(SaveFixtureError, "protected save state changed"):
+                compare_protected_state(expected, actual)
 
     def test_import_pins_source_hash_and_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

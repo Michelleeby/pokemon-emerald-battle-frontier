@@ -266,9 +266,11 @@ def _legacy_hashes(sb1: bytes, sb2: bytes, storage: bytes) -> dict[str, str]:
         "saveblock2.options": sb2[0x13:0x16],
         "saveblock2.pokedex": sb2[0x18:0x90],
         "saveblock2.normal_frontier": sb2[0x64C:0xF44],
+        "saveblock1.pokedex_seen1": sb1[0x988:0x9BC],
         "saveblock1.party": sb1[0x234:0x490],
         "saveblock1.registered_item": sb1[0x496:0x498],
         "saveblock1.hard_frontier": sb1[0x3598:0x360C],
+        "saveblock1.pokedex_seen2": sb1[0x3B24:0x3B58],
         "storage.all": storage[:STORAGE_SIZE],
     }
     return {name: hashlib.sha256(value).hexdigest() for name, value in regions.items()}
@@ -290,6 +292,8 @@ def extract_protected_state(parsed: ParsedSave) -> dict[str, object]:
         },
         "options": _hex(sb2[0x13:0x16]),
         "pokedex": _hex(sb2[0x18:0x90]),
+        "pokedex_seen1": _hex(sb1[0x988:0x9BC]),
+        "pokedex_seen2": _hex(sb1[0x3B24:0x3B58]),
         "party_count": sb1[0x234],
         "party": _pokemon_list(sb1, 0x238, PARTY_SIZE, PARTY_MON_SIZE, party=True),
         "boxes": boxes,

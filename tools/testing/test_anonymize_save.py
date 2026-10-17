@@ -224,11 +224,13 @@ def _seed_ancillary_identity(raw: bytes) -> bytes:
     for start in range(0x64C, 0xBD4, 0xEC):
         put(0, start + 4, _gen3("PRIVATE", 8))
         put(0, start + 12, old_id)
+        put(0, start + 0x34, struct.pack("<H", 25))
         put(0, start + 0x34 + 0x14, old_id)
         put(0, start + 0x34 + 0x20, _gen3("PRIVATEMON", 11))
     # The e-Reader trainer uses the same record shape with a different count.
     put(0, 0xBEC + 4, _gen3("EREADER", 8))
     put(0, 0xBEC + 12, old_id)
+    put(0, 0xBEC + 0x34, struct.pack("<H", 133))
     put(0, 0xBEC + 0x34 + 0x14, old_id)
     put(0, 0xBEC + 0x34 + 0x20, _gen3("EREADERMON", 11))
     put(0, 0xBD8, _gen3("INTRV", 8))
@@ -270,6 +272,14 @@ def _seed_ancillary_identity(raw: bytes) -> bytes:
     put(1, 0x3C88, bytes([0xD5]) * 0xD2)
     put(1, 0x3D5A, bytes([0xD6]) * 10)
     put(1, 0x3D74, bytes([0xD7]) * 16)
+    section_start = (NUM_SECTORS + 8) * SECTOR_SIZE
+    for start in range(0x64C, 0xBD4, 0xEC):
+        checksum = sum(struct.unpack_from("<I", result, section_start + start + i)[0]
+                       for i in range(0, 0xE8, 4)) & 0xFFFFFFFF
+        struct.pack_into("<I", result, section_start + start + 0xE8, checksum)
+    checksum = sum(struct.unpack_from("<I", result, section_start + 0xBEC + i)[0]
+                   for i in range(0, 0xB8, 4)) & 0xFFFFFFFF
+    struct.pack_into("<I", result, section_start + 0xBEC + 0xB8, checksum)
     _finish_latest_sections(result, changed)
     return bytes(result)
 
@@ -383,6 +393,10 @@ class AnonymizeSaveTests(unittest.TestCase):
                 after.save_block2[0xF09 + index * 4:0xF0D + index * 4],
                 struct.pack("<I", 0x6A000010 + index),
             )
+        for start in range(0x64C, 0xBD4, 0xEC):
+            for slot in range(1, 4):
+                mon = start + 0x34 + slot * 0x2C
+                self.assertEqual(after.save_block2[mon:mon + 0x2C], bytes(0x2C))
 
         sb1 = after.save_block1
         self.assertEqual(sb1[0x27CC:0x2B50], bytes(0x384))
@@ -415,6 +429,21 @@ class AnonymizeSaveTests(unittest.TestCase):
         self.assertEqual(sb1[0x3C88:0x3D5A], bytes([0xFF]) * 0xD2)
         self.assertEqual(sb1[0x3D5A:0x3D64], bytes(10))
         self.assertEqual(sb1[0x3D74:0x3D84], bytes([0xFF]) * 16)
+
+    def test_absent_records_and_slots_stay_absent(self) -> None:
+        after = _parse_bank(anonymize_save(_make_save()), 0)
+        self.assertEqual(after.save_block2[0x64C:0xBD4], bytes(0x588))
+        self.assertEqual(after.save_block2[0xBEC:0xCA8], bytes(0xBC))
+
+    def test_invalid_active_records_are_cleared(self) -> None:
+        raw = bytearray(_make_save())
+        changed: set[int] = set()
+        _set_latest_block(raw, 0, 0x64C + 4, _gen3("BAD", 8), changed)
+        _set_latest_block(raw, 0, 0xBEC + 4, _gen3("BAD", 8), changed)
+        _finish_latest_sections(raw, changed)
+        after = _parse_bank(anonymize_save(bytes(raw)), 1)
+        self.assertEqual(after.save_block2[0x64C:0xBD4], bytes(0x588))
+        self.assertEqual(after.save_block2[0xBEC:0xCA8], bytes(0xBC))
 
     def test_deterministic_names_ids_secure_data_and_numeric_state(self) -> None:
         source = _make_save()

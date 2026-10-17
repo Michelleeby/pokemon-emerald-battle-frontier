@@ -76,9 +76,35 @@ class _Anonymizer:
         data[offset:offset + size] = mon
 
     def tower_record(self, data: bytearray, start: int, count: int, checksum_offset: int) -> None:
+        record_size = checksum_offset + 4
+        payload = data[start:start + checksum_offset]
+        stored_checksum = struct.unpack_from('<I', data, start + checksum_offset)[0]
+        if not any(payload):
+            # Production validation treats a completely zero record as absent.
+            # Keep it absent instead of manufacturing a public trainer.
+            if stored_checksum != 0:
+                data[start:start + record_size] = bytes(record_size)
+            return
+
+        checksum = sum(struct.unpack_from('<I', payload, i)[0]
+                       for i in range(0, checksum_offset, 4)) & 0xFFFFFFFF
+        if stored_checksum != checksum:
+            # Match ValidateBattleTowerRecordChecksums/ValidateEReaderTrainer:
+            # an active record with a bad checksum is cleared.
+            data[start:start + record_size] = bytes(record_size)
+            return
+
         self.identity(data, start + 4, 8, start + 12)
         for i in range(count):
             mon = start + 0x34 + i * 0x2C
+            species = struct.unpack_from('<H', data, mon)[0]
+            if species == 0:
+                # Empty party slots remain empty. Clear stale bytes in an
+                # otherwise active record rather than inventing a species-none
+                # trainer entry.
+                if any(data[mon:mon + 0x2C]):
+                    data[mon:mon + 0x2C] = bytes(0x2C)
+                continue
             tid = struct.unpack_from('<I', data, mon + 0x14)[0]
             struct.pack_into('<I', data, mon + 0x14, self.trainer_id(tid))
             data[mon + 0x20:mon + 0x2B] = _text('MON', 11)
