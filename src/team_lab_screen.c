@@ -998,7 +998,7 @@ static void HandleTeamLabNormalInput(u8 taskId)
         }
         else if (sTeamLabScreen->page == TEAM_LAB_PAGE_MOVES)
         {
-            u8 move = sTeamLabScreen->draft.moves[sTeamLabScreen->moveFocus];
+            u16 move = sTeamLabScreen->draft.moves[sTeamLabScreen->moveFocus];
 
             if (!TeamLab_AdjustMovePp(move, &sTeamLabScreen->draft.ppBonuses,
                                       &sTeamLabScreen->draft.pp[sTeamLabScreen->moveFocus],
