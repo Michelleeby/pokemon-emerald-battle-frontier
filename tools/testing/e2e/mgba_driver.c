@@ -24,6 +24,7 @@
 
 #define E2E_PROTOCOL_VERSION 1
 #define E2E_MAX_COMMAND_FRAMES 10000000U
+#define E2E_MAX_READBLOCK_BYTES 65536U
 #define E2E_GBA_KEY_MASK 0x3FFU
 
 struct Driver
@@ -340,6 +341,47 @@ static bool RunCommand(struct Driver *driver, char *line)
         }
         snprintf(detail, sizeof(detail), "frame=%" PRIu32, driver->core->frameCounter(driver->core));
         Reply("OK", detail);
+        return true;
+    }
+
+    if (strcmp(command, "READBLOCK") == 0)
+    {
+        char *address = strtok_r(NULL, " \t\r\n", &context);
+        char *size = strtok_r(NULL, " \t\r\n", &context);
+        char *encoded;
+        uint8_t *bytes;
+        size_t encodedLength;
+        size_t offset;
+
+        if (!ParseU32(address, &first) || !ParseU32(size, &second)
+         || second > E2E_MAX_READBLOCK_BYTES
+         || first > UINT32_MAX - second
+         || !RequireEnd(strtok_r(NULL, " \t\r\n", &context)))
+        {
+            Reply("ERR", "usage READBLOCK address size (size <= 65536)");
+            return true;
+        }
+
+        encodedLength = (size_t)second * 2 + sizeof("data=");
+        encoded = malloc(encodedLength);
+        bytes = malloc(second == 0 ? 1 : second);
+        if (encoded == NULL || bytes == NULL)
+        {
+            free(encoded);
+            free(bytes);
+            Reply("ERR", "readblock-allocation-failed");
+            return true;
+        }
+        for (offset = 0; offset < second; offset++)
+            bytes[offset] = (uint8_t)driver->core->busRead8(driver->core, first + offset);
+        memcpy(encoded, "data=", sizeof("data=") - 1);
+        for (offset = 0; offset < second; offset++)
+            snprintf(encoded + sizeof("data=") - 1 + offset * 2, 3,
+                     "%02x", bytes[offset]);
+        encoded[sizeof("data=") - 1 + (size_t)second * 2] = '\0';
+        Reply("OK", encoded);
+        free(encoded);
+        free(bytes);
         return true;
     }
 

@@ -84,6 +84,12 @@ scenarios cover:
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal
 
+The `real-save-compatibility` scenario loads an immutable anonymized derivative
+of the user's actual older save, checks protected state, saves through the updated
+game, restarts, and checks that state again. See
+[`tests/fixtures/saves/README.md`](fixtures/saves/README.md) for import and run
+commands. The anonymized fixture is included in the default E2E suite, and
+changes to its fixture, parser or anonymizer select the regression automatically.
 
 The facility scenarios focus on behavior changed by this project. They do
 not replay unchanged vanilla facility flows. For long special-trainer

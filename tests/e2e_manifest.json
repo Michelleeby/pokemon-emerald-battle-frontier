@@ -17,6 +17,7 @@
     "pokenav-team-lab-access",
     "pyramid-hard-brandon",
     "pyramid-normal-brandon",
+    "real-save-compatibility",
     "team-lab-create-mon",
     "team-lab-edit-pp",
     "team-lab-edit-stats",
@@ -24,6 +25,11 @@
     "tower-normal-anabel"
   ],
   "rules": [
+    {
+      "name": "real save compatibility fixture",
+      "paths": ["tests/fixtures/saves/**", "tools/testing/save_fixture.py", "tools/testing/anonymize_save.py"],
+      "scenarios": ["real-save-compatibility"]
+    },
     {
       "name": "E2E infrastructure",
       "paths": ["Makefile", ".github/workflows/test*.yml", "tests/e2e_manifest.json", "tools/testing/run_e2e.py", "tools/testing/e2e/**", "src/e2e_fixture.c"],

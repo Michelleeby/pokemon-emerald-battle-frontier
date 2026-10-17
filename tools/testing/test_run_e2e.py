@@ -34,6 +34,7 @@ class E2ESelectionTests(unittest.TestCase):
                 "pokenav-team-lab-access",
                 "pyramid-hard-brandon",
                 "pyramid-normal-brandon",
+                "real-save-compatibility",
                 "team-lab-create-mon",
                 "team-lab-edit-pp",
                 "team-lab-edit-stats",
@@ -46,6 +47,13 @@ class E2ESelectionTests(unittest.TestCase):
         self.assertEqual(
             selected_scenarios(["tower-hard-anabel"]), ["tower-hard-anabel"]
         )
+
+    def test_real_save_compatibility_is_explicitly_selectable(self) -> None:
+        self.assertEqual(
+            selected_scenarios(["real-save-compatibility"]),
+            ["real-save-compatibility"],
+        )
+        self.assertIn("real-save-compatibility", selected_scenarios([]))
 
     def test_factory_setup_scenario_can_be_selected(self) -> None:
         self.assertEqual(
