@@ -2149,7 +2149,7 @@ static const struct NamingScreenTemplate sWaldaWordsScreenTemplate =
     .title = gText_TellHimTheWords,
 };
 
-static const u8 sText_MoveName[] = _("MOVE OR NONE");
+static const u8 sText_MoveName[] = _("MOVE NAME");
 
 static const struct NamingScreenTemplate sMoveSearchNamingTemplate =
 {
