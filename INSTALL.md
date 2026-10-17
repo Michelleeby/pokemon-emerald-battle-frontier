@@ -1,8 +1,8 @@
 # Developer build instructions
 
-These instructions build Pokémon Emerald Battle Frontier from source with the
-legacy, byte-matching `agbcc` toolchain. The workflow has been verified on
-Ubuntu 24.04 under WSL2.
+Use these instructions to build Pokémon Emerald Battle Frontier from source
+with the legacy, byte-matching `agbcc` toolchain. This workflow has been
+verified on Ubuntu 24.04 under WSL2.
 
 ## Requirements
 
@@ -13,7 +13,8 @@ sudo apt-get update
 sudo apt-get install -y build-essential binutils-arm-none-eabi git libpng-dev
 ```
 
-Clone this repository and `pret/agbcc` beside one another:
+Clone this repository and `pret/agbcc` into the same parent directory. The
+commands below use this layout:
 
 ```text
 pokedecomps/
@@ -23,8 +24,9 @@ pokedecomps/
 
 ## Set up the compiler
 
-From the parent directory, build `agbcc` and install its generated compiler and
-libraries into this project:
+From the parent directory, build `agbcc`, then install its generated
+compiler and libraries into this project. The ROM build uses this installed
+copy:
 
 ```sh
 cd agbcc
@@ -32,8 +34,9 @@ cd agbcc
 ./install.sh ../pokeemerald
 ```
 
-Repeat this step after replacing or rebuilding the `agbcc` checkout. The
-generated files under `pokeemerald/tools/agbcc` must not be committed.
+Repeat this step whenever you replace or rebuild the `agbcc` checkout so the
+project uses the rebuilt compiler and libraries. Do not commit the generated
+files under `pokeemerald/tools/agbcc`.
 
 ## Build
 
@@ -42,41 +45,44 @@ cd ../pokeemerald
 make
 ```
 
-The output is `pokeemerald.gba`. A successful production build has this SHA-1:
+The build produces `pokeemerald.gba`. Check its SHA-1 against the expected
+production value:
 
 ```text
 94dd919efb13876a9bfa53a5787f3d294281f3a8
 ```
 
-Verify it with:
+Calculate the SHA-1 with:
 
 ```sh
 sha1sum pokeemerald.gba
 ```
 
-The occasional `pkg-config: No such file or directory` message while compiling
-host tools is non-fatal when the tools still link successfully against libpng.
+You may see `pkg-config: No such file or directory` while compiling host
+tools. If the tools still link successfully against libpng, this message does
+not prevent the build from completing.
 
-Use `make clean` to remove generated ROMs, objects, host tools, converted
-assets, and other build output. Run `make -j2` afterward for a clean rebuild.
+For a clean rebuild, run `make clean` to remove generated ROMs, objects, host
+tools, converted assets, and other build output. Then run `make -j2`.
 
 ## Tests
 
-Run the production-linked gameplay suites:
+Run the gameplay suites linked against production code:
 
 ```sh
 make check-all
 ```
 
-Validate the suite selectors and their unit tests:
+Validate the test manifests, then run the suite selector unit tests:
 
 ```sh
 python3 tools/testing/validate_manifest.py
 python3 -m unittest discover -s tools/testing -p 'test_*.py' -v
 ```
 
-The end-to-end tests require the pinned sibling mGBA checkout. See
-[tests/README.md](tests/README.md) for the complete gameplay and E2E workflow.
+The end-to-end tests also require the pinned sibling mGBA checkout. See
+[tests/README.md](tests/README.md) for the gameplay and end-to-end (E2E)
+workflow.
 
 ## Vanilla reference
 
@@ -86,8 +92,9 @@ The upstream vanilla `pret/pokeemerald` base has this SHA-1:
 f3ae088181bf583e55daf962a92bb46f4f1d07b7
 ```
 
-`make compare` applies to a clean vanilla checkout. This modified project's ROM
-is expected to differ from the vanilla hash.
+`make compare` checks a clean vanilla checkout against that hash. Since this
+project changes the game, its ROM is expected to have a different hash. Use
+the production SHA-1 above to verify this build.
 
 Neither the source repository nor its releases provide original or patched ROM
 files.
