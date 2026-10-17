@@ -13,12 +13,27 @@ from .team_lab import (
     gameplay_symbols,
     open_team_lab_editor,
     saved_build,
+    wait_callback,
 )
 
 
 def _open_moves_page(game: Session) -> None:
     game.press("R", held_frames=1, released_frames=30)
     game.press("R", held_frames=1, released_frames=30)
+
+
+def _search_none(game: Session, symbols: dict[str, int]) -> None:
+    game.press("A", held_frames=1, released_frames=90)
+    wait_callback(game, symbols, "CB2_NamingScreen")
+    game.run_frames(60)
+    # The uppercase keyboard starts at A. Enter N, O, N, E, then confirm OK.
+    for key in (
+        "DOWN", "DOWN", "RIGHT", "A", "RIGHT", "A", "LEFT", "A",
+        "UP", "UP", "RIGHT", "RIGHT", "RIGHT", "A", "START",
+    ):
+        game.press(key, held_frames=1, released_frames=15)
+    game.press("A", held_frames=1, released_frames=120)
+    wait_callback(game, symbols, "CB2_TeamLabScreen")
 
 
 def run(artifact_dir: Path) -> None:
@@ -28,7 +43,7 @@ def run(artifact_dir: Path) -> None:
     symbols = gameplay_symbols(
         "gSaveBlock2Ptr", "sNumStartMenuActions", "sStartMenuCursorPos",
         "sCurrentStartMenuActions", "sSaveDialogCallback",
-        "SaveOverwriteInputCallback", "gSaveCounter",
+        "SaveOverwriteInputCallback", "gSaveCounter", "CB2_NamingScreen",
     )
     create_team_lab_save(artifact_dir, save, high_move=True)
     with Session(GAMEPLAY_ROM, artifact_dir / "scenario", save=save) as game:
@@ -49,11 +64,13 @@ def run(artifact_dir: Path) -> None:
         game.press("B", held_frames=1, released_frames=120)
         game.wait(symbols["sLockFieldControls"], 0, width=8, max_frames=900)
 
-        # Reopen the saved one-bonus build, then apply Max All.
+        # Select applies Max PP immediately and stays on the Moves page.
+        # Repeating it must not require confirmation or refill spent PP.
         open_team_lab_editor(game, symbols)
         _open_moves_page(game)
         game.press("SELECT", held_frames=1, released_frames=30)
-        game.press("A", held_frames=1, released_frames=30)
+        game.press("SELECT", held_frames=1, released_frames=30)
+        game.screenshot("pp-select-max.png")
         game.press("START", held_frames=1, released_frames=120)
         game.wait(symbols["gE2ETeamLabSaveCount"], 2, width=32, max_frames=600)
         build = saved_build(game, symbols)
@@ -105,4 +122,23 @@ def run(artifact_dir: Path) -> None:
         build = saved_build(game, symbols)
         if build["moves"][0] != MOVE_SWALLOW or build["pp_bonuses"] & 0x3 != 0x2 or build["pp"][0] != 14:
             raise TeamLabScenarioFailure(f"discard changed the saved PP state: {build}")
+
+        # NONE is an ordinary search choice. It clears just the focused move,
+        # its remaining PP and packed upgrades, preserving all other slots.
+        before_clear = build
+        game.press("B", held_frames=1, released_frames=120)
+        game.wait(symbols["sLockFieldControls"], 0, width=8, max_frames=900)
+        open_team_lab_editor(game, symbols)
+        _open_moves_page(game)
+        _search_none(game, symbols)
+        game.screenshot("move-none.png")
+        game.press("START", held_frames=1, released_frames=120)
+        game.wait(symbols["gE2ETeamLabSaveCount"], 3, width=32, max_frames=600)
+        build = saved_build(game, symbols)
+        if (
+            build["moves"] != [0, *before_clear["moves"][1:]]
+            or build["pp"] != [0, *before_clear["pp"][1:]]
+            or build["pp_bonuses"] != before_clear["pp_bonuses"] & ~0x3
+        ):
+            raise TeamLabScenarioFailure(f"NONE search did not clear only the focused slot: {build}")
         game.screenshot("passed.png")

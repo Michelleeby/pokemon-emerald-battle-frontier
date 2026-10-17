@@ -27,8 +27,9 @@ base, following the project's gameplay commit history.
 - Apply maximum-IV, zero-Speed-IV, cleared-EV, and 252/252/4 EV presets.
 - Adjust stats quickly with accelerated directional input.
 - Choose moves through a searchable interface.
-- Set each move's PP Up count from zero to three, or maximize all eligible
-  moves at once. PP edits preserve the amount of PP already spent.
+- Set each move's PP Up count from zero to three with D-pad Left/Right, or
+  press Select to maximize all eligible moves. PP edits preserve the amount
+  of PP already spent. Search for NONE to clear the selected move slot.
 - Choose from the selected species' legal Generation III level-up, TM/HM,
   tutor, egg, and pre-evolution move pools.
 - Validate the completed build before saving it to the party.
