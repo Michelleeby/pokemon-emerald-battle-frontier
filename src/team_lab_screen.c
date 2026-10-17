@@ -191,7 +191,7 @@ static const struct WindowTemplate sTeamLabWindowTemplates[] =
         .tilemapLeft = 2,
         .tilemapTop = 13,
         .width = 12,
-        .height = 6,
+        .height = 7,
         .paletteNum = 15,
         .baseBlock = TEAM_LAB_CONTENT_BASE_BLOCK + TEAM_LAB_CONTENT_WIDTH / 8 * TEAM_LAB_CONTENT_HEIGHT / 8,
     },
@@ -232,8 +232,16 @@ static const u8 sText_TeamLabIv[] = _("IV");
 static const u8 sText_TeamLabEv[] = _("EV");
 static const u8 sText_TeamLabStat[] = _("STAT");
 static const u8 sText_TeamLabNone[] = _("NONE");
-static const u8 sText_TeamLabControls1[] = _("L/R PAGE  START SAVE");
-static const u8 sText_TeamLabControls2[] = _("B CANCEL");
+static const u8 sText_TeamLabLButton[] = _("{L_BUTTON}");
+static const u8 sText_TeamLabRButton[] = _("{R_BUTTON}");
+static const u8 sText_TeamLabFooter[] = _("START SAVE  B END");
+static const u8 sText_TeamLabSelectorFooter[] = _("A CONFIRM  B BACK");
+static const u8 sText_TeamLabBuildControls1[] = _("A CHANGE");
+static const u8 sText_TeamLabBuildControls2[] = _("{LEFT_ARROW}{RIGHT_ARROW} LEVEL");
+static const u8 sText_TeamLabStatsControls1[] = _("{LEFT_ARROW}{RIGHT_ARROW} EDIT  A IV-EV");
+static const u8 sText_TeamLabStatsControls2[] = _("SEL PRESETS");
+static const u8 sText_TeamLabMovesControls1[] = _("A SEARCH {LEFT_ARROW}{RIGHT_ARROW} PP");
+static const u8 sText_TeamLabMovesControls2[] = _("SEL MAX PP");
 static const u8 sText_TeamLabChooseRaised[] = _("CHOOSE RAISED STAT");
 static const u8 sText_TeamLabChooseLowered[] = _("CHOOSE LOWERED STAT");
 static const u8 sText_TeamLabConfirmNature[] = _("CONFIRM NATURE");
@@ -248,13 +256,9 @@ static const u8 sText_TeamLabChoose252[] = _("CHOOSE 252 STAT");
 static const u8 sText_TeamLabChoose4[] = _("CHOOSE 4 EV STAT");
 static const u8 sText_TeamLabPlus[] = _("+");
 static const u8 sText_TeamLabMinus[] = _("-");
-static const u8 sText_TeamLabConfirmChange[] = _("A CONFIRM  B CHANGE");
 static const u8 sText_TeamLabPp[] = _("PP ");
 static const u8 sText_TeamLabSlash[] = _("/");
 static const u8 sText_TeamLabUp[] = _(" UP ");
-static const u8 sText_TeamLabMoveControls1[] = _("DPAD L/R PP A SEARCH");
-static const u8 sText_TeamLabMoveControls2[] = _("SEL MAX PP  L/R PAGE");
-static const u8 sText_TeamLabMoveControls3[] = _("START SAVE  B CANCEL");
 
 static const u8 *const sTeamLabStatNames[NUM_STATS] =
 {
@@ -293,6 +297,47 @@ static void PrintText(u8 windowId, const u8 *text, u8 x, u8 y)
 static void PrintSmallText(u8 windowId, const u8 *text, u8 x, u8 y)
 {
     AddTextPrinterParameterized4(windowId, FONT_SMALL, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, text);
+}
+
+static void PrintSmallNarrowText(u8 windowId, const u8 *text, u8 x, u8 y)
+{
+    AddTextPrinterParameterized4(windowId, FONT_SMALL_NARROW, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, text);
+}
+
+static void DrawCenteredTitle(u8 windowId, u8 fontId, const u8 *title, u8 width, u8 y)
+{
+    u16 titleWidth = GetStringWidth(fontId, title, 0);
+    u8 x = titleWidth < width ? (width - titleWidth) / 2 : 0;
+
+    AddTextPrinterParameterized4(windowId, fontId, x, y, 0, 0, sTeamLabTextColors, TEXT_SKIP_DRAW, title);
+}
+
+static void DrawPageHeaderHints(void)
+{
+    u8 rightButtonX = TEAM_LAB_CONTENT_WIDTH - GetStringWidth(FONT_NORMAL, sText_TeamLabRButton, 0);
+
+    PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabLButton, 0, 1);
+    PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabRButton, rightButtonX, 1);
+}
+
+static void DrawTeamLabPageControls(void)
+{
+    switch (sTeamLabScreen->page)
+    {
+    case TEAM_LAB_PAGE_BUILD:
+        PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabBuildControls1, 0, 12);
+        if (sTeamLabScreen->buildFocus == TEAM_LAB_BUILD_LEVEL)
+            PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabBuildControls2, 0, 24);
+        break;
+    case TEAM_LAB_PAGE_STATS:
+        PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabStatsControls1, 0, 12);
+        PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabStatsControls2, 0, 24);
+        break;
+    case TEAM_LAB_PAGE_MOVES:
+        PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabMovesControls1, 0, 12);
+        PrintText(WIN_TEAM_LAB_DETAIL, sText_TeamLabMovesControls2, 0, 24);
+        break;
+    }
 }
 
 static u8 PrintWrappedText(u8 windowId, u8 fontId, const u8 *text, u8 x, u8 y, u8 maxWidth, u8 lineHeight)
@@ -586,19 +631,16 @@ static void CopyTeamLabWindows(void)
 static void DrawTeamLabScreen(void)
 {
     ClearTeamLabWindows();
-    PrintText(WIN_TEAM_LAB_NAME, sText_TeamLabTitle, 0, 1);
+    DrawCenteredTitle(WIN_TEAM_LAB_NAME, FONT_NORMAL, sText_TeamLabTitle, 11 * 8, 1);
     PrintText(WIN_TEAM_LAB_DETAIL, gSpeciesNames[sTeamLabScreen->draft.species], 0, 1);
-    if (sTeamLabScreen->page == TEAM_LAB_PAGE_MOVES && sTeamLabScreen->mode == TEAM_LAB_MODE_NORMAL)
+    if (sTeamLabScreen->mode == TEAM_LAB_MODE_NORMAL)
     {
-        PrintSmallText(WIN_TEAM_LAB_DETAIL, sText_TeamLabMoveControls1, 0, 12);
-        PrintSmallText(WIN_TEAM_LAB_DETAIL, sText_TeamLabMoveControls2, 0, 24);
-        PrintSmallText(WIN_TEAM_LAB_DETAIL, sText_TeamLabMoveControls3, 0, 36);
+        DrawPageHeaderHints();
+        DrawTeamLabPageControls();
+        PrintSmallNarrowText(WIN_TEAM_LAB_DETAIL, sText_TeamLabFooter, 0, 40);
     }
     else
-    {
-        PrintSmallText(WIN_TEAM_LAB_DETAIL, sText_TeamLabControls1, 0, 18);
-        PrintSmallText(WIN_TEAM_LAB_DETAIL, sText_TeamLabControls2, 0, 26);
-    }
+        PrintSmallNarrowText(WIN_TEAM_LAB_DETAIL, sText_TeamLabSelectorFooter, 0, 40);
 
     if (sTeamLabScreen->mode != TEAM_LAB_MODE_NORMAL)
         DrawTeamLabModal();
@@ -633,7 +675,7 @@ static void DrawTeamLabBuildPage(void)
     u8 i;
     u8 y = 17;
 
-    PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabBuild, 0, 1);
+    DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_NORMAL, sText_TeamLabBuild, TEAM_LAB_CONTENT_WIDTH, 1);
     ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.level, STR_CONV_MODE_LEFT_ALIGN, 3);
     values[0] = gSpeciesNames[sTeamLabScreen->draft.species];
     values[1] = gNatureNamePointers[sTeamLabScreen->draft.nature];
@@ -667,7 +709,7 @@ static void DrawTeamLabStatsPage(void)
     };
     u8 i;
 
-    PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabStats, 0, 1);
+    DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_NORMAL, sText_TeamLabStats, TEAM_LAB_CONTENT_WIDTH, 1);
     PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabIv, 46, 18);
     PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabEv, 70, 18);
     PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabStat, 90, 18);
@@ -701,7 +743,7 @@ static void DrawTeamLabMovesPage(void)
 {
     u8 i;
 
-    PrintText(WIN_TEAM_LAB_CONTENT, sText_TeamLabMoves, 0, 1);
+    DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_NORMAL, sText_TeamLabMoves, TEAM_LAB_CONTENT_WIDTH, 1);
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         u16 move = sTeamLabScreen->draft.moves[i];
@@ -755,12 +797,12 @@ static void DrawTeamLabModal(void)
     case TEAM_LAB_MODE_NATURE_RAISED:
     case TEAM_LAB_MODE_NATURE_LOWERED:
         heading = sTeamLabScreen->mode == TEAM_LAB_MODE_NATURE_RAISED ? sText_TeamLabChooseRaised : sText_TeamLabChooseLowered;
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, heading, 0, 1);
+        DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_SMALL, heading, TEAM_LAB_CONTENT_WIDTH, 1);
         for (i = 0; i < NUM_STATS - 1; i++)
             DrawModalChoice(sTeamLabNatureStatNames[i], i, 19 + i * 16);
         break;
     case TEAM_LAB_MODE_NATURE_CONFIRM:
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabConfirmNature, 0, 1);
+        DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_SMALL, sText_TeamLabConfirmNature, TEAM_LAB_CONTENT_WIDTH, 1);
         PrintText(WIN_TEAM_LAB_CONTENT, gNatureNamePointers[sTeamLabScreen->natureRaised * 5 + sTeamLabScreen->natureLowered], 8, 25);
         if (sTeamLabScreen->natureRaised == sTeamLabScreen->natureLowered)
             PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabNoStatChange, 8, 49);
@@ -773,13 +815,12 @@ static void DrawTeamLabModal(void)
             StringAppend(gStringVar1, sTeamLabNatureStatNames[sTeamLabScreen->natureLowered]);
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 8, 65);
         }
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabConfirmChange, 8, 89);
         break;
     case TEAM_LAB_MODE_ABILITY:
     {
         u8 abilityCount = gSpeciesInfo[sTeamLabScreen->draft.species].abilities[1] == ABILITY_NONE ? 1 : 2;
 
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabChooseAbility, 0, 1);
+        DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_SMALL, sText_TeamLabChooseAbility, TEAM_LAB_CONTENT_WIDTH, 1);
         for (i = 0; i < abilityCount; i++)
             DrawModalChoice(gAbilityNames[GetAbilityBySpecies(sTeamLabScreen->draft.species, i)], i, 21 + i * 18);
         PrintWrappedText(WIN_TEAM_LAB_CONTENT, FONT_SMALL,
@@ -797,7 +838,7 @@ static void DrawTeamLabModal(void)
             sText_TeamLabEvSpread,
         };
 
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabStatPreset, 0, 1);
+        DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_SMALL, sText_TeamLabStatPreset, TEAM_LAB_CONTENT_WIDTH, 1);
         for (i = 0; i < ARRAY_COUNT(presetNames); i++)
             DrawModalChoice(presetNames[i], i, 21 + i * 18);
         break;
@@ -805,7 +846,9 @@ static void DrawTeamLabModal(void)
     case TEAM_LAB_MODE_EV_FIRST:
     case TEAM_LAB_MODE_EV_SECOND:
     case TEAM_LAB_MODE_EV_THIRD:
-        PrintSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabScreen->mode == TEAM_LAB_MODE_EV_THIRD ? sText_TeamLabChoose4 : sText_TeamLabChoose252, 0, 1);
+        DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_SMALL,
+                          sTeamLabScreen->mode == TEAM_LAB_MODE_EV_THIRD ? sText_TeamLabChoose4 : sText_TeamLabChoose252,
+                          TEAM_LAB_CONTENT_WIDTH, 1);
         for (i = 0; i < NUM_STATS; i++)
             DrawModalChoice(sTeamLabStatNames[i], i, 19 + i * 14);
         break;
