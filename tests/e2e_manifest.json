@@ -17,6 +17,7 @@
     "pyramid-hard-brandon",
     "pyramid-normal-brandon",
     "team-lab-create-mon",
+    "team-lab-edit-pp",
     "team-lab-edit-stats",
     "tower-hard-anabel",
     "tower-normal-anabel"
@@ -65,7 +66,7 @@
     {
       "name": "Team Lab editor",
       "paths": ["src/team_lab*.c", "include/team_lab.h"],
-      "scenarios": ["team-lab-create-mon", "team-lab-edit-stats", "pokenav-team-lab-access", "frontier-intro-team-lab"]
+      "scenarios": ["team-lab-create-mon", "team-lab-edit-stats", "team-lab-edit-pp", "pokenav-team-lab-access", "frontier-intro-team-lab"]
     },
     {
       "name": "Team Lab Pokédex selection integration",

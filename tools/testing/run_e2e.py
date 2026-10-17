@@ -34,6 +34,7 @@ from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 from e2e.pokenav_team_lab_access import run as run_pokenav_team_lab_access
 from e2e.team_lab_create_mon import run as run_team_lab_create_mon
 from e2e.team_lab_edit_stats import run as run_team_lab_edit_stats
+from e2e.team_lab_edit_pp import run as run_team_lab_edit_pp
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -64,6 +65,7 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "pyramid-hard-brandon": run_pyramid_hard_brandon,
     "pyramid-normal-brandon": run_pyramid_normal_brandon,
     "team-lab-create-mon": run_team_lab_create_mon,
+    "team-lab-edit-pp": run_team_lab_edit_pp,
     "team-lab-edit-stats": run_team_lab_edit_stats,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,

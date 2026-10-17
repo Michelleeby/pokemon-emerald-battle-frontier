@@ -77,8 +77,10 @@ scenarios cover:
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup
 - Pokémon Lab creation and stat editing
+- Pokémon Lab PP editing, Max All, and save/discard behavior
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal
+
 
 The facility scenarios focus on behavior changed by this project. They do
 not replay unchanged vanilla facility flows. For long special-trainer

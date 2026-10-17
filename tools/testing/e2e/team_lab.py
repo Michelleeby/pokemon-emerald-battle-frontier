@@ -92,6 +92,8 @@ def saved_build(game: Session, symbols: dict[str, int]) -> dict[str, object]:
         "ability": game.read(base + 14, width=8),
         "ivs": [game.read(base + 15 + i, width=8) for i in range(6)],
         "evs": [game.read(base + 21 + i, width=8) for i in range(6)],
+        "pp_bonuses": game.read(base + 27, width=8),
+        "pp": [game.read(base + 28 + i, width=8) for i in range(4)],
     }
 
 

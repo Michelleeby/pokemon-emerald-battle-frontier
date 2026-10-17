@@ -172,6 +172,7 @@ class SelectorTests(unittest.TestCase):
                 "pyramid-hard-brandon",
                 "pyramid-normal-brandon",
                 "team-lab-create-mon",
+                "team-lab-edit-pp",
                 "team-lab-edit-stats",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
