@@ -33,12 +33,82 @@ def audio_record(game: Session, symbols: dict[str, int]) -> tuple[int, ...]:
     )
 
 
+def bgm_status(game: Session, symbols: dict[str, int]) -> int:
+    """Read the BGM player's status word (song header is stale after a stop)."""
+
+    return game.read(symbols["gMPlayInfo_BGM"] + 4)
+
+
+def check_bgm_stopped(game: Session, symbols: dict[str, int], context: str) -> None:
+    status = bgm_status(game, symbols)
+    _check(status & 0x80000000 or status & 0xFFFF == 0,
+           f"{context} restarted BGM: status={status:#x}")
+
+
+def wait_for_title_input(game: Session, symbols: dict[str, int]) -> None:
+    """Skip the boot intro and wait for the real title-screen input task."""
+
+    task_base = symbols["gTasks"]
+    title_task = symbols["Task_TitleScreenPhase3"] | 1
+    for _ in range(80):
+        if any(game.read(task_base + index * 40) == title_task for index in range(16)):
+            return
+        game.press("A", held_frames=1, released_frames=14)
+    raise TeamLabScenarioFailure("coldboot did not reach the title-screen input task")
+
+
+def verify_silent_picker_restore(artifact_dir: Path, symbols: dict[str, int]) -> None:
+    """Exercise picker exits after title BGM fades into the silent main menu."""
+
+    with Session(GAMEPLAY_ROM, artifact_dir / "silent-main-menu") as game:
+        # Skip the boot intro, reach title input, then enter its silent main menu.
+        wait_for_title_input(game, symbols)
+        game.press("START", held_frames=1, released_frames=120)
+        check_bgm_stopped(game, symbols, "title fade")
+
+        # The no-save main menu is NEW GAME, OPTIONS.
+        game.press("DOWN", held_frames=1, released_frames=30)
+        game.press("A", held_frames=1, released_frames=5)
+        game.wait(symbols["gMain"] + 4, symbols["CB2_InitOptionMenu"] | 1, max_frames=600)
+        game.run_frames(120)
+        for _ in range(3):
+            game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("A", held_frames=1, released_frames=60)
+        check_bgm_stopped(game, symbols, "Audio entry")
+
+        # Cancel without previewing any track.
+        game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("A", held_frames=1, released_frames=30)
+        game.press("B", held_frames=1, released_frames=30)
+        check_bgm_stopped(game, symbols, "no-preview cancel")
+
+        # Preview a track, then cancel. The actual stop operation must restore silence.
+        game.press("A", held_frames=1, released_frames=30)
+        game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("SELECT", held_frames=1, released_frames=30)
+        preview_status = bgm_status(game, symbols)
+        _check(preview_status & 0x80000000 == 0 and preview_status & 0xFFFF != 0,
+               "Select did not start a picker preview from silent entry")
+        game.press("B", held_frames=1, released_frames=30)
+        check_bgm_stopped(game, symbols, "preview cancel")
+
+        # Preview again and confirm. Saving the choice is separate from restoring entry audio.
+        game.press("A", held_frames=1, released_frames=30)
+        game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("DOWN", held_frames=1, released_frames=15)
+        game.press("SELECT", held_frames=1, released_frames=30)
+        game.press("A", held_frames=1, released_frames=30)
+        check_bgm_stopped(game, symbols, "preview confirm")
+
+
 def run(artifact_dir: Path) -> None:
     artifact_dir = Path(artifact_dir).resolve()
     save = artifact_dir / "audio-options.sav"
     save.unlink(missing_ok=True)
     symbols = gameplay_symbols(
         "gSaveBlock2Ptr", "gMPlayInfo_BGM", "gSongTable", "sCurrentMapMusic",
+        "gMain", "gTasks", "Task_TitleScreenPhase3", "CB2_InitOptionMenu",
         "sNumStartMenuActions", "sStartMenuCursorPos", "sCurrentStartMenuActions",
         "sSaveDialogCallback", "SaveOverwriteInputCallback", "gSaveCounter",
     )
@@ -114,3 +184,5 @@ def run(artifact_dir: Path) -> None:
         reloaded = game.read(game.read(symbols["gSaveBlock2Ptr"]) + 0x14, width=16)
         _check(reloaded == option_bits, "other Options changed during save/reload")
         game.screenshot("passed.png")
+
+    verify_silent_picker_restore(artifact_dir, symbols)

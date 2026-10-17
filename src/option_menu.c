@@ -99,6 +99,7 @@ static void DrawAudioMenuChoices(u8 taskId);
 static void DrawTrainerMusicPicker(u8 taskId);
 static void UpdatePickerScroll(u8 taskId, u8 count);
 static u16 GetCurrentBgmSong(void);
+static void RestorePickerPriorMusic(u8 taskId);
 static void DrawBgWindowFrames(void);
 
 EWRAM_DATA static bool8 sArrowPressed = FALSE;
@@ -422,7 +423,10 @@ static void Task_AudioMenuProcessInput(u8 taskId)
         if (gTasks[taskId].tAudioMenuSelection == AUDIOMENU_TRAINER_MUSIC)
         {
             gTasks[taskId].tPickerPool = gTasks[taskId].tAudioPool;
-            gTasks[taskId].tPickerPriorMusic = GetCurrentBgmSong();
+            if (IsBGMPausedOrStopped())
+                gTasks[taskId].tPickerPriorMusic = MUS_NONE;
+            else
+                gTasks[taskId].tPickerPriorMusic = GetCurrentBgmSong();
             if (gTasks[taskId].tAudioMusicMode == AUDIO_TRAINER_MUSIC_FIXED)
             {
                 gTasks[taskId].tPickerSelection = 2;
@@ -514,7 +518,7 @@ static void Task_TrainerMusicPickerProcessInput(u8 taskId)
     else if (JOY_NEW(A_BUTTON))
     {
         selected = gTasks[taskId].tPickerSelection;
-        PlayBGM(gTasks[taskId].tPickerPriorMusic);
+        RestorePickerPriorMusic(taskId);
         if (selected == 0)
             gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_DEFAULT;
         else if (selected == 1)
@@ -533,7 +537,7 @@ static void Task_TrainerMusicPickerProcessInput(u8 taskId)
     }
     else if (JOY_NEW(B_BUTTON))
     {
-        PlayBGM(gTasks[taskId].tPickerPriorMusic);
+        RestorePickerPriorMusic(taskId);
         DrawAudioMenuTexts();
         DrawAudioMenuChoices(taskId);
         DrawHeaderText(sTextAudio);
@@ -810,6 +814,14 @@ static u16 GetCurrentBgmSong(void)
             return songId;
     }
     return GetCurrentMapMusic();
+}
+
+static void RestorePickerPriorMusic(u8 taskId)
+{
+    if (gTasks[taskId].tPickerPriorMusic == -1)
+        m4aMPlayStop(&gMPlayInfo_BGM);
+    else
+        PlayBGM(gTasks[taskId].tPickerPriorMusic);
 }
 
 static void UpdatePickerScroll(u8 taskId, u8 count)
