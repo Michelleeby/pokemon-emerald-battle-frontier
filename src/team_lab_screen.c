@@ -723,6 +723,11 @@ static void DrawTeamLabStatsPage(void)
         MON_DATA_SPEED,
     };
     u8 i;
+    u8 highlightedColumn = sTeamLabScreen->statColumn;
+
+    // A-button redraws happen before release commits the column toggle.
+    if (sTeamLabScreen->aButtonPressed)
+        highlightedColumn ^= 1;
 
     DrawCenteredTitle(WIN_TEAM_LAB_CONTENT, FONT_NORMAL, sText_TeamLabStats, TEAM_LAB_CONTENT_WIDTH, 1);
     PrintSmallText(WIN_TEAM_LAB_CONTENT, sText_TeamLabIv, 46, 18);
@@ -740,12 +745,12 @@ static void DrawTeamLabStatsPage(void)
         else
             PrintIdleSmallText(WIN_TEAM_LAB_CONTENT, sTeamLabStatNames[i], 8, y);
         ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.ivs[stat], STR_CONV_MODE_RIGHT_ALIGN, 2);
-        if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 0)
+        if (sTeamLabScreen->statFocus == i && highlightedColumn == 0)
             PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
         else
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 46, y);
         ConvertIntToDecimalStringN(gStringVar1, sTeamLabScreen->draft.evs[stat], STR_CONV_MODE_RIGHT_ALIGN, 3);
-        if (sTeamLabScreen->statFocus == i && sTeamLabScreen->statColumn == 1)
+        if (sTeamLabScreen->statFocus == i && highlightedColumn == 1)
             PrintFocusedSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
         else
             PrintSmallText(WIN_TEAM_LAB_CONTENT, gStringVar1, 66, y);
