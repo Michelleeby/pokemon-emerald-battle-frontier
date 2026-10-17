@@ -31,6 +31,7 @@
 #define tAudioSound data[8]
 #define tAudioMusicMode data[9]
 #define tAudioPool data[10]
+#define tAudioBeep data[11]
 #define tAudioTrack data[12]
 #define tPickerSelection data[13]
 #define tPickerScroll data[14]
@@ -54,6 +55,7 @@ enum
     AUDIOMENU_SOUND,
     AUDIOMENU_TRAINER_MUSIC,
     AUDIOMENU_POOL,
+    AUDIOMENU_LOW_HP_BEEP,
     AUDIOMENU_BACK,
     AUDIOMENU_COUNT,
 };
@@ -112,11 +114,14 @@ static const u8 sTextPressA[] = _("PRESS A");
 static const u8 sTextTrainerMusicRow[] = _("TRAINER MUSIC");
 static const u8 sTextTrainerMusic[] = _("MUSIC SEL PREVIEW");
 static const u8 sTextMusicPool[] = _("MUSIC POOL");
+static const u8 sTextLowHpBeep[] = _("LOW HP BEEP");
 static const u8 sTextDefault[] = _("DEFAULT");
 static const u8 sTextRandom[] = _("RANDOM");
 static const u8 sTextPoolHoenn[] = _("HOENN");
 static const u8 sTextPoolKanto[] = _("HOENN+KANTO");
 static const u8 sTextPoolAll[] = _("ALL BATTLES");
+static const u8 sTextOn[] = _("ON");
+static const u8 sTextOff[] = _("OFF");
 static const u8 sTextBack[] = _("BACK");
 static const u8 sAudioTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_GREEN, TEXT_COLOR_LIGHT_GREEN};
 static const u8 sAudioSelectedTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_RED, TEXT_COLOR_LIGHT_RED};
@@ -282,6 +287,7 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tAudioSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tAudioMusicMode = AudioSettings_GetTrainerMusicMode();
         gTasks[taskId].tAudioPool = AudioSettings_GetMusicPool();
+        gTasks[taskId].tAudioBeep = AudioSettings_IsLowHpBeepEnabled();
         gTasks[taskId].tAudioTrack = AudioSettings_GetTrainerTrack();
 
         TextSpeed_DrawChoices(gTasks[taskId].tTextSpeed);
@@ -493,6 +499,10 @@ static void Task_AudioMenuProcessInput(u8 taskId)
                 && !AudioSettings_IsTrackInPool(gTasks[taskId].tAudioTrack, gTasks[taskId].tAudioPool))
                 gTasks[taskId].tAudioMusicMode = AUDIO_TRAINER_MUSIC_DEFAULT;
             break;
+        case AUDIOMENU_LOW_HP_BEEP:
+            previous = gTasks[taskId].tAudioBeep;
+            gTasks[taskId].tAudioBeep ^= 1;
+            break;
         }
         if (previous != 0xFF)
         {
@@ -583,6 +593,7 @@ static void Task_OptionMenuSave(u8 taskId)
     AudioSettings_SetMusicPool(gTasks[taskId].tAudioPool);
     AudioSettings_SetTrainerTrack(gTasks[taskId].tAudioTrack);
     AudioSettings_SetTrainerMusicMode(gTasks[taskId].tAudioMusicMode);
+    AudioSettings_SetLowHpBeepEnabled(gTasks[taskId].tAudioBeep);
 
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
     gTasks[taskId].func = Task_OptionMenuFadeOut;
@@ -750,7 +761,8 @@ static void DrawAudioMenuTexts(void)
     AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Sound, 8, 1, TEXT_SKIP_DRAW, NULL);
     AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextTrainerMusicRow, 8, 17, TEXT_SKIP_DRAW, NULL);
     AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextMusicPool, 8, 33, TEXT_SKIP_DRAW, NULL);
-    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextBack, 8, 49, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextLowHpBeep, 8, 49, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextBack, 8, 65, TEXT_SKIP_DRAW, NULL);
 }
 
 static void DrawAudioMenuChoices(u8 taskId)
@@ -764,6 +776,8 @@ static void DrawAudioMenuChoices(u8 taskId)
     DrawAudioValue(GetAudioModeText(gTasks[taskId].tAudioMusicMode, gTasks[taskId].tAudioTrack), 16, style);
     style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_POOL;
     DrawAudioValue(GetAudioPoolText(gTasks[taskId].tAudioPool), 32, style);
+    style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_LOW_HP_BEEP;
+    DrawAudioValue(gTasks[taskId].tAudioBeep ? sTextOn : sTextOff, 48, style);
 }
 
 static void DrawOuterOptionChoices(u8 taskId)

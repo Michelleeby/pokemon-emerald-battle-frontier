@@ -168,10 +168,12 @@ def run(artifact_dir: Path) -> None:
         game.press("DOWN", held_frames=1, released_frames=15)  # Pool
         game.press("RIGHT", held_frames=1, released_frames=15)
         game.press("RIGHT", held_frames=1, released_frames=15)  # All Battles
+        game.press("DOWN", held_frames=1, released_frames=15)  # Beep
+        game.press("RIGHT", held_frames=1, released_frames=15)  # On
         game.screenshot("audio-edited.png")
         close_options(game, symbols)
         expected = audio_record(game, symbols)
-        _check(expected[:5] == (0x4155, 1, 0, 2, 2),
+        _check(expected[:5] == (0x4155, 1, 1, 2, 2),
                f"Audio choices/pool reset were not committed: {expected}")
         option_bits = game.read(game.read(symbols["gSaveBlock2Ptr"]) + 0x14, width=16)
         _check(option_bits & 7 == 0, "Audio submenu discarded the Text Speed draft")

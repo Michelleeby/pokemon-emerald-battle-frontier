@@ -56,6 +56,7 @@ dependencies. The suites cover:
 | `save-load` | Party and project-specific save fields |
 | `battle-shared` | Shared battle setup and controller commands |
 | `audio-settings` | Audio save compatibility, music catalog, battle scope, and cosmetic random selection |
+| `low-hp-audio` | Low health alert preferences, single/double battle state, and cleanup |
 | `frontier-tower` | Tower modes, parties, pools, progression, and Anabel boundaries |
 | `frontier-factory` | Rentals, swaps, opponents, progression, and Noland boundaries |
 | `frontier-dome` | Tournament generation, advancement, and Tucker boundaries |

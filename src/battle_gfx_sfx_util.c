@@ -25,6 +25,7 @@
 #include "constants/songs.h"
 #include "constants/rgb.h"
 #include "constants/battle_palace.h"
+#include "audio_settings.h"
 
 extern const u8 gBattlePalaceNatureToMoveTarget[];
 extern const u8 *const gBattleAnims_General[];
@@ -40,6 +41,14 @@ static bool8 ShouldAnimBeDoneRegardlessOfSubstitute(u8 animId);
 static void Task_ClearBitWhenBattleTableAnimDone(u8 taskId);
 static void Task_ClearBitWhenSpecialAnimDone(u8 taskId);
 static void ClearSpritesBattlerHealthboxAnimData(void);
+
+#ifdef TESTING
+// Narrow observation points for the low HP behavior suite. These counters
+// record only the low HP alert's song-specific operations, leaving the sound
+// engine and unrelated effects untouched.
+u16 gBattleTestLowHpSoundPlayCount;
+u16 gBattleTestLowHpSoundStopCount;
+#endif
 
 // const rom data
 static const struct CompressedSpriteSheet sSpriteSheet_SinglesPlayerHealthbox =
@@ -1092,12 +1101,34 @@ void HandleLowHpMusicChange(struct Pokemon *mon, u8 battler)
     u16 hp = GetMonData(mon, MON_DATA_HP);
     u16 maxHP = GetMonData(mon, MON_DATA_MAX_HP);
 
-    if (GetHPBarLevel(hp, maxHP) == HP_BAR_RED)
+    // Turning the preference off must also clear state left by an earlier
+    // evaluation. Otherwise re-enabling it could incorrectly suppress the
+    // next alert, especially in a double battle.
+    if (!AudioSettings_IsLowHpBeepEnabled())
+    {
+        gBattleSpritesDataPtr->battlerData[battler].lowHpSong = 0;
+        gBattleSpritesDataPtr->battlerData[BATTLE_PARTNER(battler)].lowHpSong = 0;
+#ifdef TESTING
+        gBattleTestLowHpSoundStopCount++;
+#endif
+        m4aSongNumStop(SE_LOW_HEALTH);
+        return;
+    }
+
+    // A fainted Pokémon must never start a fresh alert. Callers normally
+    // avoid zero HP, but this guard keeps the shared handler safe for direct
+    // callers during fainting and switching transitions.
+    if (hp != 0 && GetHPBarLevel(hp, maxHP) == HP_BAR_RED)
     {
         if (!gBattleSpritesDataPtr->battlerData[battler].lowHpSong)
         {
             if (!gBattleSpritesDataPtr->battlerData[BATTLE_PARTNER(battler)].lowHpSong)
+            {
+#ifdef TESTING
+                gBattleTestLowHpSoundPlayCount++;
+#endif
                 PlaySE(SE_LOW_HEALTH);
+            }
             gBattleSpritesDataPtr->battlerData[battler].lowHpSong = 1;
         }
     }
@@ -1106,11 +1137,17 @@ void HandleLowHpMusicChange(struct Pokemon *mon, u8 battler)
         gBattleSpritesDataPtr->battlerData[battler].lowHpSong = 0;
         if (!IsDoubleBattle())
         {
+#ifdef TESTING
+            gBattleTestLowHpSoundStopCount++;
+#endif
             m4aSongNumStop(SE_LOW_HEALTH);
             return;
         }
         if (IsDoubleBattle() && !gBattleSpritesDataPtr->battlerData[BATTLE_PARTNER(battler)].lowHpSong)
         {
+#ifdef TESTING
+            gBattleTestLowHpSoundStopCount++;
+#endif
             m4aSongNumStop(SE_LOW_HEALTH);
             return;
         }
@@ -1125,6 +1162,9 @@ void BattleStopLowHpSound(void)
     if (IsDoubleBattle())
         gBattleSpritesDataPtr->battlerData[BATTLE_PARTNER(playerBattler)].lowHpSong = 0;
 
+#ifdef TESTING
+    gBattleTestLowHpSoundStopCount++;
+#endif
     m4aSongNumStop(SE_LOW_HEALTH);
 }
 

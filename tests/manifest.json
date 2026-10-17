@@ -7,6 +7,7 @@
     "save-load": {"dependencies": []},
     "battle-shared": {"dependencies": []},
     "audio-settings": {"dependencies": ["save-load"]},
+    "low-hp-audio": {"dependencies": ["audio-settings"]},
     "frontier-tower": {"dependencies": ["frontier-common"]},
     "frontier-factory": {"dependencies": ["frontier-common", "team-lab"]},
     "frontier-dome": {"dependencies": ["frontier-common"]},

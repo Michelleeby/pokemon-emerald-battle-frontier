@@ -49,13 +49,15 @@ base, following the project's gameplay commit history.
 ## Audio preferences
 
 - Open Audio from Options to set Mono/Stereo sound, trainer music, the music
-  pool.
+  pool, and the low health beep.
 - Keep the original trainer music, choose a fixed battle theme, or pick a
   random theme each battle without immediate repeats.
 - Choose Hoenn trainer and boss themes, include FireRed/LeafGreen trainer and
   boss themes, or use all existing battle themes. Frontier Brains and other
   special battles retain their original music.
 - Preview named tracks with Select before choosing them.
+- Turn the repeating low health beep on or off. It defaults to off for both
+  new games and existing saves.
 
 ## Normal and Hard Frontier challenges
 
