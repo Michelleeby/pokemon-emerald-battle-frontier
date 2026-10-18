@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Capture the production Team Lab editor flow for the player guide."""
+"""Capture the manual Team Lab editor pages for the player guide.
+
+The complete fresh-game tutorial is captured by ``tutorial_capture.py``.
+"""
 
 from __future__ import annotations
 
@@ -26,7 +29,7 @@ from tools.capture.encode_gif import encode_gif  # noqa: E402
 
 
 DEFAULT_ROM = ROOT / "pokeemerald.gba"
-DEFAULT_OUTPUT = ROOT / "build" / "capture" / "pokemon-lab-editor-tutorial"
+DEFAULT_OUTPUT = ROOT / "build" / "capture" / "pokemon-lab-pages"
 SAVE_SOURCE = ROOT / "tests" / "fixtures" / "saves" / "real-save.sav"
 
 
@@ -174,7 +177,7 @@ def main(argv: list[str] | None = None) -> int:
     count = capture_pokemon_lab(args.rom, args.output, stride=args.stride)
     print(f"Captured {count} PNG frames in {args.output.resolve() / 'frames'}")
     if not args.no_encode:
-        gif = args.output.resolve() / "pokemon-lab-editor-tutorial.gif"
+        gif = args.output.resolve() / "pokemon-lab-pages.gif"
         encode_gif(args.output / "frames", gif, fps=60 / args.stride)
         print(f"Encoded {gif}")
     return 0

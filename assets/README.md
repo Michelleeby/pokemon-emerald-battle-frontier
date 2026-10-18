@@ -2,16 +2,18 @@
 
 The Lab animation and Lab/Audio screenshots come from the default production
 ROM, built with `make rom` and the existing `agbcc` toolchain. The capture
-scenes navigate the normal game menus with emulator keypad input.
+scenes use the normal game menus and the game's own guided tutorial.
 
-Each scene loads its own copy of the public anonymized fixture at
-`tests/fixtures/saves/real-save.sav` and verifies that the fixture stays
-unchanged. Private saves, working saves, ROMs, and raw capture output are not
-part of these assets.
+The tutorial starts a fresh new game and records continuously through the
+complete guided introduction, without cuts or added demonstration steps.
+The separate Lab and Audio screenshots use copies of the public anonymized
+fixture at `tests/fixtures/saves/real-save.sav`, which stays unchanged.
+Private saves, working saves, ROMs, and raw capture output are not part of
+these assets.
 
 | Files | Content |
 | --- | --- |
-| `pokemon-lab-editor-tutorial.gif` | PokéNav entry, Build and nature selection, IV/EV switching, PP adjustment, Select Max PP, and saving the Lab draft |
+| `pokemon-lab-editor-tutorial.gif` | New-game opening and the complete guided tutorial: species search and selection, nature, ability, held-item selection, EV presets, typing and accepting a move name, and finishing the demonstration |
 | `team-lab-build.png`, `team-lab-stats.png`, `team-lab-moves.png` | Current Lab pages, centered headings, stacked controls, and shared footer |
 | `audio-options.png` | Default trainer music, Hoenn + Kanto pool, retained Mono sound, and Low HP Beep Off |
 | `trainer-music-picker.png` | Named tracks and the Select preview control |
@@ -31,17 +33,19 @@ Run these commands from the repository root, using fresh output directories:
 ```sh
 make -j2 rom
 make e2e-runner
-python3 -m tools.capture.scenes.pokemon_lab --output build/capture/docs-lab
+python3 -m tools.capture.scenes.tutorial_capture --output build/capture/docs-tutorial
+python3 -m tools.capture.scenes.pokemon_lab --output build/capture/docs-lab --no-encode
 python3 -m tools.capture.scenes.audio_options --output build/capture/docs-audio --no-encode
-cp build/capture/docs-lab/pokemon-lab-editor-tutorial.gif assets/
+cp build/capture/docs-tutorial/pokemon-lab-editor-tutorial.gif assets/
 cp build/capture/docs-lab/team-lab-{build,stats,moves}.png assets/
 cp build/capture/docs-audio/{audio-options,trainer-music-picker,audio-options-custom}.png assets/
 ```
 
-The PNGs are native 240 × 160 captures. The GIF uses a four-frame capture
-stride, 15 fps, and 2× nearest-neighbor scaling. Add `--no-encode` to the Lab
-command to retain only its PNG frames and snapshots. Each scene writes a
-`capture-report.json` with the production ROM hash, fixture hash, frame count,
+The PNGs are native 240 × 160 captures. The tutorial GIF uses a six-frame
+capture stride, 10 fps at the original game speed, and 2× nearest-neighbor
+scaling. Add `--no-encode` to the tutorial command to retain its raw PNG
+frames. Each scene writes a `capture-report.json` with the production ROM hash
+and frame count. The screenshot scenes also record the public fixture hash
 and snapshot filenames.
 
 ## Current capture provenance
@@ -53,5 +57,7 @@ and snapshot filenames.
 - Public fixture SHA-256:
   `da9e9e05d005078483b1b4127775a9b9e5022c80a2672f7cf218ca7326fe1890`.
 
-The Lab recording contains 489 captured frames; the Audio recording contains
-269. Both scenes verified that the public fixture remained unchanged.
+The complete new-game/tutorial recording contains 1,012 captured frames and
+lasts 101.2 seconds. The separate Lab-page recording contains 489 frames; the
+Audio recording contains 269. Both screenshot scenes verified that the public
+fixture remained unchanged.
