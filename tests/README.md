@@ -10,8 +10,9 @@ same behavior:
 | C gameplay suites | Fast, deterministic checks of gameplay logic and state transitions | `mgba-rom-test` |
 | End-to-end scenarios | Checks through production menus, scripts, maps, and saves using game input | Project-owned driver linked to mGBA |
 
-Test builds use `TESTING=1` and keep their object files under `build/test/`
-or `build/e2e/`. This keeps test objects out of the production ROM.
+C gameplay-suite builds use `TESTING=1` and keep their object files under
+`build/test/`. E2E gameplay builds use `E2E_TESTING=1` and keep their object
+files under `build/e2e/`. This keeps test objects out of the production ROM.
 
 ## Quick start
 
@@ -51,7 +52,7 @@ dependencies. The suites cover:
 | Suite | Primary coverage |
 |---|---|
 | `frontier-common` | Shared Normal/Hard Frontier state, records, and boundaries |
-| `team-lab` | Pokémon creation, validation, legal moves, stats, nature, and ability data |
+| `team-lab` | Pokémon creation, validation, legal moves, PP editing, stats, nature, and ability data |
 | `new-game-tutorial` | New-game state and guided-introduction behavior |
 | `save-load` | Party and project-specific save fields |
 | `battle-shared` | Shared battle setup and controller commands |
@@ -79,7 +80,9 @@ scenarios cover:
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup
 - Pokémon Lab creation and stat editing
-- Pokémon Lab PP editing, Max All, and save/discard behavior
+- Pokémon Lab PP editing, direct Select Max PP, `NONE` clearing, and
+  save/discard behavior
+- Pokémon Lab rendered IV/EV preview feedback
 - Nested Audio options, music preview, pool selection, and preference saving
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal

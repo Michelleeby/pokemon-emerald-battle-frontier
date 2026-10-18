@@ -24,7 +24,8 @@ Start at the Battle Frontier. Use the Pokémon Lab to build your team, choose No
         <li>Choose species, nature, ability, level, and held item</li>
         <li>Edit IVs and EVs with live stat previews and useful presets</li>
         <li>Select legal level-up, TM/HM, tutor, egg, and pre-evolution moves</li>
-        <li>Validate the completed build before saving it</li>
+        <li>Adjust each move's PP Up count, maximize eligible moves, or search for NONE to clear a slot</li>
+        <li>Validate the completed build before saving it; B discards an unsaved draft</li>
       </ul>
     </td>
     <td valign="top">
@@ -40,7 +41,26 @@ Start at the Battle Frontier. Use the Pokémon Lab to build your team, choose No
   </tr>
 </table>
 
-See [FEATURES.md](FEATURES.md) for the full list of gameplay changes.
+<p align="center">
+  <img src="assets/team-lab-build.png" width="32%" alt="Pokémon Lab Build page">
+  <img src="assets/team-lab-stats.png" width="32%" alt="Pokémon Lab Stats page">
+  <img src="assets/team-lab-moves.png" width="32%" alt="Pokémon Lab Moves page">
+</p>
+
+### Audio preferences
+
+<p>
+  <img src="assets/audio-options.png" width="32%" alt="Audio options with default settings">
+  <img src="assets/trainer-music-picker.png" width="32%" alt="Trainer music picker">
+  <img src="assets/audio-options-custom.png" width="32%" alt="Customized Audio options">
+</p>
+
+Audio settings cover Mono/Stereo sound, trainer music, the music pool, and the
+optional repeating low-health beep. Preview a named track with Select before
+choosing it; previews restore the previous music when the picker closes.
+
+See the [player guide](docs/player-guide.md) for control details and defaults,
+and [FEATURES.md](FEATURES.md) for the full list of gameplay changes.
 
 ## Install and play
 
@@ -66,11 +86,15 @@ Required base ROM SHA-1: f3ae088181bf583e55daf962a92bb46f4f1d07b7
    is performed locally in your browser.
 3. Select your verified Pokémon Emerald ROM as the ROM file. Select the
    downloaded `.bps` file as the patch, then apply it.
-4. Save the patched ROM and verify its SHA-1 before playing:
+4. Save the patched ROM as `pokemon-emerald-battle-frontier.gba` and calculate
+   its SHA-1:
 
-```text
-Production ROM SHA-1: 94dd919efb13876a9bfa53a5787f3d294281f3a8
+```sh
+sha1sum pokemon-emerald-battle-frontier.gba
 ```
+
+Compare the result with the `SHA-1` value under **Patched production ROM** in
+the `checksums.txt` file downloaded with the release.
 
 The BPS patch checks that the selected base ROM is correct before applying
 changes. If patching fails, check the base ROM's SHA-1 and confirm that the ROM
@@ -99,6 +123,12 @@ cd ../agbcc
 cd ../pokeemerald
 make -j2
 ```
+
+Production ROM SHA-1: `82c1c06766be52b47c8f2c50153561208ba86128`
+
+This is the current default `agbcc` source-build checksum. Release checksums
+belong to the release artifact and may differ from older or newer source
+builds.
 
 This produces the development ROM, `pokeemerald.gba`. See
 [INSTALL.md](INSTALL.md) for repository setup, build verification, and test

@@ -30,6 +30,8 @@ base, following the project's gameplay commit history.
 - Set each move's PP Up count from zero to three with D-pad Left/Right, or
   press Select to maximize all eligible moves. PP edits preserve the amount
   of PP already spent. Search for NONE to clear the selected move slot.
+- Save a Lab draft with Start or discard it with B; only a validated saved
+  draft changes the party Pokémon.
 - Choose from the selected species' legal Generation III level-up, TM/HM,
   tutor, egg, and pre-evolution move pools.
 - Validate the completed build before saving it to the party.
@@ -56,6 +58,8 @@ base, following the project's gameplay commit history.
   boss themes, or use all existing battle themes. Frontier Brains and other
   special battles retain their original music.
 - Preview named tracks with Select before choosing them.
+- Restore the previous music after leaving a preview picker, and avoid an
+  immediate repeat when Random selects the next trainer theme.
 - Turn the repeating low health beep on or off. It defaults to off for both
   new games and existing saves.
 
