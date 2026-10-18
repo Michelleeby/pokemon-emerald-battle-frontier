@@ -41,24 +41,6 @@ Start at the Battle Frontier. Use the Pokémon Lab to build your team, choose No
   </tr>
 </table>
 
-<p align="center">
-  <img src="assets/team-lab-build.png" width="32%" alt="Pokémon Lab Build page">
-  <img src="assets/team-lab-stats.png" width="32%" alt="Pokémon Lab Stats page">
-  <img src="assets/team-lab-moves.png" width="32%" alt="Pokémon Lab Moves page">
-</p>
-
-### Audio preferences
-
-<p>
-  <img src="assets/audio-options.png" width="32%" alt="Audio options with default settings">
-  <img src="assets/trainer-music-picker.png" width="32%" alt="Trainer music picker">
-  <img src="assets/audio-options-custom.png" width="32%" alt="Customized Audio options">
-</p>
-
-Audio settings cover Mono/Stereo sound, trainer music, the music pool, and the
-optional repeating low-health beep. Preview a named track with Select before
-choosing it; previews restore the previous music when the picker closes.
-
 See the [player guide](docs/player-guide.md) for control details and defaults,
 and [FEATURES.md](FEATURES.md) for the full list of gameplay changes.
 
