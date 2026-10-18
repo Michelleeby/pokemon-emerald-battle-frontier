@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Record the unsteered production Team Lab tutorial from a new game."""
+"""Record the production Team Lab tutorial from the PokéNav Condition selection."""
 
 from __future__ import annotations
 
@@ -61,6 +61,7 @@ def _write_report(
         "raw_frame_count": frame_count,
         "stride": stride,
         "fresh_new_game": True,
+        "starts_at": "pokenav_condition_selection",
         "natural_completed": natural_completed,
         "save": save.name,
     }
@@ -70,7 +71,7 @@ def _write_report(
 
 
 def capture_tutorial(rom: Path, output: Path, *, stride: int = 6) -> int:
-    """Capture the complete current production tutorial without steering it."""
+    """Capture the guided Lab sequence with the original video's opening."""
 
     output = _prepare_output(output)
     frames = output / "frames"
@@ -80,30 +81,32 @@ def capture_tutorial(rom: Path, output: Path, *, stride: int = 6) -> int:
     natural_completed = False
 
     with Session(Path(rom), output / "session", save=save) as game:
-        # Match the established new-game scene, recording continuously before
-        # advancing the title screen and normal new-game prompts.
+        # Reach the tutorial through a fresh normal new game. The arrival
+        # video covers these prompts; this video starts at the PokéNav.
         game.run_frames(900)
+        game.press("START", released_frames=180)
+        game.press("A", released_frames=180)
+        game.press("A", released_frames=180)
+        game.press("A", released_frames=180)
+
+        game.press("A", released_frames=120)
+        game.press("A", released_frames=120)
+        game.press("A", released_frames=120)
+        game.press("A", released_frames=20)
+        game.press("START", released_frames=60)
+        game.press("A", released_frames=120)
+        game.press("A", released_frames=300)
+        game.press("A", released_frames=120)
+        game.press("A", released_frames=347)
+
+        # No input is supplied once the new-game route reaches Frontier.
+        # Step 0 highlights Condition; its release phase leaves that selection
+        # visible before step 1 opens it, matching the original Lab video.
+        game.set_keys()
+        game.wait(symbols["sTutorial"], 1, width=8, max_frames=1800)
+        game.wait(symbols["sTutorial"] + 2, 3, width=8, max_frames=600)
         game.capture_start(frames, stride=stride)
         try:
-            game.press("START", released_frames=180)
-            game.press("A", released_frames=180)
-            game.press("A", released_frames=180)
-            game.press("A", released_frames=180)
-
-            game.press("A", released_frames=120)
-            game.press("A", released_frames=120)
-            game.press("A", released_frames=120)
-            game.press("A", released_frames=20)
-            game.press("START", released_frames=60)
-            game.press("A", released_frames=120)
-            game.press("A", released_frames=300)
-            game.press("A", released_frames=120)
-            game.press("A", released_frames=347)
-
-            # No input is supplied once the new-game route reaches Frontier;
-            # the production tutorial owns every subsequent button press.
-            game.set_keys()
-            game.wait(symbols["sTutorial"], 1, width=8, max_frames=1800)
             game.wait(symbols["sTutorial"], 0, width=8, max_frames=18000)
             natural_completed = game.read(symbols["sTutorial"], width=8) == 0
             if not natural_completed:

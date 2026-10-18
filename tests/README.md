@@ -82,17 +82,18 @@ scenarios cover:
 - Pokémon Lab creation and stat editing
 - Pokémon Lab PP editing, direct Select Max PP, `NONE` clearing, and
   save/discard behavior
-- Pokémon Lab rendered IV/EV preview feedback
+- Pokémon Lab IV/EV highlights and the values they select for editing
 - Nested Audio options, music preview, pool selection, and preference saving
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal
 
-The `real-save-compatibility` scenario loads an immutable anonymized derivative
-of the user's actual older save, checks protected state, saves through the updated
-game, restarts, and checks that state again. See
+The `real-save-compatibility` scenario loads an anonymized copy of a real
+RetroArch save, checks protected data, saves through the game menu, and
+restarts. It then compares that data again and checks that the original
+fixture stayed unchanged. See
 [`tests/fixtures/saves/README.md`](fixtures/saves/README.md) for import and run
-commands. The anonymized fixture is included in the default E2E suite, and
-changes to its fixture, parser or anonymizer select the regression automatically.
+commands. The scenario runs in the default E2E suite. Changes to the fixture,
+parser, or anonymizer also select it automatically.
 
 The facility scenarios focus on behavior changed by this project. They do
 not replay unchanged vanilla facility flows. For long special-trainer

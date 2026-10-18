@@ -108,9 +108,9 @@ make -j2
 
 Production ROM SHA-1: `82c1c06766be52b47c8f2c50153561208ba86128`
 
-This is the current default `agbcc` source-build checksum. Release checksums
-belong to the release artifact and may differ from older or newer source
-builds.
+This checksum is for the current default `agbcc` source build. For a release,
+use the `checksums.txt` shipped with that release; its source and build inputs
+may differ.
 
 This produces the development ROM, `pokeemerald.gba`. See
 [INSTALL.md](INSTALL.md) for repository setup, build verification, and test

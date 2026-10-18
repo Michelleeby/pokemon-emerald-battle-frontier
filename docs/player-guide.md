@@ -2,11 +2,11 @@
 
 ## Pokémon Lab
 
-Open the Pokémon Lab from the party menu or PokéNav, then use the three pages
-to prepare a party Pokémon. Build edits species, nature, ability, item, and
-level. Moves edits the four move slots and shows each move's current and
-maximum PP. Stats edits IVs and EVs with live stat totals. Press A to switch
-columns; its red flash marks the column Left and Right will edit.
+Open the Pokémon Lab from the party menu or PokéNav to create or edit a party
+Pokémon. Build sets species, nature, ability, item, and level. Stats sets IVs
+and EVs and shows the resulting stats as you edit. Moves sets the four moves
+and shows their current and maximum PP. On Stats, press A to switch between
+IVs and EVs; the red flash marks the column Left and Right will edit.
 
 <p>
   <img src="../assets/team-lab-build.png" width="32%" alt="Pokémon Lab Build page">
@@ -16,28 +16,24 @@ columns; its red flash marks the column Left and Right will edit.
 
 | Page | Controls |
 | --- | --- |
-| Lab pages | L/R changes page; Up/Down moves through the focused fields or slots |
-| Build | A changes the focused field; Left/Right changes Level when Level is focused |
+| Lab pages | L/R changes page; Up/Down selects a field or move slot |
+| Build | A changes the selected field; Left/Right changes Level when Level is selected |
 | Stats | A switches IV/EV editing; Left/Right changes the value; Select opens presets |
 | Moves | A opens move search; Left/Right changes PP; Select applies Max PP |
 | Main pages | Start saves the Lab draft; B ends the editor and discards it |
 
-Selectors use A to confirm and B to go back. The Lab's Start action saves the
-validated Pokémon to the current party in game memory. Use the normal game
-save menu afterward to write the party and Audio preferences to the battery
-save; entering or leaving the Lab does not replace a normal game save.
+Selectors use A to confirm and B to go back. Start validates the Lab draft and
+puts the Pokémon in your current party. Save through the normal game menu
+afterward to keep the party and Audio preferences after restarting.
 
-The Lab provides free PP upgrades. On the Moves page, Up and Down choose a
-slot, A opens move search, and the
-left/right arrow controls lower or raise that move's PP Up count from zero to
-three. Select applies Max PP to every eligible occupied slot. Enter `NONE` in
-move search to clear only the selected slot. The PP calculation
-preserves spent PP when a maximum changes, and empty slots or Sketch cannot
-receive PP Up upgrades.
+PP upgrades are free. On Moves, Left and Right lower or raise the selected
+move's PP Up count from zero to three. Select applies Max PP to every
+eligible move. Empty slots and Sketch cannot receive upgrades. Enter `NONE`
+in move search to clear the selected slot.
 
-For example, a move at 5/10 PP becomes 11/16 after Max PP: the five PP that
-were spent remain spent while the maximum increases. Repeating Max PP does
-not refill spent PP.
+Changing the maximum preserves PP already spent. A move at 5/10 PP becomes
+11/16 after Max PP because the five spent PP remain spent. Repeating Max PP
+leaves the remaining PP unchanged.
 
 ## Audio
 
@@ -47,29 +43,29 @@ not refill spent PP.
   <img src="../assets/audio-options-custom.png" width="32%" alt="Customized Audio options">
 </p>
 
-Open Options → Audio to configure Sound, Trainer Music, Music Pool, and Low HP
-Beep. New games and existing saves without these settings use these defaults:
+Open Options → Audio to set Sound, Trainer Music, Music Pool, and Low HP Beep.
+New games and existing saves without these settings use these defaults:
 
 - Trainer Music: Default, which keeps the original music choice.
 - Music Pool: Hoenn + Kanto trainer and boss themes.
 - Low HP Beep: Off.
 - Sound: the saved Mono/Stereo value.
 
-Trainer Music offers Default, fixed named tracks, and Random for regular
-trainer battles. Music Pool controls which tracks are available. The Hoenn pool
-contains the Hoenn trainer and boss themes; Hoenn + Kanto adds the
-FireRed/LeafGreen trainer and boss themes; All Battles adds the remaining
-battle themes. Frontier Brains and other protected special battles keep their
-original music. If a pool change excludes a fixed track, Trainer Music resets
-to Default.
+Trainer Music lets you keep Default, choose a named track, or use Random for
+regular trainer battles. Music Pool controls the available tracks. Hoenn
+contains the Hoenn trainer and boss themes, Hoenn + Kanto adds the
+FireRed/LeafGreen trainer and boss themes, and All Battles adds the remaining
+battle themes. Frontier Brains and other special battles keep their original
+music. If you change the pool and it no longer includes your chosen track,
+Trainer Music returns to Default.
 
-Select previews a named track; A confirms the choice and B cancels it. Leaving
-the picker restores the music that was playing before the preview. Random
-avoids an immediate repeat within the current play session when another track
-is available.
+Press Select to preview a named track, A to choose it, or B to cancel.
+Leaving the picker restores the music that was playing before the preview.
+Random avoids playing the same track twice in a row within the current
+session when another track is available.
 
-Return to Options with B, then leave Options to apply the preferences. Use the
-normal game save menu to retain them after restarting.
+Press B to return to Options, then leave Options to apply the preferences.
+Save through the normal game menu to keep them after restarting.
 
 Low HP Beep controls the repeating red-HP alert. Turning it off stops an active
 alert; turning it on restores the original warning.

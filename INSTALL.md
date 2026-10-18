@@ -45,10 +45,10 @@ cd ../pokeemerald
 make
 ```
 
-The build produces `pokeemerald.gba`. The current default `agbcc`
-source-build checksum is documented in the README. Release checksums belong
-to release artifacts; a local source build can differ as the source tree and
-build inputs change.
+The build produces `pokeemerald.gba`. Compare its SHA-1 with the current
+default `agbcc` build checksum in the README. For a release, use that
+release's `checksums.txt`. The two can differ when the source or build inputs
+change.
 
 Calculate the SHA-1 with:
 

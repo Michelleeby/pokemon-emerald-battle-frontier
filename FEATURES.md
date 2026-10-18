@@ -1,7 +1,6 @@
 # Complete feature list
 
-This guide describes the gameplay changes from the upstream `pret/pokeemerald`
-base, following the project's gameplay commit history.
+These are the gameplay changes from the upstream `pret/pokeemerald` base.
 
 ## Battle Frontier from the beginning
 
@@ -30,8 +29,8 @@ base, following the project's gameplay commit history.
 - Set each move's PP Up count from zero to three with D-pad Left/Right, or
   press Select to maximize all eligible moves. PP edits preserve the amount
   of PP already spent. Search for NONE to clear the selected move slot.
-- Save a Lab draft with Start or discard it with B; only a validated saved
-  draft changes the party Pokémon.
+- Press Start to validate the Lab draft and save it to the party, or B to
+  discard it.
 - Choose from the selected species' legal Generation III level-up, TM/HM,
   tutor, egg, and pre-evolution move pools.
 - Validate the completed build before saving it to the party.
@@ -57,9 +56,8 @@ base, following the project's gameplay commit history.
 - Choose Hoenn trainer and boss themes, include FireRed/LeafGreen trainer and
   boss themes, or use all existing battle themes. Frontier Brains and other
   special battles retain their original music.
-- Preview named tracks with Select before choosing them.
-- Restore the previous music after leaving a preview picker, and avoid an
-  immediate repeat when Random selects the next trainer theme.
+- Preview named tracks with Select before choosing them. Leaving the picker
+  restores the music that was playing before the preview.
 - Turn the repeating low health beep on or off. It defaults to off for both
   new games and existing saves.
 
