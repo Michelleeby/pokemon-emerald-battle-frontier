@@ -64,9 +64,9 @@ void E2E_CreateFrontierLobbyFixture(void)
         x = 19;
         y = 67;
         ZeroPlayerPartyMons();
-        CreateMon(&gPlayerParty[0], SPECIES_LUDICOLO, 50, 31, TRUE,
+        CreateMon(&gPlayerParty[0], JOY_HELD(DPAD_RIGHT) ? SPECIES_EKANS : SPECIES_LUDICOLO, 50, 31, TRUE,
                   0x11111111, OT_ID_PLAYER_ID, 0);
-        SetMonMoveSlot(&gPlayerParty[0], MOVE_FAKE_OUT, 0);
+        SetMonMoveSlot(&gPlayerParty[0], JOY_HELD(DPAD_RIGHT) ? MOVE_SWALLOW : MOVE_FAKE_OUT, 0);
         SetMonData(&gPlayerParty[0], MON_DATA_ABILITY_NUM, &abilityNum);
         gPlayerPartyCount = 1;
         FlagSet(FLAG_SYS_POKENAV_GET);

@@ -15,6 +15,8 @@ import time
 from typing import Callable
 
 from e2e.session import DEFAULT_RESPONSE_TIMEOUT, DriverTimeout, ProtocolError
+from e2e.audio_options import run as run_audio_options
+from e2e.real_save_compatibility import run as run_real_save_compatibility
 from e2e.arena_hard_greta import run as run_arena_hard_greta
 from e2e.arena_normal_greta import run as run_arena_normal_greta
 from e2e.dome_hard_tucker import run as run_dome_hard_tucker
@@ -34,6 +36,7 @@ from e2e.tower_normal_anabel import run as run_tower_normal_anabel
 from e2e.pokenav_team_lab_access import run as run_pokenav_team_lab_access
 from e2e.team_lab_create_mon import run as run_team_lab_create_mon
 from e2e.team_lab_edit_stats import run as run_team_lab_edit_stats
+from e2e.team_lab_edit_pp import run as run_team_lab_edit_pp
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -50,6 +53,7 @@ ALLOWED_DIAGNOSTIC_SUFFIXES = {".json", ".log", ".png", ".sav"}
 SCENARIOS: dict[str, Callable[[Path], None]] = {
     "arena-hard-greta": run_arena_hard_greta,
     "arena-normal-greta": run_arena_normal_greta,
+    "audio-options": run_audio_options,
     "dome-hard-tucker": run_dome_hard_tucker,
     "dome-normal-tucker": run_dome_normal_tucker,
     "factory-hard-noland": run_factory_hard_noland,
@@ -63,7 +67,9 @@ SCENARIOS: dict[str, Callable[[Path], None]] = {
     "pokenav-team-lab-access": run_pokenav_team_lab_access,
     "pyramid-hard-brandon": run_pyramid_hard_brandon,
     "pyramid-normal-brandon": run_pyramid_normal_brandon,
+    "real-save-compatibility": run_real_save_compatibility,
     "team-lab-create-mon": run_team_lab_create_mon,
+    "team-lab-edit-pp": run_team_lab_edit_pp,
     "team-lab-edit-stats": run_team_lab_edit_stats,
     "tower-hard-anabel": run_tower_hard_anabel,
     "tower-normal-anabel": run_tower_normal_anabel,

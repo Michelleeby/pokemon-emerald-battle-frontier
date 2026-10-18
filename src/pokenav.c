@@ -24,6 +24,7 @@ struct PokenavResources
     u16 conditionSearchId;
     bool32 hasAnyRibbons;
     void *substructPtrs[POKENAV_SUBSTRUCT_COUNT];
+    MainCallback exitCallback;
 };
 
 struct PokenavCallbacks
@@ -417,6 +418,12 @@ static void InitPokenavResources(struct PokenavResources *resources)
     resources->currentMenuIndex = 0;
     resources->hasAnyRibbons = AnyMonHasRibbon();
     resources->currentMenuCb1 = NULL;
+    resources->exitCallback = NULL;
+}
+
+void SetPokenavExitCallback(MainCallback callback)
+{
+    gPokenavResources->exitCallback = callback;
 }
 
 static bool32 AnyMonHasRibbon(void)
@@ -524,6 +531,7 @@ static void Task_Pokenav(u8 taskId)
         {
             bool32 calledFromScript = (gPokenavResources->mode != POKENAV_MODE_NORMAL);
             bool32 skippingTutorial = FrontierIntroTutorial_IsSkipping();
+            MainCallback exitCallback = gPokenavResources->exitCallback;
 
             FreeMenuHandlerSubstruct1();
             FreePokenavResources();
@@ -535,6 +543,9 @@ static void Task_Pokenav(u8 taskId)
                 SetMainCallback2(CB2_ReturnToFieldWithOpenMenu);
             if (skippingTutorial)
                 FrontierIntroTutorial_CompleteSkip();
+            // PokéNav owns teardown; hand off only after its resources are freed.
+            if (exitCallback != NULL)
+                exitCallback();
         }
         break;
     }

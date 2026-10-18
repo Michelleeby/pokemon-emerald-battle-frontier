@@ -193,6 +193,25 @@ class Session:
         except (KeyError, ValueError) as error:
             raise ProtocolError(f"READ response has no valid value: {response}") from error
 
+    def read_bytes(self, address: int, size: int) -> bytes:
+        """Read a bounded byte block in one driver command."""
+        if address < 0 or address > 0xFFFFFFFF:
+            raise ValueError("memory address must fit in 32 bits")
+        if size < 0 or size > 65536:
+            raise ValueError("block read size must be between 0 and 65536 bytes")
+        response = self._command(f"READBLOCK {address:#x} {size}")
+        encoded = parse_fields(response).get("data")
+        expected_length = size * 2
+        if encoded is None or len(encoded) != expected_length:
+            raise ProtocolError(
+                f"READBLOCK response has invalid data length: expected {expected_length}, "
+                f"got {len(encoded) if encoded is not None else 'missing'}"
+            )
+        try:
+            return bytes.fromhex(encoded)
+        except ValueError as error:
+            raise ProtocolError("READBLOCK response contains invalid hexadecimal data") from error
+
     def wait(
         self,
         address: int,

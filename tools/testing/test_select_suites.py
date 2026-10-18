@@ -158,6 +158,7 @@ class SelectorTests(unittest.TestCase):
             [
                 "arena-hard-greta",
                 "arena-normal-greta",
+                "audio-options",
                 "dome-hard-tucker",
                 "dome-normal-tucker",
                 "factory-hard-noland",
@@ -171,7 +172,9 @@ class SelectorTests(unittest.TestCase):
                 "pokenav-team-lab-access",
                 "pyramid-hard-brandon",
                 "pyramid-normal-brandon",
+                "real-save-compatibility",
                 "team-lab-create-mon",
+                "team-lab-edit-pp",
                 "team-lab-edit-stats",
                 "tower-hard-anabel",
                 "tower-normal-anabel",
@@ -238,6 +241,17 @@ class SelectorTests(unittest.TestCase):
     def test_documentation_change_selects_no_e2e_scenario(self) -> None:
         result = select_e2e_scenarios(["README.md"], self.e2e_manifest)
         self.assertEqual(result["scenarios"], [])
+
+    def test_real_save_fixture_selects_compatibility_scenario(self) -> None:
+        for path in (
+            "tests/fixtures/saves/real-save.sav",
+            "tests/fixtures/saves/real-save.baseline.json",
+            "tools/testing/save_fixture.py",
+            "tools/testing/anonymize_save.py",
+        ):
+            with self.subTest(path=path):
+                result = select_e2e_scenarios([path], self.e2e_manifest)
+                self.assertEqual(result["scenarios"], ["real-save-compatibility"])
 
     def test_unknown_source_change_selects_all_e2e_scenarios(self) -> None:
         result = select_e2e_scenarios(

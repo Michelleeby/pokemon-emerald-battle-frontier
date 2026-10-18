@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from e2e.session import (
     CommandError,
@@ -34,6 +35,26 @@ class SessionUnitTests(unittest.TestCase):
             parse_fields("OK frames=12 value=0x34 detail"),
             {"frames": "12", "value": "0x34"},
         )
+
+    def test_read_bytes_uses_little_endian_hex_readback(self) -> None:
+        session = Session(rom=Path(__file__), artifact_dir=Path(tempfile.gettempdir()))
+        with patch.object(session, "_command", return_value="OK data=01020304") as command:
+            self.assertEqual(session.read_bytes(0x02000000, 4), b"\x01\x02\x03\x04")
+        command.assert_called_once_with("READBLOCK 0x2000000 4")
+
+    def test_read_bytes_rejects_invalid_length_and_hex(self) -> None:
+        session = Session(rom=Path(__file__), artifact_dir=Path(tempfile.gettempdir()))
+        with patch.object(session, "_command", return_value="OK data=0102"):
+            with self.assertRaisesRegex(ProtocolError, "invalid data length"):
+                session.read_bytes(0x02000000, 4)
+        with patch.object(session, "_command", return_value="OK data=zzzz"):
+            with self.assertRaisesRegex(ProtocolError, "invalid hexadecimal"):
+                session.read_bytes(0x02000000, 2)
+
+    def test_read_bytes_rejects_oversized_blocks(self) -> None:
+        session = Session(rom=Path(__file__), artifact_dir=Path(tempfile.gettempdir()))
+        with self.assertRaisesRegex(ValueError, "between 0 and 65536"):
+            session.read_bytes(0x02000000, 65537)
 
     def test_wall_clock_timeout_kills_driver_and_records_trace(self) -> None:
         fake_driver = ROOT / "tests" / "fixtures" / "e2e-fake-driver.py"
@@ -80,6 +101,10 @@ class SessionDriverIntegrationTests(unittest.TestCase):
             save = Path(directory) / "game.sav"
             with Session(rom, artifacts, save=save, runner=runner) as game:
                 game.ping()
+                self.assertEqual(game.read_bytes(0x080000A0, 12), b"POKEMON EMER")
+                self.assertEqual(game.read_bytes(0x080000A0, 0), b"")
+                with self.assertRaises(CommandError):
+                    game._command("READBLOCK 0x08000000 65537")
                 self.assertEqual(game.read(0x04000130, width=16), 0x3FF)
                 self.assertEqual(game.run_frames(2), 2)
                 game.set_keys("A")

@@ -28,9 +28,19 @@ struct TeamLabMonBuild
     u8 abilityNum;
     u8 ivs[NUM_STATS];
     u8 evs[NUM_STATS];
+    // Keep PP state after the existing fields: E2E tooling reads this build
+    // directly from memory using the original offsets.
+    u8 ppBonuses;
+    u8 pp[MAX_MON_MOVES];
+    bool8 hasPpData;
 };
 
 bool8 TeamLab_IsMoveLegal(u16 species, u16 move);
+bool8 TeamLab_IsPpUpEligible(u16 move);
+u8 TeamLab_GetPpBonusCount(u8 ppBonuses, u8 moveIndex);
+u8 TeamLab_GetMoveMaxPp(u16 move, u8 ppBonuses, u8 moveIndex);
+bool8 TeamLab_AdjustMovePp(u16 move, u8 *ppBonuses, u8 *currentPp, u8 moveIndex, s8 delta);
+void TeamLab_MaxMovePp(u16 move, u8 *ppBonuses, u8 *currentPp, u8 moveIndex);
 enum TeamLabValidationResult TeamLab_ValidateBuild(const struct TeamLabMonBuild *build);
 void TeamLab_CreateMon(struct Pokemon *mon, const struct TeamLabMonBuild *build);
 void TeamLab_MaxMonIvs(struct Pokemon *mon);

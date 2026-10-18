@@ -516,7 +516,7 @@ $(SYM): $(ELF)
 TEST_BUILD_DIR := $(BUILD_DIR)/test
 TEST_ROM_DIR := $(TEST_BUILD_DIR)/roms
 TEST_COMMON_OBJS := $(TEST_BUILD_DIR)/runner/start.o $(TEST_BUILD_DIR)/runner/test_report.o
-CORE_TEST_NAMES := frontier-common team-lab new-game-tutorial save-load battle-shared frontier-tower frontier-factory frontier-dome frontier-arena frontier-palace frontier-pike frontier-pyramid
+CORE_TEST_NAMES := frontier-common team-lab new-game-tutorial save-load battle-shared audio-settings low-hp-audio frontier-tower frontier-factory frontier-dome frontier-arena frontier-palace frontier-pike frontier-pyramid
 DIAGNOSTIC_TEST_NAMES := spike-pass spike-fail spike-hang
 TEST_NAMES := $(CORE_TEST_NAMES)
 

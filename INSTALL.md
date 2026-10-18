@@ -45,12 +45,10 @@ cd ../pokeemerald
 make
 ```
 
-The build produces `pokeemerald.gba`. Check its SHA-1 against the expected
-production value:
-
-```text
-94dd919efb13876a9bfa53a5787f3d294281f3a8
-```
+The build produces `pokeemerald.gba`. Compare its SHA-1 with the current
+default `agbcc` build checksum in the README. For a release, use that
+release's `checksums.txt`. The two can differ when the source or build inputs
+change.
 
 Calculate the SHA-1 with:
 
@@ -93,8 +91,8 @@ f3ae088181bf583e55daf962a92bb46f4f1d07b7
 ```
 
 `make compare` checks a clean vanilla checkout against that hash. Since this
-project changes the game, its ROM is expected to have a different hash. Use
-the production SHA-1 above to verify this build.
+project changes the game, its ROM is expected to have a different hash. To
+verify a release ROM, use the `checksums.txt` shipped with that release.
 
 Neither the source repository nor its releases provide original or patched ROM
 files.

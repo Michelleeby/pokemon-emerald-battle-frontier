@@ -10,8 +10,9 @@ same behavior:
 | C gameplay suites | Fast, deterministic checks of gameplay logic and state transitions | `mgba-rom-test` |
 | End-to-end scenarios | Checks through production menus, scripts, maps, and saves using game input | Project-owned driver linked to mGBA |
 
-Test builds use `TESTING=1` and keep their object files under `build/test/`
-or `build/e2e/`. This keeps test objects out of the production ROM.
+C gameplay-suite builds use `TESTING=1` and keep their object files under
+`build/test/`. E2E gameplay builds use `E2E_TESTING=1` and keep their object
+files under `build/e2e/`. This keeps test objects out of the production ROM.
 
 ## Quick start
 
@@ -51,10 +52,12 @@ dependencies. The suites cover:
 | Suite | Primary coverage |
 |---|---|
 | `frontier-common` | Shared Normal/Hard Frontier state, records, and boundaries |
-| `team-lab` | Pokémon creation, validation, legal moves, stats, nature, and ability data |
+| `team-lab` | Pokémon creation, validation, legal moves, PP editing, stats, nature, and ability data |
 | `new-game-tutorial` | New-game state and guided-introduction behavior |
 | `save-load` | Party and project-specific save fields |
 | `battle-shared` | Shared battle setup and controller commands |
+| `audio-settings` | Audio save compatibility, music catalog, battle scope, and cosmetic random selection |
+| `low-hp-audio` | Low health alert preferences, single/double battle state, and cleanup |
 | `frontier-tower` | Tower modes, parties, pools, progression, and Anabel boundaries |
 | `frontier-factory` | Rentals, swaps, opponents, progression, and Noland boundaries |
 | `frontier-dome` | Tournament generation, advancement, and Tucker boundaries |
@@ -77,8 +80,20 @@ scenarios cover:
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup
 - Pokémon Lab creation and stat editing
+- Pokémon Lab PP editing, direct Select Max PP, `NONE` clearing, and
+  save/discard behavior
+- Pokémon Lab IV/EV highlights and the values they select for editing
+- Nested Audio options, music preview, pool selection, and preference saving
 - PokéNav access to the Pokémon Lab
 - The guided Frontier introduction and its Pokémon Lab traversal
+
+The `real-save-compatibility` scenario loads an anonymized copy of a real
+RetroArch save, checks protected data, saves through the game menu, and
+restarts. It then compares that data again and checks that the original
+fixture stayed unchanged. See
+[`tests/fixtures/saves/README.md`](fixtures/saves/README.md) for import and run
+commands. The scenario runs in the default E2E suite. Changes to the fixture,
+parser, or anonymizer also select it automatically.
 
 The facility scenarios focus on behavior changed by this project. They do
 not replay unchanged vanilla facility flows. For long special-trainer

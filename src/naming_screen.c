@@ -5,6 +5,7 @@
 #include "task.h"
 #include "sprite.h"
 #include "string_util.h"
+#include "international_string_util.h"
 #include "window.h"
 #include "bg.h"
 #include "gpu_regs.h"
@@ -1717,8 +1718,13 @@ static void HandleDpadMovement(struct Task *task)
 
 static void DrawNormalTextEntryBox(void)
 {
+    u8 x = 8;
+
+    if (sNamingScreen->templateNum == NAMING_SCREEN_MOVE_SEARCH)
+        x = GetStringCenterAlignXOffset(FONT_NORMAL, sNamingScreen->template->title,
+                                       GetWindowAttribute(sNamingScreen->windows[WIN_TEXT_ENTRY_BOX], WINDOW_WIDTH) * 8);
     FillWindowPixelBuffer(sNamingScreen->windows[WIN_TEXT_ENTRY_BOX], PIXEL_FILL(1));
-    AddTextPrinterParameterized(sNamingScreen->windows[WIN_TEXT_ENTRY_BOX], FONT_NORMAL, sNamingScreen->template->title, 8, 1, 0, 0);
+    AddTextPrinterParameterized(sNamingScreen->windows[WIN_TEXT_ENTRY_BOX], FONT_NORMAL, sNamingScreen->template->title, x, 1, 0, 0);
     PutWindowTilemap(sNamingScreen->windows[WIN_TEXT_ENTRY_BOX]);
 }
 

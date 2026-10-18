@@ -116,6 +116,72 @@ bool8 TeamLab_IsMoveLegal(u16 species, u16 move)
     return FALSE;
 }
 
+bool8 TeamLab_IsPpUpEligible(u16 move)
+{
+    // Sketch is deliberately excluded even though it has a normal PP value;
+    // this matches the vanilla PP Up item eligibility rules.
+    return move != MOVE_NONE
+        && move != MOVE_SKETCH
+        && move < MOVES_COUNT
+        && gBattleMoves[move].pp >= 5;
+}
+
+u8 TeamLab_GetPpBonusCount(u8 ppBonuses, u8 moveIndex)
+{
+    if (moveIndex >= MAX_MON_MOVES)
+        return 0;
+    return (ppBonuses & gPPUpGetMask[moveIndex]) >> (moveIndex * 2);
+}
+
+u8 TeamLab_GetMoveMaxPp(u16 move, u8 ppBonuses, u8 moveIndex)
+{
+    if (move == MOVE_NONE || move >= MOVES_COUNT || moveIndex >= MAX_MON_MOVES)
+        return 0;
+    return CalculatePPWithBonus(move, ppBonuses, moveIndex);
+}
+
+static void SetTeamLabPpBonusCount(u16 move, u8 *ppBonuses, u8 *currentPp, u8 moveIndex, u8 bonusCount)
+{
+    u8 oldBonusCount;
+    u8 oldMax;
+    u8 newMax;
+    u8 spent;
+
+    if (ppBonuses == NULL || currentPp == NULL || !TeamLab_IsPpUpEligible(move) || moveIndex >= MAX_MON_MOVES)
+        return;
+
+    oldBonusCount = TeamLab_GetPpBonusCount(*ppBonuses, moveIndex);
+    if (bonusCount > 3)
+        bonusCount = 3;
+    if (oldBonusCount == bonusCount)
+        return;
+
+    oldMax = TeamLab_GetMoveMaxPp(move, *ppBonuses, moveIndex);
+    spent = oldMax > *currentPp ? oldMax - *currentPp : 0;
+    *ppBonuses = (*ppBonuses & gPPUpClearMask[moveIndex]) | (bonusCount << (moveIndex * 2));
+    newMax = TeamLab_GetMoveMaxPp(move, *ppBonuses, moveIndex);
+    *currentPp = newMax > spent ? newMax - spent : 0;
+}
+
+bool8 TeamLab_AdjustMovePp(u16 move, u8 *ppBonuses, u8 *currentPp, u8 moveIndex, s8 delta)
+{
+    s8 newBonusCount;
+
+    if (ppBonuses == NULL || currentPp == NULL || !TeamLab_IsPpUpEligible(move) || moveIndex >= MAX_MON_MOVES)
+        return FALSE;
+
+    newBonusCount = TeamLab_GetPpBonusCount(*ppBonuses, moveIndex) + delta;
+    if (newBonusCount < 0 || newBonusCount > 3)
+        return FALSE;
+    SetTeamLabPpBonusCount(move, ppBonuses, currentPp, moveIndex, newBonusCount);
+    return TRUE;
+}
+
+void TeamLab_MaxMovePp(u16 move, u8 *ppBonuses, u8 *currentPp, u8 moveIndex)
+{
+    SetTeamLabPpBonusCount(move, ppBonuses, currentPp, moveIndex, 3);
+}
+
 enum TeamLabValidationResult TeamLab_ValidateBuild(const struct TeamLabMonBuild *build)
 {
     u8 i;
@@ -250,4 +316,32 @@ void TeamLab_CreateMon(struct Pokemon *mon, const struct TeamLabMonBuild *build)
         SetMonMoveSlot(mon, build->moves[i], i);
 
     CalculateMonStats(mon);
+
+    if (build->hasPpData)
+    {
+        u8 ppBonuses = 0;
+
+        for (i = 0; i < MAX_MON_MOVES; i++)
+        {
+            u16 move = build->moves[i];
+
+            if (move != MOVE_NONE && move < MOVES_COUNT)
+            {
+                u8 currentPp = build->pp[i];
+                u8 maxPp = gBattleMoves[move].pp;
+
+                if (TeamLab_IsPpUpEligible(move))
+                {
+                    u8 bonusCount = TeamLab_GetPpBonusCount(build->ppBonuses, i);
+
+                    ppBonuses |= bonusCount << (i * 2);
+                    maxPp = TeamLab_GetMoveMaxPp(move, ppBonuses, i);
+                }
+                if (currentPp > maxPp)
+                    currentPp = maxPp;
+                SetMonData(mon, MON_DATA_PP1 + i, &currentPp);
+            }
+        }
+        SetMonData(mon, MON_DATA_PP_BONUSES, &ppBonuses);
+    }
 }

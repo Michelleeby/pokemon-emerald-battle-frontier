@@ -11,6 +11,7 @@ from .tower import FIXTURE_ELF, FIXTURE_ROM, FIXTURE_SAVED, GAMEPLAY_ELF, GAMEPL
 
 SPECIES_LUDICOLO = 297
 MOVE_FAKE_OUT = 252
+MOVE_SWALLOW = 256
 FLAG_SYS_PC_FROM_POKENAV = 0x20
 FLAG_FRONTIER_INTRO_COMPLETE = 0x91B
 FLAG_FRONTIER_INTRO_PENDING = 0x91C
@@ -20,12 +21,20 @@ class TeamLabScenarioFailure(E2EError):
     """The game did not satisfy a Team Lab integration predicate."""
 
 
-def create_team_lab_save(artifact_dir: Path, save: Path, *, tutorial: bool = False) -> None:
+def create_team_lab_save(
+    artifact_dir: Path,
+    save: Path,
+    *,
+    tutorial: bool = False,
+    high_move: bool = False,
+) -> None:
     symbols = require_symbols(load_symbols(FIXTURE_ELF), "gE2EFixtureStatus")
     with Session(FIXTURE_ROM, artifact_dir / "fixture", save=save) as fixture:
         keys = ["START", "SELECT"]
         if tutorial:
             keys.append("UP")
+        if high_move:
+            keys.append("RIGHT")
         fixture.set_keys(*keys)
         wait_for_value(fixture, symbols["gE2EFixtureStatus"], FIXTURE_SAVED, width=32)
         fixture.set_keys()
@@ -92,6 +101,8 @@ def saved_build(game: Session, symbols: dict[str, int]) -> dict[str, object]:
         "ability": game.read(base + 14, width=8),
         "ivs": [game.read(base + 15 + i, width=8) for i in range(6)],
         "evs": [game.read(base + 21 + i, width=8) for i in range(6)],
+        "pp_bonuses": game.read(base + 27, width=8),
+        "pp": [game.read(base + 28 + i, width=8) for i in range(4)],
     }
 
 

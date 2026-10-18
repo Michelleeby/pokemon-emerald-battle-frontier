@@ -3,6 +3,7 @@
   "scenarios": [
     "arena-hard-greta",
     "arena-normal-greta",
+    "audio-options",
     "dome-hard-tucker",
     "dome-normal-tucker",
     "factory-hard-noland",
@@ -16,12 +17,19 @@
     "pokenav-team-lab-access",
     "pyramid-hard-brandon",
     "pyramid-normal-brandon",
+    "real-save-compatibility",
     "team-lab-create-mon",
+    "team-lab-edit-pp",
     "team-lab-edit-stats",
     "tower-hard-anabel",
     "tower-normal-anabel"
   ],
   "rules": [
+    {
+      "name": "real save compatibility fixture",
+      "paths": ["tests/fixtures/saves/**", "tools/testing/save_fixture.py", "tools/testing/anonymize_save.py"],
+      "scenarios": ["real-save-compatibility"]
+    },
     {
       "name": "E2E infrastructure",
       "paths": ["Makefile", ".github/workflows/test*.yml", "tests/e2e_manifest.json", "tools/testing/run_e2e.py", "tools/testing/e2e/**", "src/e2e_fixture.c"],
@@ -65,7 +73,12 @@
     {
       "name": "Team Lab editor",
       "paths": ["src/team_lab*.c", "include/team_lab.h"],
-      "scenarios": ["team-lab-create-mon", "team-lab-edit-stats", "pokenav-team-lab-access", "frontier-intro-team-lab"]
+      "scenarios": ["team-lab-create-mon", "team-lab-edit-stats", "team-lab-edit-pp", "pokenav-team-lab-access", "frontier-intro-team-lab"]
+    },
+    {
+      "name": "shared audio preferences and battle music",
+      "paths": ["src/audio*.c", "include/audio*.h", "src/option_menu.c", "src/pokemon.c", "src/battle_gfx_sfx_util.c"],
+      "scenarios": "all"
     },
     {
       "name": "Team Lab Pokédex selection integration",
