@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_ai_script_commands.h"
 #include "battle_anim.h"
@@ -1123,20 +1124,7 @@ static void LinkPartnerHandleDrawTrainerPic(void)
         xPos = 80;
     }
 
-    if ((gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_FIRE_RED
-        || (gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_LEAF_GREEN)
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender + TRAINER_BACK_PIC_RED;
-    }
-    else if ((gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_RUBY
-             || (gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_SAPPHIRE)
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
-    }
-    else
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender;
-    }
+    trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)]);
 
     DecompressTrainerBackPic(trainerPicId, gActiveBattler);
     SetMultiuseSpriteTemplateToTrainerBack(trainerPicId, GetBattlerPosition(gActiveBattler));
@@ -1543,20 +1531,7 @@ static void LinkPartnerHandleIntroTrainerBallThrow(void)
 
     paletteNum = AllocSpritePalette(0xD6F9);
 
-    if ((gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_FIRE_RED
-        || (gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_LEAF_GREEN)
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender + TRAINER_BACK_PIC_RED;
-    }
-    else if ((gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_RUBY
-             || (gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].version & 0xFF) == VERSION_SAPPHIRE)
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
-    }
-    else
-    {
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender;
-    }
+    trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)]);
 
     LoadCompressedPalette(gTrainerBackPicPaletteTable[trainerPicId].data, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
 

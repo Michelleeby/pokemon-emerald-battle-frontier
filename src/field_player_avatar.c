@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "main.h"
 #include "bike.h"
 #include "event_data.h"
@@ -1255,6 +1256,8 @@ u8 GetRSAvatarGraphicsIdByGender(u8 gender)
 
 u8 GetPlayerAvatarGraphicsIdByStateId(u8 state)
 {
+    if (state == PLAYER_AVATAR_STATE_NORMAL)
+        return GetPlayerAvatarOverworldGraphicsId(GetPlayerAvatarId());
     return GetPlayerAvatarGraphicsIdByStateIdAndGender(state, gPlayerAvatar.gender);
 }
 
@@ -1280,6 +1283,8 @@ u8 GetPlayerAvatarGenderByGraphicsId(u8 gfxId)
 {
     switch (gfxId)
     {
+    case OBJ_EVENT_GFX_LEAF:
+    case OBJ_EVENT_GFX_LINK_RS_MAY:
     case OBJ_EVENT_GFX_MAY_NORMAL:
     case OBJ_EVENT_GFX_MAY_MACH_BIKE:
     case OBJ_EVENT_GFX_MAY_ACRO_BIKE:
@@ -1365,7 +1370,7 @@ u8 GetPlayerAvatarGraphicsIdByCurrentState(void)
     for (i = 0; i < ARRAY_COUNT(sPlayerAvatarGfxToStateFlag[0]); i++)
     {
         if (sPlayerAvatarGfxToStateFlag[gPlayerAvatar.gender][i].playerFlag & flags)
-            return sPlayerAvatarGfxToStateFlag[gPlayerAvatar.gender][i].graphicsId;
+            return GetPlayerAvatarGraphicsIdByStateId(i);
     }
     return 0;
 }
@@ -1385,7 +1390,7 @@ void InitPlayerAvatar(s16 x, s16 y, u8 direction, u8 gender)
     struct ObjectEvent *objectEvent;
 
     playerObjEventTemplate.localId = LOCALID_PLAYER;
-    playerObjEventTemplate.graphicsId = GetPlayerAvatarGraphicsIdByStateIdAndGender(PLAYER_AVATAR_STATE_NORMAL, gender);
+    playerObjEventTemplate.graphicsId = GetPlayerAvatarOverworldGraphicsId(GetPlayerAvatarId());
     playerObjEventTemplate.x = x - MAP_OFFSET;
     playerObjEventTemplate.y = y - MAP_OFFSET;
     playerObjEventTemplate.elevation = ELEVATION_TRANSITION;

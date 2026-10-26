@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_controllers.h"
@@ -352,12 +353,12 @@ static void SafariHandleReturnMonToBall(void)
 
 static void SafariHandleDrawTrainerPic(void)
 {
-    DecompressTrainerBackPic(GetPlayerAvatarStyle(), gActiveBattler);
-    SetMultiuseSpriteTemplateToTrainerBack(GetPlayerAvatarStyle(), GetBattlerPosition(gActiveBattler));
+    DecompressTrainerBackPic(GetPlayerAvatarBackPicId(GetPlayerAvatarId()), gActiveBattler);
+    SetMultiuseSpriteTemplateToTrainerBack(GetPlayerAvatarBackPicId(GetPlayerAvatarId()), GetBattlerPosition(gActiveBattler));
     gBattlerSpriteIds[gActiveBattler] = CreateSprite(
       &gMultiuseSpriteTemplate,
       80,
-      (8 - gTrainerBackPicCoords[GetPlayerAvatarStyle()].size) * 4 + 80,
+      (8 - gTrainerBackPicCoords[GetPlayerAvatarBackPicId(GetPlayerAvatarId())].size) * 4 + 80,
       30);
     gSprites[gBattlerSpriteIds[gActiveBattler]].oam.paletteNum = gActiveBattler;
     gSprites[gBattlerSpriteIds[gActiveBattler]].x2 = DISPLAY_WIDTH;

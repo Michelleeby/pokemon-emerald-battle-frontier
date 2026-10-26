@@ -4,6 +4,7 @@
     "arena-hard-greta",
     "arena-normal-greta",
     "audio-options",
+    "avatar-selection",
     "dome-hard-tucker",
     "dome-normal-tucker",
     "factory-hard-noland",
@@ -89,6 +90,11 @@
       "name": "PokéNav Team Lab access",
       "paths": ["src/pokenav*.c", "include/pokenav.h", "src/field_specials.c", "graphics/pokenav/options/**"],
       "scenarios": ["pokenav-team-lab-access", "frontier-intro-team-lab"]
+    },
+    {
+      "name": "new-game avatar selection",
+      "paths": ["src/main_menu.c", "src/new_game.c", "src/player_avatar.c", "include/player_avatar.h", "include/new_game.h", "src/naming_screen.c"],
+      "scenarios": ["avatar-selection"]
     },
     {
       "name": "Frontier introduction",

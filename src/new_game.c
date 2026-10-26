@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "new_game.h"
 #include "random.h"
 #include "pokemon.h"
@@ -171,7 +172,7 @@ void NewGameInitData(void)
     PlayTimeCounter_Reset();
     ClearPokedexFlags();
     InitEventData();
-    VarSet(VAR_PLAYER_AVATAR_STYLE, gNewGameAvatarStyle);
+    VarSet(VAR_PLAYER_AVATAR_STYLE, NormalizePlayerAvatarId(gNewGameAvatarStyle));
     gSaveBlock2Ptr->playerGender = FEMALE;
     ClearTVShowData();
     ResetGabbyAndTy();
@@ -231,7 +232,7 @@ void NewGameInitData(void)
 
 u8 GetPlayerAvatarStyle(void)
 {
-    return VarGet(VAR_PLAYER_AVATAR_STYLE);
+    return GetPlayerAvatarGender(GetPlayerAvatarId());
 }
 
 static void ResetMiniGamesRecords(void)

@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_controllers.h"
@@ -151,7 +152,7 @@ void RecordedBattle_SetTrainerInfo(void)
         for (i = 0; i < MAX_LINK_PLAYERS; i++)
         {
             sPlayers[i].trainerId = gLinkPlayers[i].trainerId;
-            sPlayers[i].gender = gLinkPlayers[i].gender;
+            sPlayers[i].gender = EncodePlayerAvatarId(GetLinkPlayerAvatarId(&gLinkPlayers[i]));
             sPlayers[i].battler = gLinkPlayers[i].id;
             sPlayers[i].language = gLinkPlayers[i].language;
 
@@ -177,7 +178,7 @@ void RecordedBattle_SetTrainerInfo(void)
                               | (gSaveBlock2Ptr->playerTrainerId[2] << 16)
                               | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
 
-        sPlayers[0].gender = GetPlayerAvatarStyle();
+        sPlayers[0].gender = EncodePlayerAvatarId(GetPlayerAvatarId());
         sPlayers[0].battler = 0;
         sPlayers[0].language = gGameLanguage;
 
@@ -543,7 +544,12 @@ static void SetVariablesForRecordedBattle(struct RecordedBattleSave *src)
             if (src->playersName[i][j] == EOS)
                 var = TRUE;
         }
-        gLinkPlayers[i].gender = src->playersGender[i];
+        gLinkPlayers[i].neverRead = IsEncodedPlayerAvatarId(src->playersGender[i]) ? src->playersGender[i] : 0;
+        gLinkPlayers[i].version = VERSION_EMERALD;
+        if (IsEncodedPlayerAvatarId(src->playersGender[i]))
+            gLinkPlayers[i].gender = GetPlayerAvatarGender(GetLinkPlayerAvatarId(&gLinkPlayers[i]));
+        else
+            gLinkPlayers[i].gender = src->playersGender[i] == MALE ? MALE : FEMALE;
         gLinkPlayers[i].language = src->playersLanguage[i];
         gLinkPlayers[i].id = src->playersBattlers[i];
         gLinkPlayers[i].trainerId = src->playersTrainerId[i];
@@ -644,7 +650,7 @@ static void RecordedBattle_RestoreSavedParties(void)
     }
 }
 
-u8 GetActiveBattlerLinkPlayerGender(void)
+u8 GetActiveBattlerLinkPlayerAvatarId(void)
 {
     s32 i;
 
@@ -655,7 +661,7 @@ u8 GetActiveBattlerLinkPlayerGender(void)
     }
 
     if (i != MAX_LINK_PLAYERS)
-        return gLinkPlayers[i].gender;
+        return GetLinkPlayerAvatarId(&gLinkPlayers[i]);
 
     return 0;
 }

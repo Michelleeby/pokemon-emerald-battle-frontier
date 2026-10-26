@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_anim.h"
 #include "battle_arena.h"
@@ -2274,24 +2275,11 @@ static void PlayerHandleDrawTrainerPic(void)
 
     if (gBattleTypeFlags & BATTLE_TYPE_LINK)
     {
-        if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_FIRE_RED
-            || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_LEAF_GREEN)
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RED;
-        }
-        else if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_RUBY
-                 || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
-        }
-        else
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_BRENDAN;
-        }
+        trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[GetMultiplayerId()]);
     }
     else
     {
-        trainerPicId = GetPlayerAvatarStyle();
+        trainerPicId = GetPlayerAvatarBackPicId(GetPlayerAvatarId());
     }
 
     if (gBattleTypeFlags & BATTLE_TYPE_MULTI)
@@ -2321,7 +2309,7 @@ static void PlayerHandleDrawTrainerPic(void)
     // Use front pic table for any tag battles unless your partner is Steven.
     if (gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && gPartnerTrainerId != TRAINER_STEVEN_PARTNER)
     {
-        trainerPicId = PlayerGenderToFrontTrainerPicId(GetPlayerAvatarStyle());
+        trainerPicId = GetPlayerAvatarFrontPicId(GetPlayerAvatarId());
         DecompressTrainerFrontPic(trainerPicId, gActiveBattler);
         SetMultiuseSpriteTemplateToTrainerFront(trainerPicId, GetBattlerPosition(gActiveBattler));
         gBattlerSpriteIds[gActiveBattler] = CreateSprite(&gMultiuseSpriteTemplate, xPos, yPos, GetBattlerSpriteSubpriority(gActiveBattler));
@@ -2356,24 +2344,11 @@ static void PlayerHandleTrainerSlide(void)
 
     if (gBattleTypeFlags & BATTLE_TYPE_LINK)
     {
-        if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_FIRE_RED
-            || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_LEAF_GREEN)
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RED;
-        }
-        else if ((gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_RUBY
-                 || (gLinkPlayers[GetMultiplayerId()].version & 0xFF) == VERSION_SAPPHIRE)
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_RUBY_SAPPHIRE_BRENDAN;
-        }
-        else
-        {
-            trainerPicId = gLinkPlayers[GetMultiplayerId()].gender + TRAINER_BACK_PIC_BRENDAN;
-        }
+        trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[GetMultiplayerId()]);
     }
     else
     {
-        trainerPicId = GetPlayerAvatarStyle() + TRAINER_BACK_PIC_BRENDAN;
+        trainerPicId = GetPlayerAvatarBackPicId(GetPlayerAvatarId());
     }
 
     DecompressTrainerBackPic(trainerPicId, gActiveBattler);
@@ -2945,7 +2920,7 @@ static void PlayerHandleIntroTrainerBallThrow(void)
     StartSpriteAnim(&gSprites[gBattlerSpriteIds[gActiveBattler]], 1);
 
     paletteNum = AllocSpritePalette(0xD6F8);
-    LoadCompressedPalette(gTrainerBackPicPaletteTable[GetPlayerAvatarStyle()].data, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
+    LoadCompressedPalette(gTrainerBackPicPaletteTable[GetPlayerAvatarBackPicId(GetPlayerAvatarId())].data, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
     gSprites[gBattlerSpriteIds[gActiveBattler]].oam.paletteNum = paletteNum;
 
     taskId = CreateTask(Task_StartSendOutAnim, 5);

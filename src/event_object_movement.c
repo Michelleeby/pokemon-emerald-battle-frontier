@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "malloc.h"
 #include "battle_pyramid.h"
 #include "berry.h"
@@ -1430,7 +1431,7 @@ static u8 TrySetupObjectEventSprite(const struct ObjectEventTemplate *objectEven
 
     objectEvent = &gObjectEvents[objectEventId];
     graphicsInfo = GetObjectEventGraphicsInfo(objectEvent->graphicsId);
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = objectEvent->movementType == MOVEMENT_TYPE_PLAYER ? PALSLOT_PLAYER : graphicsInfo->paletteSlot;
     if (paletteSlot == PALSLOT_PLAYER)
     {
         LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
@@ -1750,10 +1751,10 @@ static void SpawnObjectEventOnReturnToField(u8 objectEventId, s16 x, s16 y)
     spriteTemplate.images = &spriteFrameImage;
 
     *(u16 *)&spriteTemplate.paletteTag = TAG_NONE;
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = objectEvent->movementType == MOVEMENT_TYPE_PLAYER ? PALSLOT_PLAYER : graphicsInfo->paletteSlot;
     if (paletteSlot == PALSLOT_PLAYER)
     {
-        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot == PALSLOT_NPC_SPECIAL)
     {
@@ -1825,10 +1826,10 @@ void ObjectEventSetGraphicsId(struct ObjectEvent *objectEvent, u8 graphicsId)
 
     graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
     sprite = &gSprites[objectEvent->spriteId];
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = objectEvent->movementType == MOVEMENT_TYPE_PLAYER ? PALSLOT_PLAYER : graphicsInfo->paletteSlot;
     if (paletteSlot == PALSLOT_PLAYER)
     {
-        PatchObjectPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot == PALSLOT_NPC_SPECIAL)
     {
@@ -2083,6 +2084,8 @@ void LoadPlayerObjectReflectionPalette(u16 tag, u8 slot)
             return;
         }
     }
+    // The extra playable NPC/link graphics have no separate reflection palette.
+    PatchObjectPalette(tag, gReflectionEffectPaletteMap[slot]);
 }
 
 void LoadSpecialObjectReflectionPalette(u16 tag, u8 slot)
@@ -5110,7 +5113,10 @@ static void InitMovementNormal(struct ObjectEvent *objectEvent, struct Sprite *s
 static void StartRunningAnim(struct ObjectEvent *objectEvent, struct Sprite *sprite, u8 direction)
 {
     InitNpcForMovement(objectEvent, sprite, direction, MOVE_SPEED_FAST_1);
-    SetStepAnimHandleAlternation(objectEvent, sprite, GetRunningDirectionAnimNum(objectEvent->facingDirection));
+    if (objectEvent->isPlayer && GetPlayerAvatarId() >= 2)
+        SetStepAnimHandleAlternation(objectEvent, sprite, GetMoveDirectionFastAnimNum(objectEvent->facingDirection));
+    else
+        SetStepAnimHandleAlternation(objectEvent, sprite, GetRunningDirectionAnimNum(objectEvent->facingDirection));
 }
 
 static bool8 UpdateMovementNormal(struct ObjectEvent *objectEvent, struct Sprite *sprite)

@@ -1,5 +1,13 @@
 # Player guide
 
+## Choose your avatar
+
+At the start of a new game, press Up or Down to cycle through Brendan, May,
+Red, Leaf, Ruby/Sapphire Brendan, Ruby/Sapphire May, Wally, and Steven. The
+arrows show the controls, and the character preview updates as you cycle.
+Press A to choose the displayed avatar and enter your name. Save through the
+normal game menu to keep your choice after restarting.
+
 ## Pokémon Lab
 
 Open the Pokémon Lab from the party menu or PokéNav to create or edit a party

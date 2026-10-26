@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "overworld.h"
 #include "battle_pyramid.h"
 #include "battle_setup.h"
@@ -3197,7 +3198,7 @@ static void CreateLinkPlayerSprite(u8 linkPlayerId, u8 gameVersion)
             objEvent->spriteId = CreateObjectGraphicsSprite(GetRSAvatarGraphicsIdByGender(linkGender(objEvent)), SpriteCB_LinkPlayer, 0, 0, 0);
             break;
         case VERSION_EMERALD:
-            objEvent->spriteId = CreateObjectGraphicsSprite(GetRivalAvatarGraphicsIdByStateIdAndGender(PLAYER_AVATAR_STATE_NORMAL, linkGender(objEvent)), SpriteCB_LinkPlayer, 0, 0, 0);
+            objEvent->spriteId = CreateObjectGraphicsSprite(GetPlayerAvatarOverworldGraphicsId(GetLinkPlayerAvatarId(&gLinkPlayers[linkPlayerId])), SpriteCB_LinkPlayer, 0, 0, 0);
             break;
         }
 
