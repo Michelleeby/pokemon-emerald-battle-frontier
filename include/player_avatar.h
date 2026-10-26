@@ -3,6 +3,9 @@
 
 #define PLAYER_AVATAR_COUNT 8
 
+// Only party healing avoids the special player poses absent from six avatars.
+bool8 IsPlayerFieldMoveAllowed(u16 move);
+
 struct LinkPlayer;
 
 // IDs match TRAINER_BACK_PIC_*; the saved 0/1 choices remain Brendan/May.

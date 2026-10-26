@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "malloc.h"
 #include "battle.h"
 #include "battle_anim.h"
@@ -2654,7 +2655,8 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
     {
         for (j = 0; sFieldMoves[j] != FIELD_MOVES_COUNT; j++)
         {
-            if (GetMonData(&mons[slotId], i + MON_DATA_MOVE1) == sFieldMoves[j])
+            if (GetMonData(&mons[slotId], i + MON_DATA_MOVE1) == sFieldMoves[j]
+             && IsPlayerFieldMoveAllowed(sFieldMoves[j]))
             {
                 AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, j + MENU_FIELD_MOVES);
                 break;
@@ -3776,6 +3778,8 @@ static void CursorCb_FieldMove(u8 taskId)
     const struct MapHeader *mapHeader;
 
     PlaySE(SE_SELECT);
+    if (!IsPlayerFieldMoveAllowed(sFieldMoves[fieldMove]))
+        return;
     if (sFieldMoveCursorCallbacks[fieldMove].fieldMoveFunc == NULL)
         return;
 

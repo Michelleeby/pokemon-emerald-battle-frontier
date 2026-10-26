@@ -3,6 +3,7 @@
 #include "overworld.h"
 #include "battle_pyramid.h"
 #include "battle_setup.h"
+#include "bike.h"
 #include "berry.h"
 #include "bg.h"
 #include "cable_club.h"
@@ -61,6 +62,7 @@
 #include "wild_encounter.h"
 #include "frontier_util.h"
 #include "constants/abilities.h"
+#include "constants/heal_locations.h"
 #include "constants/layouts.h"
 #include "constants/map_types.h"
 #include "constants/region_map_sections.h"
@@ -169,7 +171,6 @@ static void SetKeyInterceptCallback(u16 (*func)(u32));
 static void SetFieldVBlankCallback(void);
 static void FieldClearVBlankHBlankCallbacks(void);
 static void TransitionMapMusic(void);
-static u8 GetAdjustedInitialTransitionFlags(struct InitialPlayerAvatarState *, u16, u8);
 static u8 GetAdjustedInitialDirection(struct InitialPlayerAvatarState *, u8, u16, u8);
 static u16 GetCenterScreenMetatileBehavior(void);
 
@@ -886,16 +887,7 @@ void StoreInitialPlayerAvatarState(void)
 {
     sInitialPlayerAvatarState.direction = GetPlayerFacingDirection();
 
-    if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_MACH_BIKE))
-        sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_MACH_BIKE;
-    else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_ACRO_BIKE))
-        sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_ACRO_BIKE;
-    else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING))
-        sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_SURFING;
-    else if (TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_UNDERWATER))
-        sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_UNDERWATER;
-    else
-        sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_ON_FOOT;
+    sInitialPlayerAvatarState.transitionFlags = PLAYER_AVATAR_FLAG_ON_FOOT;
 }
 
 static struct InitialPlayerAvatarState *GetInitialPlayerAvatarState(void)
@@ -903,29 +895,11 @@ static struct InitialPlayerAvatarState *GetInitialPlayerAvatarState(void)
     struct InitialPlayerAvatarState playerStruct;
     u8 mapType = GetCurrentMapType();
     u16 metatileBehavior = GetCenterScreenMetatileBehavior();
-    u8 transitionFlags = GetAdjustedInitialTransitionFlags(&sInitialPlayerAvatarState, metatileBehavior, mapType);
+    u8 transitionFlags = PLAYER_AVATAR_FLAG_ON_FOOT;
     playerStruct.transitionFlags = transitionFlags;
     playerStruct.direction = GetAdjustedInitialDirection(&sInitialPlayerAvatarState, transitionFlags, metatileBehavior, mapType);
     sInitialPlayerAvatarState = playerStruct;
     return &sInitialPlayerAvatarState;
-}
-
-static u8 GetAdjustedInitialTransitionFlags(struct InitialPlayerAvatarState *playerStruct, u16 metatileBehavior, u8 mapType)
-{
-    if (mapType != MAP_TYPE_INDOOR && FlagGet(FLAG_SYS_CRUISE_MODE))
-        return PLAYER_AVATAR_FLAG_ON_FOOT;
-    else if (mapType == MAP_TYPE_UNDERWATER)
-        return PLAYER_AVATAR_FLAG_UNDERWATER;
-    else if (MetatileBehavior_IsSurfableWaterOrUnderwater(metatileBehavior) == TRUE)
-        return PLAYER_AVATAR_FLAG_SURFING;
-    else if (Overworld_IsBikingAllowed() != TRUE)
-        return PLAYER_AVATAR_FLAG_ON_FOOT;
-    else if (playerStruct->transitionFlags == PLAYER_AVATAR_FLAG_MACH_BIKE)
-        return PLAYER_AVATAR_FLAG_MACH_BIKE;
-    else if (playerStruct->transitionFlags != PLAYER_AVATAR_FLAG_ACRO_BIKE)
-        return PLAYER_AVATAR_FLAG_ON_FOOT;
-    else
-        return PLAYER_AVATAR_FLAG_ACRO_BIKE;
 }
 
 static u8 GetAdjustedInitialDirection(struct InitialPlayerAvatarState *playerStruct, u8 transitionFlags, u16 metatileBehavior, u8 mapType)
@@ -958,12 +932,21 @@ static u16 GetCenterScreenMetatileBehavior(void)
     return MapGridGetMetatileBehaviorAt(gSaveBlock1Ptr->pos.x + MAP_OFFSET, gSaveBlock1Ptr->pos.y + MAP_OFFSET);
 }
 
+static bool8 SavedPlayerNeedsDryLanding(void)
+{
+    u8 mapType = GetCurrentMapType();
+
+    // Ferry travel deliberately uses the walking avatar over ocean tiles.
+    if (mapType != MAP_TYPE_INDOOR && FlagGet(FLAG_SYS_CRUISE_MODE))
+        return FALSE;
+
+    return mapType == MAP_TYPE_UNDERWATER
+        || MetatileBehavior_IsSurfableWaterOrUnderwater(GetCenterScreenMetatileBehavior());
+}
+
 bool32 Overworld_IsBikingAllowed(void)
 {
-    if (!gMapHeader.allowCycling)
-        return FALSE;
-    else
-        return TRUE;
+    return FALSE;
 }
 
 // Flash level of 0 is fully bright
@@ -1456,6 +1439,8 @@ static void DoCB1_Overworld(u16 newKeys, u16 heldKeys)
             PlayerStep(inputStruct.dpadDirection, newKeys, heldKeys);
         }
     }
+    if (ArePlayerFieldControlsLocked())
+        Bike_UpdateBikeCounterSpeed(0);
 }
 
 void CB1_Overworld(void)
@@ -1750,7 +1735,19 @@ void CB2_ContinueSavedGame(void)
     ScriptContext_Init();
     UnlockPlayerFieldControls();
     InitMatchCallCounters();
-    if (UseContinueGameWarp() == TRUE)
+    // Saves made on water in earlier builds need a dry landing now that all
+    // avatars travel on foot. Ground saves, including mounted bikes, stay put.
+    if (SavedPlayerNeedsDryLanding())
+    {
+        ClearContinueGameWarpStatus();
+        FlagClear(FLAG_SYS_CRUISE_MODE);
+        SetWarpDestinationToHealLocation(HEAL_LOCATION_BATTLE_FRONTIER_OUTSIDE_EAST);
+        WarpIntoMap();
+        ResetInitialPlayerAvatarState();
+        TryPutTodaysRivalTrainerOnAir();
+        SetMainCallback2(CB2_LoadMap);
+    }
+    else if (UseContinueGameWarp() == TRUE)
     {
         ClearContinueGameWarpStatus();
         SetWarpDestinationToContinueGameWarp();

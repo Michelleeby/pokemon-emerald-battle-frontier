@@ -76,7 +76,9 @@ Use [`tests/e2e_manifest.json`](e2e_manifest.json) as the source for scenario
 names and the rules that select scenarios from changed file paths. Current
 scenarios cover:
 
-- Eight-avatar new-game selection, both D-pad wrap directions, front previews, naming, and normal save/reload
+- Eight-avatar new-game selection, both D-pad wrap directions, front previews,
+  naming, normal save/reload, running acceleration and coasting, disabled legacy
+  key items, and safe recovery of water/underwater saves
 - Normal and Hard Frontier Brain boundaries for Tower, Factory, Dome, Arena,
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup

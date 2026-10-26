@@ -192,8 +192,7 @@ void NewGameInitData(void)
     ClearRoamerData();
     ClearRoamerLocationData();
     ClearBag();
-    AddBagItem(ITEM_MACH_BIKE, 1);
-    gSaveBlock1Ptr->registeredItem = ITEM_MACH_BIKE;
+    gSaveBlock1Ptr->registeredItem = ITEM_NONE;
     NewGameInitPCItems();
     ClearPokeblocks();
     ClearDecorationInventories();

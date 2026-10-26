@@ -1,5 +1,9 @@
 #include <stddef.h>
 #include "global.h"
+#include "bike.h"
+#include "field_player_avatar.h"
+#include "item.h"
+#include "item_use.h"
 #include "load_save.h"
 #include "link.h"
 #include "event_data.h"
@@ -107,6 +111,50 @@ static void TestLinkAvatarBounds(void)
     TEST_ASSERT_EQ(TRAINER_BACK_PIC_RUBY_SAPPHIRE_MAY, GetLinkPlayerAvatarId(&player));
 }
 
+static void TestAvatarTravelRestrictions(void)
+{
+    static const u16 unavailableItems[] = {
+        ITEM_MACH_BIKE, ITEM_ACRO_BIKE, ITEM_OLD_ROD, ITEM_GOOD_ROD,
+        ITEM_SUPER_ROD, ITEM_WAILMER_PAIL,
+    };
+    static const u16 unavailableFieldMoves[] = {
+        MOVE_CUT, MOVE_FLASH, MOVE_ROCK_SMASH, MOVE_STRENGTH, MOVE_SURF,
+        MOVE_FLY, MOVE_DIVE, MOVE_WATERFALL, MOVE_TELEPORT, MOVE_DIG,
+        MOVE_SECRET_POWER, MOVE_SWEET_SCENT,
+    };
+    u32 i, state;
+
+    for (i = 0; i < ARRAY_COUNT(unavailableItems); i++)
+        TEST_ASSERT(GetItemFieldFunc(unavailableItems[i]) == ItemUseOutOfBattle_CannotUse);
+    for (i = 0; i < ARRAY_COUNT(unavailableFieldMoves); i++)
+        TEST_ASSERT(!IsPlayerFieldMoveAllowed(unavailableFieldMoves[i]));
+    TEST_ASSERT(IsPlayerFieldMoveAllowed(MOVE_MILK_DRINK));
+    TEST_ASSERT(IsPlayerFieldMoveAllowed(MOVE_SOFT_BOILED));
+    TEST_ASSERT(!IsPlayerFieldMoveAllowed(MOVE_NONE));
+    TEST_ASSERT(!IsPlayerFieldMoveAllowed(0xFFFF));
+
+    for (i = 0; i < PLAYER_AVATAR_COUNT; i++)
+    {
+        VarSet(VAR_PLAYER_AVATAR_STYLE, i);
+        gPlayerAvatar.gender = GetPlayerAvatarGender(i);
+        for (state = PLAYER_AVATAR_STATE_NORMAL; state <= PLAYER_AVATAR_STATE_WATERING; state++)
+            TEST_ASSERT_EQ(GetPlayerAvatarOverworldGraphicsId(i), GetPlayerAvatarGraphicsIdByStateId(state));
+        gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_CONTROLLABLE;
+        SetPlayerAvatarStateMask(PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE
+                                | PLAYER_AVATAR_FLAG_SURFING | PLAYER_AVATAR_FLAG_UNDERWATER);
+        TEST_ASSERT_EQ(PLAYER_AVATAR_FLAG_CONTROLLABLE | PLAYER_AVATAR_FLAG_ON_FOOT, gPlayerAvatar.flags);
+    }
+    gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_ON_FOOT | PLAYER_AVATAR_FLAG_DASH;
+    gPlayerAvatar.bikeSpeed = 0;
+    TEST_ASSERT_EQ(PLAYER_SPEED_NORMAL, GetPlayerSpeed());
+    gPlayerAvatar.bikeSpeed = 1;
+    TEST_ASSERT_EQ(PLAYER_SPEED_FAST, GetPlayerSpeed());
+    gPlayerAvatar.bikeSpeed = 3;
+    TEST_ASSERT_EQ(PLAYER_SPEED_FASTEST, GetPlayerSpeed());
+    gPlayerAvatar.flags = PLAYER_AVATAR_FLAG_ON_FOOT;
+    TEST_ASSERT_EQ(PLAYER_SPEED_NORMAL, GetPlayerSpeed());
+}
+
 void RunTest(void)
 {
     u8 ppBonuses = 3;
@@ -155,4 +203,5 @@ void RunTest(void)
     TEST_ASSERT_EQ(42, gSaveBlock1Ptr->frontierHardMode.towerWinStreaks[0][0]);
     TestAvatarSaveMappings();
     TestLinkAvatarBounds();
+    TestAvatarTravelRestrictions();
 }

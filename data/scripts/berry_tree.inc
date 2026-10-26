@@ -143,14 +143,8 @@ BerryTree_EventScript_ItemUsePlantBerry::
 	releaseall
 	end
 
+@ Watering is unavailable because it requires a different player sprite.
 BerryTree_EventScript_WantToWater::
-	checkitem ITEM_WAILMER_PAIL
-	goto_if_eq VAR_RESULT, FALSE, BerryTree_EventScript_DontWater
-	special ObjectEventInteractionGetBerryName
-	msgbox BerryTree_Text_WantToWater, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, BerryTree_EventScript_WaterBerry
-	goto_if_eq VAR_RESULT, NO, BerryTree_EventScript_DontWater
-
 BerryTree_EventScript_DontWater::
 	releaseall
 	end

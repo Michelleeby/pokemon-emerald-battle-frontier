@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "frontier_util.h"
 #include "battle_setup.h"
 #include "berry.h"
@@ -1716,6 +1717,10 @@ bool8 ScrCmd_checkpartymove(struct ScriptContext *ctx)
     u16 move = ScriptReadHalfword(ctx);
 
     gSpecialVar_Result = PARTY_SIZE;
+    // These scripts only query field moves; removed actions cannot be started
+    // by interacting with a tree, rock, boulder, or Secret Base entrance.
+    if (!IsPlayerFieldMoveAllowed(move))
+        return FALSE;
     for (i = 0; i < PARTY_SIZE; i++)
     {
         u16 species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES, NULL);

@@ -3,6 +3,7 @@
 #include "event_data.h"
 #include "link.h"
 #include "constants/event_objects.h"
+#include "constants/moves.h"
 #include "constants/trainers.h"
 #include "constants/vars.h"
 
@@ -28,6 +29,11 @@ static const struct PlayerAvatarAppearance sPlayerAvatars[PLAYER_AVATAR_COUNT] =
 // An opt-in tag in an unused link byte leaves the legacy binary gender intact.
 // The same byte encoding fits the recorded battle's existing appearance slot.
 #define PLAYER_AVATAR_TAG 0xA0
+
+bool8 IsPlayerFieldMoveAllowed(u16 move)
+{
+    return move == MOVE_MILK_DRINK || move == MOVE_SOFT_BOILED;
+}
 
 u8 NormalizePlayerAvatarId(u16 avatarId)
 {

@@ -8,6 +8,23 @@ arrows show the controls, and the character preview updates as you cycle.
 Press A to choose the displayed avatar and enter your name. Save through the
 normal game menu to keep your choice after restarting.
 
+## Travel
+
+Hold B and a direction to run. Running builds speed like the Mach Bike and
+reaches four pixels per frame at full speed. Release B or the direction to
+coast to a stop; requesting a turn brakes before changing direction. Walking
+stays at its normal pace. Your selected avatar stays visible throughout movement.
+
+Bikes, surfing, diving, fishing, and Wailmer Pail watering are unavailable.
+The party menu also removes these field actions: Cut, Flash, Rock Smash,
+Strength, Surf, Fly, Dive, Waterfall, Teleport, Dig, Secret Power, and Sweet Scent.
+Those moves still work in battle. Milk Drink and Soft-Boiled remain available
+for healing party members outside battle.
+
+Older saves keep their avatar. Registered bikes, rods, and the Wailmer Pail
+cannot be used. A save made on water or underwater returns to the safe landing
+at the eastern Battle Frontier; saves on land stay in place.
+
 ## Pokémon Lab
 
 Open the Pokémon Lab from the party menu or PokéNav to create or edit a party

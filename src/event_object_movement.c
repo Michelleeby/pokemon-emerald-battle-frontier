@@ -1745,6 +1745,8 @@ static void SpawnObjectEventOnReturnToField(u8 objectEventId, s16 x, s16 y)
 
     objectEvent = &gObjectEvents[objectEventId];
     subspriteTables = NULL;
+    if (objectEvent->movementType == MOVEMENT_TYPE_PLAYER)
+        objectEvent->graphicsId = GetPlayerAvatarOverworldGraphicsId(GetPlayerAvatarId());
     graphicsInfo = GetObjectEventGraphicsInfo(objectEvent->graphicsId);
     spriteFrameImage.size = graphicsInfo->size;
     CopyObjectGraphicsInfoToSpriteTemplate_WithMovementType(objectEvent->graphicsId, objectEvent->movementType, &spriteTemplate, &subspriteTables);
