@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "berry_tag_screen.h"
 #include "berry.h"
 #include "decompress.h"
@@ -335,8 +336,8 @@ static bool8 LoadBerryTagGfx(void)
         sBerryTag->gfxState++;
         break;
     case 3:
-        // Palette of the bg tiles changes depending on the player's gender
-        if (GetPlayerAvatarStyle() == MALE)
+        // The background follows the independently selected interface palette.
+        if (GetPlayerUiTheme() == PLAYER_THEME_BLUE)
         {
             for (i = 0; i < ARRAY_COUNT(sBerryTag->tilemapBuffers[1]); i++)
                 sBerryTag->tilemapBuffers[1][i] = (4 << 12) | BG_TILE;

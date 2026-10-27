@@ -22,6 +22,7 @@
 #include "overworld.h"
 #include "palette.h"
 #include "player_avatar.h"
+#include "player_customization.h"
 #include "pokeball.h"
 #include "pokedex.h"
 #include "pokemon.h"
@@ -510,9 +511,8 @@ static const u8 *const sFemalePresetNames[] = {
     gText_DefaultNameHalie
 };
 
-// The number of male vs. female names is assumed to be the same.
-// If they aren't, the smaller of the two sizes will be used and any extra names will be ignored.
-#define NUM_PRESET_NAMES min(ARRAY_COUNT(sMalePresetNames), ARRAY_COUNT(sFemalePresetNames))
+// Suggestions share one pool independently of avatar, bag, and colors.
+#define NUM_PRESET_NAMES (ARRAY_COUNT(sMalePresetNames) + ARRAY_COUNT(sFemalePresetNames))
 
 enum
 {
@@ -771,9 +771,8 @@ static void Task_DisplayMainMenu(u8 taskId)
         palette = RGB(26, 26, 25);
         LoadPalette(&palette, BG_PLTT_ID(15) + 12, PLTT_SIZEOF(1));
 
-        // Note: If there is no save file, the save block is zeroed out,
-        // so the default gender is MALE.
-        if (GetPlayerAvatarStyle() == MALE)
+        // A fresh save uses the blue theme independently of its avatar.
+        if (GetPlayerUiTheme() == PLAYER_THEME_BLUE)
         {
             palette = RGB(4, 16, 31);
             LoadPalette(&palette, BG_PLTT_ID(15) + 1, PLTT_SIZEOF(1));
@@ -2103,10 +2102,10 @@ static void NewGameBirchSpeech_SetDefaultPlayerName(u8 nameId)
     const u8 *name;
     u8 i;
 
-    if (GetPlayerAvatarGender(gNewGameAvatarStyle) == MALE)
+    if (nameId < ARRAY_COUNT(sMalePresetNames))
         name = sMalePresetNames[nameId];
     else
-        name = sFemalePresetNames[nameId];
+        name = sFemalePresetNames[nameId - ARRAY_COUNT(sMalePresetNames)];
     for (i = 0; i < PLAYER_NAME_LENGTH; i++)
         gSaveBlock2Ptr->playerName[i] = name[i];
     gSaveBlock2Ptr->playerName[PLAYER_NAME_LENGTH] = EOS;

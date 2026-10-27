@@ -10,9 +10,12 @@
 #include "event_data.h"
 #include "new_game.h"
 #include "player_avatar.h"
+#include "player_customization.h"
+#include "trainer_card.h"
 #include "pokemon.h"
 #include "test.h"
 #include "constants/event_objects.h"
+#include "constants/characters.h"
 #include "constants/moves.h"
 #include "constants/pokemon.h"
 #include "constants/trainers.h"
@@ -185,6 +188,109 @@ static void TestAvatarTravelRestrictions(void)
     TEST_ASSERT_EQ(PLAYER_SPEED_NORMAL, GetPlayerSpeed());
 }
 
+static void TestIndependentPlayerCustomization(void)
+{
+    static const u16 invalidSavedChoices[] = {0, 1, 0xB102, 0xB1FF, 0xB202, 0xB2FF, 0xFFFF};
+    struct TrainerCard card = {0};
+    struct TrainerCard copiedCard;
+    u32 avatar, bag, theme, i;
+
+    gSaveBlock2Ptr->playerGender = FEMALE;
+    for (avatar = 0; avatar < PLAYER_AVATAR_COUNT; avatar++)
+    {
+        VarSet(VAR_PLAYER_AVATAR_STYLE, avatar);
+        for (bag = 0; bag < PLAYER_BAG_COUNT; bag++)
+        {
+            for (theme = 0; theme < PLAYER_THEME_COUNT; theme++)
+            {
+                PlayerCustomization_Init(bag, theme);
+                TEST_ASSERT_EQ(bag, GetPlayerBagStyle());
+                TEST_ASSERT_EQ(theme, GetPlayerUiTheme());
+                TEST_ASSERT_EQ(avatar, GetPlayerAvatarId());
+                TEST_ASSERT_EQ(GetPlayerAvatarGender(avatar), GetPlayerAvatarStyle());
+                TEST_ASSERT_EQ(FEMALE, gSaveBlock2Ptr->playerGender);
+            }
+        }
+    }
+
+    // An older save preserves its previous appearance on first access. Once
+    // migrated, its bag and theme stay fixed if the avatar changes later.
+    VarSet(VAR_PLAYER_AVATAR_STYLE, TRAINER_BACK_PIC_LEAF);
+    VarSet(VAR_PLAYER_BAG_STYLE, 0);
+    VarSet(VAR_PLAYER_UI_THEME, 0);
+    TEST_ASSERT_EQ(PLAYER_BAG_SATCHEL, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+    VarSet(VAR_PLAYER_AVATAR_STYLE, TRAINER_BACK_PIC_STEVEN);
+    TEST_ASSERT_EQ(PLAYER_BAG_SATCHEL, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+
+    for (i = 0; i < ARRAY_COUNT(invalidSavedChoices); i++)
+    {
+        VarSet(VAR_PLAYER_BAG_STYLE, invalidSavedChoices[i]);
+        VarSet(VAR_PLAYER_UI_THEME, invalidSavedChoices[i]);
+        TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+        TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+    }
+    PlayerCustomization_Init(0xFF, 0xFF);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+
+    // Options setters change one preference without changing the other or
+    // the selected avatar. Out-of-range inputs use the corresponding default.
+    PlayerCustomization_Init(PLAYER_BAG_SATCHEL, PLAYER_THEME_PINK);
+    SetPlayerBagStyle(PLAYER_BAG_BACKPACK);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+    SetPlayerUiTheme(PLAYER_THEME_BLUE);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+    SetPlayerBagStyle(PLAYER_BAG_SATCHEL);
+    SetPlayerUiTheme(0xFF);
+    TEST_ASSERT_EQ(PLAYER_BAG_SATCHEL, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+    SetPlayerUiTheme(PLAYER_THEME_PINK);
+    SetPlayerBagStyle(0xFF);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+    TEST_ASSERT_EQ(TRAINER_BACK_PIC_STEVEN, GetPlayerAvatarId());
+
+    // Appearance metadata does not repurpose the card's binary gender.
+    PlayerCustomization_Init(PLAYER_BAG_SATCHEL, PLAYER_THEME_PINK);
+    // The generic zeroed fixture has no EOS; real player names are terminated.
+    gSaveBlock2Ptr->playerName[0] = EOS;
+    TrainerCard_GenerateCardForLinkPlayer(&card);
+    TEST_ASSERT_EQ(MALE, card.gender);
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetTrainerCardUiTheme(&card));
+    CopyTrainerCardData(&copiedCard, &card, VERSION_EMERALD);
+    TEST_ASSERT_EQ(MALE, copiedCard.gender);
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetTrainerCardUiTheme(&copiedCard));
+
+    // Only the two tagged theme bytes opt in on an Emerald card. Every other
+    // byte and every foreign-version card retains its legacy presentation.
+    card.version = VERSION_EMERALD;
+    for (i = 0; i <= 0xFF; i++)
+    {
+        card.filler[1] = i;
+        card.gender = MALE;
+        TEST_ASSERT_EQ(i == EncodePlayerUiTheme(PLAYER_THEME_PINK) ? PLAYER_THEME_PINK : PLAYER_THEME_BLUE,
+                       GetTrainerCardUiTheme(&card));
+        card.gender = FEMALE;
+        TEST_ASSERT_EQ(i == EncodePlayerUiTheme(PLAYER_THEME_BLUE) ? PLAYER_THEME_BLUE : PLAYER_THEME_PINK,
+                       GetTrainerCardUiTheme(&card));
+    }
+    card.version = VERSION_EMERALD;
+    card.gender = MALE;
+    card.filler[1] = EncodePlayerUiTheme(PLAYER_THEME_PINK);
+    CopyTrainerCardData(&copiedCard, &card, VERSION_FIRE_RED);
+    TEST_ASSERT_EQ(VERSION_FIRE_RED, copiedCard.version);
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetTrainerCardUiTheme(&copiedCard));
+    card.version = VERSION_FIRE_RED;
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetTrainerCardUiTheme(&card));
+    card.version = VERSION_RUBY;
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetTrainerCardUiTheme(&card));
+    TEST_ASSERT_EQ(EncodePlayerUiTheme(PLAYER_THEME_BLUE), EncodePlayerUiTheme(0xFF));
+}
+
 void RunTest(void)
 {
     u8 ppBonuses = 3;
@@ -235,4 +341,5 @@ void RunTest(void)
     TestLinkAvatarBounds();
     TestAvatarTravelRestrictions();
     TestTowerStandInMappings();
+    TestIndependentPlayerCustomization();
 }

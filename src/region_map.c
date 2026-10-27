@@ -1,4 +1,6 @@
 #include "global.h"
+#include "player_avatar.h"
+#include "player_map_icon.h"
 #include "main.h"
 #include "text.h"
 #include "menu.h"
@@ -122,10 +124,6 @@ static const u32 sRegionMapCursorLargeGfxLZ[] = INCGFX_U32("graphics/pokenav/reg
 static const u16 sRegionMapBg_Pal[] = INCGFX_U16("graphics/pokenav/region_map/map.pal", ".gbapal");
 static const u32 sRegionMapBg_GfxLZ[] = INCGFX_U32("graphics/pokenav/region_map/map.png", ".8bpp.lz", "-num_tiles 233 -Wnum_tiles");
 static const u32 sRegionMapBg_TilemapLZ[] = INCGFX_U32("graphics/pokenav/region_map/map.bin", ".lz");
-static const u16 sRegionMapPlayerIcon_BrendanPal[] = INCGFX_U16("graphics/pokenav/region_map/brendan_icon.png", ".gbapal");
-static const u8 sRegionMapPlayerIcon_BrendanGfx[] = INCGFX_U8("graphics/pokenav/region_map/brendan_icon.png", ".4bpp");
-static const u16 sRegionMapPlayerIcon_MayPal[] = INCGFX_U16("graphics/pokenav/region_map/may_icon.png", ".gbapal");
-static const u8 sRegionMapPlayerIcon_MayGfx[] = INCGFX_U8("graphics/pokenav/region_map/may_icon.png", ".4bpp");
 
 #include "data/region_map/region_map_layout.h"
 #include "data/region_map/region_map_entries.h"
@@ -1447,19 +1445,14 @@ static void UNUSED ClearUnkCursorSpriteData(void)
 void CreateRegionMapPlayerIcon(u16 tileTag, u16 paletteTag)
 {
     u8 spriteId;
-    struct SpriteSheet sheet = {sRegionMapPlayerIcon_BrendanGfx, 0x80, tileTag};
-    struct SpritePalette palette = {sRegionMapPlayerIcon_BrendanPal, paletteTag};
+    struct SpriteSheet sheet = {GetPlayerMapIconTiles(GetPlayerAvatarId()), 0x80, tileTag};
+    struct SpritePalette palette = {GetPlayerMapIconPalette(GetPlayerAvatarId()), paletteTag};
     struct SpriteTemplate template = {tileTag, paletteTag, &sRegionMapPlayerIconOam, sRegionMapPlayerIconAnimTable, NULL, gDummySpriteAffineAnimTable, SpriteCallbackDummy};
 
     if (IsEventIslandMapSecId(gMapHeader.regionMapSectionId))
     {
         sRegionMap->playerIconSprite = NULL;
         return;
-    }
-    if (GetPlayerAvatarStyle() == FEMALE)
-    {
-        sheet.data = sRegionMapPlayerIcon_MayGfx;
-        palette.data = sRegionMapPlayerIcon_MayPal;
     }
     LoadSpriteSheet(&sheet);
     LoadSpritePalette(&palette);

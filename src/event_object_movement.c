@@ -2150,12 +2150,21 @@ static u8 FindObjectEventPaletteIndexByTag(u16 tag)
 {
     u8 i;
 
-    for (i = 0; sObjectEventSpritePalettes[i].tag != OBJ_EVENT_PAL_TAG_NONE; i++)
+    for (i = 0; i < ARRAY_COUNT(sObjectEventSpritePalettes); i++)
     {
-        if (sObjectEventSpritePalettes[i].tag == tag)
+        if (sObjectEventSpritePalettes[i].data != NULL && sObjectEventSpritePalettes[i].tag == tag)
             return i;
     }
     return 0xFF;
+}
+
+const u16 *GetObjectEventPaletteByGraphicsId(u8 graphicsId)
+{
+    u8 index = FindObjectEventPaletteIndexByTag(GetObjectEventGraphicsInfo(graphicsId)->paletteTag);
+
+    if (index == 0xFF)
+        return gObjectEventPal_Brendan;
+    return sObjectEventSpritePalettes[index].data;
 }
 
 void LoadPlayerObjectReflectionPalette(u16 tag, u8 slot)

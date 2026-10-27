@@ -1,4 +1,6 @@
 #include "global.h"
+#include "player_avatar.h"
+#include "player_map_icon.h"
 #include "gpu_regs.h"
 #include "main.h"
 #include "trainer_card.h"
@@ -93,8 +95,7 @@ enum {
     TAG_MAP_INDICATOR,
     TAG_MEDAL_SILVER,
     TAG_MEDAL_GOLD,
-    TAG_HEAD_MALE,
-    TAG_HEAD_FEMALE,
+    TAG_PLAYER_HEAD,
 };
 
 // Error return codes. Never read
@@ -176,11 +177,8 @@ static void PrintAreaDescription(u8);
 static void ShowHideZoomingArea(bool8, bool8);
 static void SpriteCB_PlayerHead(struct Sprite *);
 
-static const u16 sMaleHead_Pal[]                 = INCGFX_U16("graphics/frontier_pass/map_heads.png", ".gbapal");
-static const u16 sFemaleHead_Pal[]               = INCGFX_U16("graphics/frontier_pass/map_heads_female.pal", ".gbapal");
 static const u32 sMapScreen_Gfx[]                = INCGFX_U32("graphics/frontier_pass/map_screen.png", ".4bpp.lz");
 static const u32 sCursor_Gfx[]                   = INCGFX_U32("graphics/frontier_pass/cursor.png", ".4bpp.lz");
-static const u32 sHeads_Gfx[]                    = INCGFX_U32("graphics/frontier_pass/map_heads.png", ".4bpp.lz");
 static const u32 sMapCursor_Gfx[]                = INCGFX_U32("graphics/frontier_pass/map_cursor.png", ".4bpp.lz");
 static const u32 sMapScreen_Tilemap[]            = INCGFX_U32("graphics/frontier_pass/map_screen.bin", ".lz");
 static const u32 sMapAndCard_ZoomedOut_Tilemap[] = INCGFX_U32("graphics/frontier_pass/small_map_and_card.bin", ".lz");
@@ -367,20 +365,12 @@ static const struct CompressedSpriteSheet sCursorSpriteSheets[] =
     {gFrontierPassMedals_Gfx, 0x380, TAG_MEDAL_SILVER},
 };
 
-static const struct CompressedSpriteSheet sHeadsSpriteSheet[] =
-{
-    {sHeads_Gfx, 0x100, TAG_HEAD_MALE},
-    {}
-};
-
 static const struct SpritePalette sSpritePalettes[] =
 {
     {gFrontierPassCursor_Pal,       TAG_CURSOR},
     {gFrontierPassMapCursor_Pal,    TAG_MAP_INDICATOR},
     {gFrontierPassMedalsSilver_Pal, TAG_MEDAL_SILVER},
     {gFrontierPassMedalsGold_Pal,   TAG_MEDAL_GOLD},
-    {sMaleHead_Pal,                 TAG_HEAD_MALE},
-    {sFemaleHead_Pal,               TAG_HEAD_FEMALE},
     {}
 };
 
@@ -518,10 +508,10 @@ static const struct SpriteTemplate sSpriteTemplate_Medal =
 
 static const struct SpriteTemplate sSpriteTemplate_PlayerHead =
 {
-    .tileTag = TAG_HEAD_MALE,
-    .paletteTag = TAG_HEAD_MALE,
+    .tileTag = TAG_PLAYER_HEAD,
+    .paletteTag = TAG_PLAYER_HEAD,
     .oam = &gOamData_AffineOff_ObjNormal_16x16,
-    .anims = sAnims_TwoFrame,
+    .anims = gDummySpriteAnimTable,
     .images = NULL,
     .affineAnims = gDummySpriteAffineAnimTable,
     .callback = SpriteCB_PlayerHead,
@@ -1485,7 +1475,7 @@ static bool32 ExitFrontierMap(void)
         if (sMapData->playerHeadSprite != NULL)
         {
             DestroySprite(sMapData->playerHeadSprite);
-            FreeSpriteTilesByTag(TAG_HEAD_MALE);
+            FreeSpriteTilesByTag(TAG_PLAYER_HEAD);
         }
         FreeAllWindowBuffers();
         break;
@@ -1633,6 +1623,8 @@ static u8 MapNumToFrontierFacilityId(u16 mapNum) // id + 1, zero means not a fro
 static void InitFrontierMapSprites(void)
 {
     struct SpriteTemplate sprite;
+    struct SpriteSheet headSheet = {GetPlayerMapIconTiles(GetPlayerAvatarId()), 0x80, TAG_PLAYER_HEAD};
+    struct SpritePalette headPalette = {GetPlayerMapIconPalette(GetPlayerAvatarId()), TAG_PLAYER_HEAD};
     u8 spriteId;
     u8 id;
     s16 x = 0, y;
@@ -1693,9 +1685,9 @@ static void InitFrontierMapSprites(void)
             }
         }
 
-        LoadCompressedSpriteSheet(sHeadsSpriteSheet);
+        LoadSpriteSheet(&headSheet);
+        LoadSpritePalette(&headPalette);
         sprite = sSpriteTemplate_PlayerHead;
-        sprite.paletteTag = GetPlayerAvatarStyle() + TAG_HEAD_MALE; // TAG_HEAD_FEMALE if gender is FEMALE
         if (id != 0)
         {
             spriteId = CreateSprite(&sprite, x, y, 0);
@@ -1709,8 +1701,6 @@ static void InitFrontierMapSprites(void)
 
         sMapData->playerHeadSprite = &gSprites[spriteId];
         sMapData->playerHeadSprite->oam.priority = 0;
-        if (GetPlayerAvatarStyle() != MALE)
-            StartSpriteAnim(sMapData->playerHeadSprite, 1);
     }
 }
 

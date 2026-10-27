@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "player_avatar.h"
 #include "scanline_effect.h"
 #include "palette.h"
@@ -700,6 +701,7 @@ static void SetPlayerCardData(struct TrainerCard *trainerCard, u8 cardType)
 
     trainerCard->gender = GetPlayerAvatarStyle();
     trainerCard->filler[0] = EncodePlayerAvatarId(GetPlayerAvatarId());
+    trainerCard->filler[1] = EncodePlayerUiTheme(GetPlayerUiTheme());
     trainerCard->playTimeHours = gSaveBlock2Ptr->playTimeHours;
     trainerCard->playTimeMinutes = gSaveBlock2Ptr->playTimeMinutes;
 
@@ -794,7 +796,6 @@ void TrainerCard_GenerateCardForLinkPlayer(struct TrainerCard *trainerCard)
 void CopyTrainerCardData(struct TrainerCard *dst, struct TrainerCard *src, u8 gameVersion)
 {
     memset(dst, 0, sizeof(struct TrainerCard));
-    dst->version = gameVersion;
 
     switch (VersionToCardType(gameVersion))
     {
@@ -811,6 +812,8 @@ void CopyTrainerCardData(struct TrainerCard *dst, struct TrainerCard *src, u8 ga
         dst->frontierBP = *((u16 *)&src->linkPoints.frontier);
         break;
     }
+    // The transport version determines whether extension bytes are supported.
+    dst->version = gameVersion;
 }
 
 static void SetDataFromTrainerCard(void)
@@ -1435,14 +1438,14 @@ static u8 SetCardBgsAndPals(void)
         {
             LoadPalette(sHoennTrainerCardPals[sData->trainerCard.stars], BG_PLTT_ID(0), 3 * PLTT_SIZE_4BPP);
             LoadPalette(sHoennTrainerCardBadges_Pal, BG_PLTT_ID(3), PLTT_SIZE_4BPP);
-            if (sData->trainerCard.gender != MALE)
+            if (GetTrainerCardUiTheme(&sData->trainerCard) == PLAYER_THEME_PINK)
                 LoadPalette(sHoennTrainerCardFemaleBg_Pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         }
         else
         {
             LoadPalette(sKantoTrainerCardPals[sData->trainerCard.stars], BG_PLTT_ID(0), 3 * PLTT_SIZE_4BPP);
             LoadPalette(sKantoTrainerCardBadges_Pal, BG_PLTT_ID(3), PLTT_SIZE_4BPP);
-            if (sData->trainerCard.gender != MALE)
+            if (GetTrainerCardUiTheme(&sData->trainerCard) == PLAYER_THEME_PINK)
                 LoadPalette(sKantoTrainerCardFemaleBg_Pal, BG_PLTT_ID(1), PLTT_SIZE_4BPP);
         }
         LoadPalette(sTrainerCardStar_Pal, BG_PLTT_ID(4), PLTT_SIZE_4BPP);

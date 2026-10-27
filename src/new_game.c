@@ -1,5 +1,6 @@
 #include "global.h"
 #include "player_avatar.h"
+#include "player_customization.h"
 #include "new_game.h"
 #include "random.h"
 #include "pokemon.h"
@@ -155,6 +156,11 @@ void ResetMenuAndMonGlobals(void)
 
 void NewGameInitData(void)
 {
+    // Options selected on the title screen survive the new save, like the
+    // standard preferences in SaveBlock2. Snapshot before event data is reset.
+    u8 bagStyle = GetPlayerBagStyle();
+    u8 uiTheme = GetPlayerUiTheme();
+
     if (gSaveFileStatus == SAVE_STATUS_EMPTY || gSaveFileStatus == SAVE_STATUS_CORRUPT)
         RtcReset();
 
@@ -173,6 +179,7 @@ void NewGameInitData(void)
     ClearPokedexFlags();
     InitEventData();
     VarSet(VAR_PLAYER_AVATAR_STYLE, NormalizePlayerAvatarId(gNewGameAvatarStyle));
+    PlayerCustomization_Init(bagStyle, uiTheme);
     gSaveBlock2Ptr->playerGender = FEMALE;
     ClearTVShowData();
     ResetGabbyAndTy();
