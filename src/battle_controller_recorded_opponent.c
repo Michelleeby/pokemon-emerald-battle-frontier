@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_ai_script_commands.h"
 #include "battle_anim.h"
@@ -1219,7 +1220,7 @@ static void RecordedOpponentHandleDrawTrainerPic(void)
         }
         else
         {
-            trainerPicId = PlayerGenderToFrontTrainerPicId(GetActiveBattlerLinkPlayerGender());
+            trainerPicId = GetPlayerAvatarFrontPicId(GetActiveBattlerLinkPlayerAvatarId());
         }
     }
     else
@@ -1231,7 +1232,7 @@ static void RecordedOpponentHandleDrawTrainerPic(void)
         }
         else
         {
-            trainerPicId = PlayerGenderToFrontTrainerPicId(gLinkPlayers[gRecordedBattleMultiplayerId ^ BIT_SIDE].gender);
+            trainerPicId = GetLinkPlayerFrontPicId(&gLinkPlayers[gRecordedBattleMultiplayerId ^ BIT_SIDE]);
         }
     }
 

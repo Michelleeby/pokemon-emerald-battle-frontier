@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "scanline_effect.h"
 #include "palette.h"
 #include "task.h"
@@ -698,6 +699,7 @@ static void SetPlayerCardData(struct TrainerCard *trainerCard, u8 cardType)
     u8 i;
 
     trainerCard->gender = GetPlayerAvatarStyle();
+    trainerCard->filler[0] = EncodePlayerAvatarId(GetPlayerAvatarId());
     trainerCard->playTimeHours = gSaveBlock2Ptr->playTimeHours;
     trainerCard->playTimeMinutes = gSaveBlock2Ptr->playTimeMinutes;
 
@@ -1892,7 +1894,10 @@ static void CreateTrainerCardTrainerPic(void)
     }
     else
     {
-        CreateTrainerCardTrainerPicSprite(FacilityClassToPicIndex(sTrainerPicFacilityClass[sData->cardType][sData->trainerCard.gender]),
+        u16 trainerPic = FacilityClassToPicIndex(sTrainerPicFacilityClass[sData->cardType][sData->trainerCard.gender]);
+        if (sData->trainerCard.version == VERSION_EMERALD && IsEncodedPlayerAvatarId(sData->trainerCard.filler[0]))
+            trainerPic = GetPlayerAvatarFrontPicId(sData->trainerCard.filler[0] & 7);
+        CreateTrainerCardTrainerPicSprite(trainerPic,
                     TRUE,
                     sTrainerPicOffset[sData->isHoenn][sData->trainerCard.gender][0],
                     sTrainerPicOffset[sData->isHoenn][sData->trainerCard.gender][1],

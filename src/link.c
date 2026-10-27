@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "m4a.h"
 #include "malloc.h"
 #include "reload_save.h"
@@ -326,6 +327,7 @@ static void InitLocalLinkPlayer(void)
     gLocalLinkPlayer.trainerId = gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8) | (gSaveBlock2Ptr->playerTrainerId[2] << 16) | (gSaveBlock2Ptr->playerTrainerId[3] << 24);
     StringCopy(gLocalLinkPlayer.name, gSaveBlock2Ptr->playerName);
     gLocalLinkPlayer.gender = GetPlayerAvatarStyle();
+    gLocalLinkPlayer.neverRead = EncodePlayerAvatarId(GetPlayerAvatarId());
     gLocalLinkPlayer.linkType = gLinkType;
     gLocalLinkPlayer.language = gGameLanguage;
     gLocalLinkPlayer.version = gGameVersion + 0x4000;

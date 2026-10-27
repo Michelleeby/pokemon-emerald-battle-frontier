@@ -50,8 +50,6 @@ static const u8 *GetInteractedObjectEventScript(struct MapPosition *, u8, u8);
 static const u8 *GetInteractedBackgroundEventScript(struct MapPosition *, u8, u8);
 static const u8 *GetInteractedMetatileScript(struct MapPosition *, u8, u8);
 static const u8 *GetInteractedWaterScript(struct MapPosition *, u8, u8);
-static bool32 TrySetupDiveDownScript(void);
-static bool32 TrySetupDiveEmergeScript(void);
 static bool8 TryStartStepBasedScript(struct MapPosition *, u16, u16);
 static bool8 CheckStandardWildEncounter(u16);
 static bool8 TryArrowWarp(struct MapPosition *, u16, u8);
@@ -153,8 +151,6 @@ int ProcessPlayerFieldInput(struct FieldInput *input)
     if (TryRunOnFrameMapScript() == TRUE)
         return TRUE;
 
-    if (input->pressedBButton && TrySetupDiveEmergeScript() == TRUE)
-        return TRUE;
     if (input->tookStep)
     {
         IncrementGameStat(GAME_STAT_STEPS);
@@ -180,8 +176,6 @@ int ProcessPlayerFieldInput(struct FieldInput *input)
         if (TryDoorWarp(&position, metatileBehavior, playerDirection) == TRUE)
             return TRUE;
     }
-    if (input->pressedAButton && TrySetupDiveDownScript() == TRUE)
-        return TRUE;
     if (input->pressedStartButton)
     {
         PlaySE(SE_WIN_OPEN);
@@ -452,37 +446,11 @@ static const u8 *GetInteractedMetatileScript(struct MapPosition *position, u8 me
 
 static const u8 *GetInteractedWaterScript(struct MapPosition *unused1, u8 metatileBehavior, u8 direction)
 {
-    if (FlagGet(FLAG_BADGE05_GET) == TRUE && PartyHasMonWithSurf() == TRUE && IsPlayerFacingSurfableFishableWater() == TRUE)
-        return EventScript_UseSurf;
-
     if (MetatileBehavior_IsWaterfall(metatileBehavior) == TRUE)
     {
-        if (FlagGet(FLAG_BADGE08_GET) == TRUE && IsPlayerSurfingNorth() == TRUE)
-            return EventScript_UseWaterfall;
-        else
-            return EventScript_CannotUseWaterfall;
+        return EventScript_CannotUseWaterfall;
     }
     return NULL;
-}
-
-static bool32 TrySetupDiveDownScript(void)
-{
-    if (FlagGet(FLAG_BADGE07_GET) && TrySetDiveWarp() == 2)
-    {
-        ScriptContext_SetupScript(EventScript_UseDive);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-static bool32 TrySetupDiveEmergeScript(void)
-{
-    if (FlagGet(FLAG_BADGE07_GET) && gMapHeader.mapType == MAP_TYPE_UNDERWATER && TrySetDiveWarp() == 1)
-    {
-        ScriptContext_SetupScript(EventScript_UseDiveUnderwater);
-        return TRUE;
-    }
-    return FALSE;
 }
 
 static bool8 TryStartStepBasedScript(struct MapPosition *position, u16 metatileBehavior, u16 direction)

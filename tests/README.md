@@ -54,7 +54,7 @@ dependencies. The suites cover:
 | `frontier-common` | Shared Normal/Hard Frontier state, records, and boundaries |
 | `team-lab` | Pokémon creation, validation, legal moves, PP editing, stats, nature, and ability data |
 | `new-game-tutorial` | New-game state and guided-introduction behavior |
-| `save-load` | Party and project-specific save fields |
+| `save-load` | Party, save boundaries, all eight avatar mappings, invalid-avatar fallback, and project-specific save fields |
 | `battle-shared` | Shared battle setup and controller commands |
 | `audio-settings` | Audio save compatibility, music catalog, battle scope, and cosmetic random selection |
 | `low-hp-audio` | Low health alert preferences, single/double battle state, and cleanup |
@@ -76,6 +76,9 @@ Use [`tests/e2e_manifest.json`](e2e_manifest.json) as the source for scenario
 names and the rules that select scenarios from changed file paths. Current
 scenarios cover:
 
+- Eight-avatar new-game selection, both D-pad wrap directions, front previews,
+  naming, normal save/reload, running acceleration and coasting, disabled legacy
+  key items, and safe recovery of water/underwater saves
 - Normal and Hard Frontier Brain boundaries for Tower, Factory, Dome, Arena,
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup

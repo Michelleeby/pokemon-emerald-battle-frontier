@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "malloc.h"
 #include "battle_pyramid.h"
 #include "berry.h"
@@ -14,6 +15,7 @@
 #include "fieldmap.h"
 #include "mauville_old_man.h"
 #include "metatile_behavior.h"
+#include "link.h"
 #include "overworld.h"
 #include "palette.h"
 #include "random.h"
@@ -24,6 +26,10 @@
 #include "util.h"
 #include "constants/event_object_movement.h"
 #include "constants/event_objects.h"
+#include "constants/battle_frontier.h"
+#include "constants/map_event_ids.h"
+#include "constants/maps.h"
+#include "constants/vars.h"
 #include "constants/field_effects.h"
 #include "constants/items.h"
 #include "constants/mauville_old_man.h"
@@ -1415,6 +1421,69 @@ void RemoveAllObjectEventsExceptPlayer(void)
     }
 }
 
+// Frontier entrance actors replace the hidden player. Refresh them when a
+// saved room is restored, as well as when its transition script runs.
+static u8 GetFrontierStandInAvatarId(u8 localId, u8 mapNum, u8 mapGroup)
+{
+    u16 map = mapNum | (mapGroup << 8);
+    u8 playerLocalId;
+    u8 partnerLocalId = LOCALID_NONE;
+
+    switch (map)
+    {
+    case MAP_BATTLE_FRONTIER_BATTLE_ARENA_BATTLE_ROOM:
+        playerLocalId = LOCALID_ARENA_BATTLE_PLAYER;
+        break;
+    case MAP_BATTLE_FRONTIER_BATTLE_DOME_BATTLE_ROOM:
+        playerLocalId = LOCALID_DOME_PLAYER;
+        break;
+    case MAP_BATTLE_FRONTIER_BATTLE_FACTORY_BATTLE_ROOM:
+        playerLocalId = LOCALID_FACTORY_BATTLE_PLAYER;
+        break;
+    case MAP_BATTLE_FRONTIER_BATTLE_PALACE_BATTLE_ROOM:
+        playerLocalId = LOCALID_PALACE_BATTLE_PLAYER;
+        break;
+    case MAP_BATTLE_FRONTIER_BATTLE_TOWER_MULTI_BATTLE_ROOM:
+        playerLocalId = LOCALID_TOWER_MULTI_BATTLE_PLAYER;
+        partnerLocalId = LOCALID_TOWER_MULTI_BATTLE_PARTNER;
+        break;
+    case MAP_BATTLE_FRONTIER_BATTLE_TOWER_MULTI_CORRIDOR:
+        playerLocalId = LOCALID_TOWER_MULTI_CORRIDOR_PLAYER;
+        partnerLocalId = LOCALID_TOWER_MULTI_CORRIDOR_PARTNER;
+        break;
+    default:
+        return PLAYER_AVATAR_COUNT;
+    }
+
+    if (partnerLocalId != LOCALID_NONE
+     && VarGet(VAR_FRONTIER_BATTLE_MODE) == FRONTIER_MODE_LINK_MULTIS)
+    {
+        if (localId == playerLocalId)
+            return GetLinkPlayerAvatarId(&gLinkPlayers[0]);
+        if (localId == partnerLocalId)
+            return GetLinkPlayerAvatarId(&gLinkPlayers[1]);
+    }
+    else if (localId == playerLocalId)
+    {
+        return GetPlayerAvatarId();
+    }
+
+    return PLAYER_AVATAR_COUNT;
+}
+
+// Stand-ins have the same palette as the hidden local player. Link Multi's
+// other avatar uses the existing special NPC slot, separate from local colors.
+static u8 GetObjectEventPaletteSlot(const struct ObjectEvent *objectEvent, const struct ObjectEventGraphicsInfo *graphicsInfo)
+{
+    u8 avatarId = GetFrontierStandInAvatarId(objectEvent->localId, objectEvent->mapNum, objectEvent->mapGroup);
+
+    if (objectEvent->movementType == MOVEMENT_TYPE_PLAYER || avatarId == GetPlayerAvatarId())
+        return PALSLOT_PLAYER;
+    if (avatarId < PLAYER_AVATAR_COUNT)
+        return PALSLOT_NPC_SPECIAL;
+    return graphicsInfo->paletteSlot;
+}
+
 static u8 TrySetupObjectEventSprite(const struct ObjectEventTemplate *objectEventTemplate, struct SpriteTemplate *spriteTemplate, u8 mapNum, u8 mapGroup, s16 cameraX, s16 cameraY)
 {
     u8 spriteId;
@@ -1430,7 +1499,7 @@ static u8 TrySetupObjectEventSprite(const struct ObjectEventTemplate *objectEven
 
     objectEvent = &gObjectEvents[objectEventId];
     graphicsInfo = GetObjectEventGraphicsInfo(objectEvent->graphicsId);
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = GetObjectEventPaletteSlot(objectEvent, graphicsInfo);
     if (paletteSlot == PALSLOT_PLAYER)
     {
         LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
@@ -1482,6 +1551,16 @@ static u8 TrySpawnObjectEventTemplate(const struct ObjectEventTemplate *objectEv
     struct SpriteFrameImage spriteFrameImage;
     const struct ObjectEventGraphicsInfo *graphicsInfo;
     const struct SubspriteTable *subspriteTables = NULL;
+
+    struct ObjectEventTemplate standInTemplate;
+    u8 avatarId = GetFrontierStandInAvatarId(objectEventTemplate->localId, mapNum, mapGroup);
+
+    if (avatarId < PLAYER_AVATAR_COUNT)
+    {
+        standInTemplate = *objectEventTemplate;
+        standInTemplate.graphicsId = GetPlayerAvatarOverworldGraphicsId(avatarId);
+        objectEventTemplate = &standInTemplate;
+    }
 
     graphicsInfo = GetObjectEventGraphicsInfo(objectEventTemplate->graphicsId);
     MakeSpriteTemplateFromObjectEventTemplate(objectEventTemplate, &spriteTemplate, &subspriteTables);
@@ -1729,6 +1808,7 @@ static void SpawnObjectEventOnReturnToField(u8 objectEventId, s16 x, s16 y)
 {
     u8 i;
     u8 paletteSlot;
+    u8 avatarId;
     struct Sprite *sprite;
     struct ObjectEvent *objectEvent;
     struct SpriteTemplate spriteTemplate;
@@ -1744,20 +1824,25 @@ static void SpawnObjectEventOnReturnToField(u8 objectEventId, s16 x, s16 y)
 
     objectEvent = &gObjectEvents[objectEventId];
     subspriteTables = NULL;
+    if (objectEvent->movementType == MOVEMENT_TYPE_PLAYER)
+        objectEvent->graphicsId = GetPlayerAvatarOverworldGraphicsId(GetPlayerAvatarId());
+    avatarId = GetFrontierStandInAvatarId(objectEvent->localId, objectEvent->mapNum, objectEvent->mapGroup);
+    if (avatarId < PLAYER_AVATAR_COUNT)
+        objectEvent->graphicsId = GetPlayerAvatarOverworldGraphicsId(avatarId);
     graphicsInfo = GetObjectEventGraphicsInfo(objectEvent->graphicsId);
     spriteFrameImage.size = graphicsInfo->size;
     CopyObjectGraphicsInfoToSpriteTemplate_WithMovementType(objectEvent->graphicsId, objectEvent->movementType, &spriteTemplate, &subspriteTables);
     spriteTemplate.images = &spriteFrameImage;
 
     *(u16 *)&spriteTemplate.paletteTag = TAG_NONE;
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = GetObjectEventPaletteSlot(objectEvent, graphicsInfo);
     if (paletteSlot == PALSLOT_PLAYER)
     {
-        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot == PALSLOT_NPC_SPECIAL)
     {
-        LoadSpecialObjectReflectionPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadSpecialObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot >= 16)
     {
@@ -1822,17 +1907,20 @@ void ObjectEventSetGraphicsId(struct ObjectEvent *objectEvent, u8 graphicsId)
     const struct ObjectEventGraphicsInfo *graphicsInfo;
     struct Sprite *sprite;
     u8 paletteSlot;
+    u8 avatarId = GetFrontierStandInAvatarId(objectEvent->localId, objectEvent->mapNum, objectEvent->mapGroup);
 
+    if (avatarId < PLAYER_AVATAR_COUNT)
+        graphicsId = GetPlayerAvatarOverworldGraphicsId(avatarId);
     graphicsInfo = GetObjectEventGraphicsInfo(graphicsId);
     sprite = &gSprites[objectEvent->spriteId];
-    paletteSlot = graphicsInfo->paletteSlot;
+    paletteSlot = GetObjectEventPaletteSlot(objectEvent, graphicsInfo);
     if (paletteSlot == PALSLOT_PLAYER)
     {
-        PatchObjectPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadPlayerObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot == PALSLOT_NPC_SPECIAL)
     {
-        LoadSpecialObjectReflectionPalette(graphicsInfo->paletteTag, graphicsInfo->paletteSlot);
+        LoadSpecialObjectReflectionPalette(graphicsInfo->paletteTag, paletteSlot);
     }
     else if (paletteSlot >= 16)
     {
@@ -2083,6 +2171,8 @@ void LoadPlayerObjectReflectionPalette(u16 tag, u8 slot)
             return;
         }
     }
+    // The extra playable NPC/link graphics have no separate reflection palette.
+    PatchObjectPalette(tag, gReflectionEffectPaletteMap[slot]);
 }
 
 void LoadSpecialObjectReflectionPalette(u16 tag, u8 slot)
@@ -5110,7 +5200,10 @@ static void InitMovementNormal(struct ObjectEvent *objectEvent, struct Sprite *s
 static void StartRunningAnim(struct ObjectEvent *objectEvent, struct Sprite *sprite, u8 direction)
 {
     InitNpcForMovement(objectEvent, sprite, direction, MOVE_SPEED_FAST_1);
-    SetStepAnimHandleAlternation(objectEvent, sprite, GetRunningDirectionAnimNum(objectEvent->facingDirection));
+    if (objectEvent->isPlayer && GetPlayerAvatarId() >= 2)
+        SetStepAnimHandleAlternation(objectEvent, sprite, GetMoveDirectionFastAnimNum(objectEvent->facingDirection));
+    else
+        SetStepAnimHandleAlternation(objectEvent, sprite, GetRunningDirectionAnimNum(objectEvent->facingDirection));
 }
 
 static bool8 UpdateMovementNormal(struct ObjectEvent *objectEvent, struct Sprite *sprite)

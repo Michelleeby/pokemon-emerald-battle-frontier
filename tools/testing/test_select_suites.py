@@ -159,6 +159,7 @@ class SelectorTests(unittest.TestCase):
                 "arena-hard-greta",
                 "arena-normal-greta",
                 "audio-options",
+                "avatar-selection",
                 "dome-hard-tucker",
                 "dome-normal-tucker",
                 "factory-hard-noland",

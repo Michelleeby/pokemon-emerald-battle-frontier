@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "battle.h"
 #include "battle_ai_script_commands.h"
 #include "battle_anim.h"
@@ -1189,13 +1190,13 @@ static void RecordedPlayerHandleDrawTrainerPic(void)
     if (gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK)
     {
         if (gBattleTypeFlags & BATTLE_TYPE_MULTI)
-            trainerPicId = GetActiveBattlerLinkPlayerGender();
+            trainerPicId = GetPlayerAvatarBackPicId(GetActiveBattlerLinkPlayerAvatarId());
         else
-            trainerPicId = gLinkPlayers[gRecordedBattleMultiplayerId].gender;
+            trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[gRecordedBattleMultiplayerId]);
     }
     else
     {
-        trainerPicId = gLinkPlayers[0].gender;
+        trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[0]);
     }
 
     if (gBattleTypeFlags & BATTLE_TYPE_MULTI)
@@ -1224,7 +1225,7 @@ static void RecordedPlayerHandleDrawTrainerPic(void)
 
     if (gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER)
     {
-        trainerPicId = PlayerGenderToFrontTrainerPicId(GetPlayerAvatarStyle());
+        trainerPicId = GetLinkPlayerFrontPicId(&gLinkPlayers[0]);
         DecompressTrainerFrontPic(trainerPicId, gActiveBattler);
         SetMultiuseSpriteTemplateToTrainerFront(trainerPicId, GetBattlerPosition(gActiveBattler));
         gBattlerSpriteIds[gActiveBattler] = CreateSprite(&gMultiuseSpriteTemplate, xPos, yPos, GetBattlerSpriteSubpriority(gActiveBattler));
@@ -1674,9 +1675,9 @@ static void RecordedPlayerHandleIntroTrainerBallThrow(void)
 
     paletteNum = AllocSpritePalette(0xD6F9);
     if (gBattleTypeFlags & BATTLE_TYPE_RECORDED_LINK)
-        trainerPicId = gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)].gender;
+        trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[GetBattlerMultiplayerId(gActiveBattler)]);
     else
-        trainerPicId = GetPlayerAvatarStyle();
+        trainerPicId = GetLinkPlayerBackPicId(&gLinkPlayers[0]);
 
     LoadCompressedPalette(gTrainerBackPicPaletteTable[trainerPicId].data, OBJ_PLTT_ID(paletteNum), PLTT_SIZE_4BPP);
 

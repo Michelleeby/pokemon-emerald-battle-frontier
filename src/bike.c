@@ -1,5 +1,6 @@
 #include "global.h"
 #include "bike.h"
+#include "event_data.h"
 #include "event_object_movement.h"
 #include "field_player_avatar.h"
 #include "fieldmap.h"
@@ -137,6 +138,34 @@ static void MovePlayerOnMachBike(u8 direction, u16 newKeys, u16 heldKeys)
     sMachBikeTransitions[GetMachBikeTransition(&direction)](direction);
 }
 
+// Reuse the Mach Bike momentum and step callbacks while remaining on foot.
+// Releasing run or changing direction brakes in the current direction first.
+bool8 MovePlayerWithRunningMomentum(u8 direction, u16 heldKeys)
+{
+    struct ObjectEvent *playerObjEvent = &gObjectEvents[gPlayerAvatar.objectEventId];
+    u8 currentDirection = GetPlayerMovementDirection();
+    bool8 wantsToRun = (heldKeys & B_BUTTON) && FlagGet(FLAG_SYS_B_DASH)
+        && !IsRunningDisallowed(playerObjEvent->currentMetatileBehavior);
+
+    if (!wantsToRun || direction == DIR_NONE || direction != currentDirection)
+    {
+        if (gPlayerAvatar.bikeSpeed != PLAYER_SPEED_STANDING)
+        {
+            gPlayerAvatar.runningState = MOVING;
+            MachBikeTransition_TrySlowDown(currentDirection);
+            gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
+            return TRUE;
+        }
+        Bike_SetBikeStill();
+        if (!wantsToRun || direction == DIR_NONE)
+            return FALSE;
+    }
+
+    MovePlayerOnMachBike(direction, 0, heldKeys);
+    gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
+    return TRUE;
+}
+
 // dirTraveling is a variable that is 0 when the player is standing still.
 static u8 GetMachBikeTransition(u8 *dirTraveling)
 {
@@ -214,7 +243,7 @@ static void MachBikeTransition_TrySpeedUp(u8 direction)
     else
     {
         collision = GetBikeCollision(direction);
-        if (collision > 0 && collision < COLLISION_VERTICAL_RAIL)
+        if (collision > 0 && (collision < COLLISION_VERTICAL_RAIL || !(gPlayerAvatar.flags & (PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE))))
         {
             // we hit a solid object, but check to see if its a ledge and then jump.
             if (collision == COLLISION_LEDGE_JUMP)
@@ -251,7 +280,7 @@ static void MachBikeTransition_TrySlowDown(u8 direction)
 
     collision = GetBikeCollision(direction);
 
-    if (collision > 0 && collision < COLLISION_VERTICAL_RAIL)
+    if (collision > 0 && (collision < COLLISION_VERTICAL_RAIL || !(gPlayerAvatar.flags & (PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE))))
     {
         if (collision == COLLISION_LEDGE_JUMP)
         {
@@ -878,6 +907,9 @@ static u8 GetBikeCollisionAt(struct ObjectEvent *objectEvent, s16 x, s16 y, u8 d
 {
     u8 collision = CheckForObjectEventCollision(objectEvent, x, y, direction, metatileBehavior);
 
+    if (!(gPlayerAvatar.flags & (PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE)))
+        return collision;
+
     if (collision > COLLISION_OBJECT_EVENT)
         return collision;
 
@@ -915,6 +947,9 @@ static void Bike_TryAdvanceCyclingRoadCollisions(void)
 
 static bool8 CanBikeFaceDirOnMetatile(u8 direction, u8 tile)
 {
+    if (!(gPlayerAvatar.flags & (PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE)))
+        return TRUE;
+
     if (direction == DIR_EAST || direction == DIR_WEST)
     {
         // Bike cannot face east or west on a vertical rail
@@ -1030,7 +1065,9 @@ s16 GetPlayerSpeed(void)
         return machSpeeds[gPlayerAvatar.bikeFrameCounter];
     else if (gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_ACRO_BIKE)
         return PLAYER_SPEED_FASTER;
-    else if (gPlayerAvatar.flags & (PLAYER_AVATAR_FLAG_SURFING | PLAYER_AVATAR_FLAG_DASH))
+    else if (gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_DASH)
+        return machSpeeds[min(gPlayerAvatar.bikeSpeed, ARRAY_COUNT(sMachBikeSpeeds) - 1)];
+    else if (gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_SURFING)
         return PLAYER_SPEED_FAST;
     else
         return PLAYER_SPEED_NORMAL;
