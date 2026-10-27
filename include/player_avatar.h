@@ -15,6 +15,7 @@ u8 GetPlayerAvatarGender(u8 avatarId);
 u16 GetPlayerAvatarFrontPicId(u8 avatarId);
 u8 GetPlayerAvatarBackPicId(u8 avatarId);
 u8 GetPlayerAvatarOverworldGraphicsId(u8 avatarId);
+u16 GetPlayerAvatarObjectGraphicsId(void);
 u8 EncodePlayerAvatarId(u8 avatarId);
 bool8 IsEncodedPlayerAvatarId(u8 value);
 u8 GetLinkPlayerAvatarId(const struct LinkPlayer *player);

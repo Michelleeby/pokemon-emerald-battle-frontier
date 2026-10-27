@@ -65,6 +65,12 @@ u8 GetPlayerAvatarOverworldGraphicsId(u8 avatarId)
     return sPlayerAvatars[NormalizePlayerAvatarId(avatarId)].overworldGraphics;
 }
 
+// Scripted Frontier entrances display an NPC stand-in while hiding the player.
+u16 GetPlayerAvatarObjectGraphicsId(void)
+{
+    return GetPlayerAvatarOverworldGraphicsId(GetPlayerAvatarId());
+}
+
 u8 EncodePlayerAvatarId(u8 avatarId)
 {
     return PLAYER_AVATAR_TAG | NormalizePlayerAvatarId(avatarId);

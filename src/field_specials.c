@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_avatar.h"
 #include "malloc.h"
 #include "battle.h"
 #include "battle_tower.h"
@@ -2786,10 +2787,8 @@ void SetBattleTowerLinkPlayerGfx(void)
     u8 i;
     for (i = 0; i < 2; i++)
     {
-        if (gLinkPlayers[i].gender == MALE)
-            VarSet(VAR_OBJ_GFX_ID_F - i, OBJ_EVENT_GFX_BRENDAN_NORMAL);
-        else
-            VarSet(VAR_OBJ_GFX_ID_F - i, OBJ_EVENT_GFX_RIVAL_MAY_NORMAL);
+        VarSet(VAR_OBJ_GFX_ID_F - i,
+               GetPlayerAvatarOverworldGraphicsId(GetLinkPlayerAvatarId(&gLinkPlayers[i])));
     }
 }
 

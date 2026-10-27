@@ -2,6 +2,7 @@
 #include "global.h"
 #include "bike.h"
 #include "field_player_avatar.h"
+#include "field_specials.h"
 #include "item.h"
 #include "item_use.h"
 #include "load_save.h"
@@ -49,6 +50,7 @@ static void TestAvatarSaveMappings(void)
         TEST_ASSERT_EQ(expected[i].frontPic, GetPlayerAvatarFrontPicId(i));
         TEST_ASSERT_EQ(expected[i].backPic, GetPlayerAvatarBackPicId(i));
         TEST_ASSERT_EQ(expected[i].overworld, GetPlayerAvatarOverworldGraphicsId(i));
+        TEST_ASSERT_EQ(expected[i].overworld, GetPlayerAvatarObjectGraphicsId());
     }
 
     // Both original stored choices must retain their appearance; values with
@@ -109,6 +111,34 @@ static void TestLinkAvatarBounds(void)
     player.version = VERSION_SAPPHIRE;
     player.gender = 0xFF;
     TEST_ASSERT_EQ(TRAINER_BACK_PIC_RUBY_SAPPHIRE_MAY, GetLinkPlayerAvatarId(&player));
+}
+
+extern void SetBattleTowerLinkPlayerGfx(void);
+
+static void TestTowerStandInMappings(void)
+{
+    u32 i;
+    for (i = 0; i < PLAYER_AVATAR_COUNT; i++)
+    {
+        gLinkPlayers[0].version = VERSION_EMERALD;
+        gLinkPlayers[0].neverRead = EncodePlayerAvatarId(i);
+        gLinkPlayers[0].gender = GetPlayerAvatarGender(i);
+        gLinkPlayers[1].version = VERSION_EMERALD;
+        gLinkPlayers[1].neverRead = EncodePlayerAvatarId(PLAYER_AVATAR_COUNT - i - 1);
+        gLinkPlayers[1].gender = GetPlayerAvatarGender(PLAYER_AVATAR_COUNT - i - 1);
+        SetBattleTowerLinkPlayerGfx();
+        TEST_ASSERT_EQ(GetPlayerAvatarOverworldGraphicsId(i), VarGet(VAR_OBJ_GFX_ID_F));
+        TEST_ASSERT_EQ(GetPlayerAvatarOverworldGraphicsId(PLAYER_AVATAR_COUNT - i - 1), VarGet(VAR_OBJ_GFX_ID_E));
+    }
+
+    // Legacy peers still use the shared game's normal avatar mapping.
+    gLinkPlayers[0].neverRead = 0;
+    gLinkPlayers[0].gender = FEMALE;
+    gLinkPlayers[1].neverRead = 0;
+    gLinkPlayers[1].gender = MALE;
+    SetBattleTowerLinkPlayerGfx();
+    TEST_ASSERT_EQ(OBJ_EVENT_GFX_MAY_NORMAL, VarGet(VAR_OBJ_GFX_ID_F));
+    TEST_ASSERT_EQ(OBJ_EVENT_GFX_BRENDAN_NORMAL, VarGet(VAR_OBJ_GFX_ID_E));
 }
 
 static void TestAvatarTravelRestrictions(void)
@@ -204,4 +234,5 @@ void RunTest(void)
     TestAvatarSaveMappings();
     TestLinkAvatarBounds();
     TestAvatarTravelRestrictions();
+    TestTowerStandInMappings();
 }

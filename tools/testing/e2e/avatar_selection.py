@@ -9,6 +9,7 @@ except ModuleNotFoundError:
     from tools.testing.save_fixture import SECTOR_CHECKSUM_OFFSET, SECTOR_DATA_SIZE, SECTOR_SIZE, SECTION_SIZES, calculate_checksum, parse_save
 
 from .audio_options import wait_for_title_input
+from .arena import create_arena_battle_room_save
 from .overworld_menu import save_normally
 from .session import E2EError, Session
 from .symbols import load_symbols, require_symbols
@@ -194,11 +195,13 @@ def _running_speed(game: Session, symbols: dict[str, int]) -> None:
 
 
 def _write_legacy_fixture(source: Path, destination: Path, *, item: int | None = None,
-                          travel: str | None = None) -> None:
+                          travel: str | None = None, avatar_id: int | None = None) -> None:
     # Only mutate this scenario's freshly generated save, never the repository's
     # compatibility fixture or a user's SRAM. Reuse the canonical sector parser.
     parsed = parse_save(source)
     sb1 = bytearray(parsed.save_block1)
+    if avatar_id is not None:
+        struct.pack_into("<H", sb1, AVATAR_VAR_OFFSET, avatar_id)
     if item is not None:
         key = int.from_bytes(parsed.save_block2[0xAC:0xB0], "little") & 0xFFFF
         struct.pack_into("<H", sb1, 0x496, item)
@@ -277,6 +280,41 @@ def _legacy_travel(artifact_dir: Path, source: Path, symbols: dict[str, int]) ->
             game.screenshot("safe-landing.png")
 
 
+def _frontier_standins(artifact_dir: Path, symbols: dict[str, int]) -> None:
+    source = artifact_dir / "arena-source.sav"
+    create_arena_battle_room_save(artifact_dir / "arena-fixture", source, greta_mode="normal")
+    graphics = (0, 89, 230, 231, 235, 236, 135, 134)
+    for avatar_id, expected_gfx in enumerate(graphics):
+        save = artifact_dir / f"arena-avatar-{avatar_id}.sav"
+        _write_legacy_fixture(source, save, avatar_id=avatar_id)
+        with Session(GAMEPLAY_ROM, artifact_dir / f"arena-avatar-{avatar_id}", save=save) as game:
+            for _ in range(90):
+                if (game.read(symbols["gMain"] + 4) == symbols["CB2_Overworld"] | 1
+                        and game.read(game.read(symbols["gSaveBlock1Ptr"]) + 4, width=16) == 0x1E1A):
+                    break
+                game.press("START", held_frames=1, released_frames=14)
+                game.press("A", held_frames=1, released_frames=14)
+            else:
+                raise AvatarSelectionFailure("Continue never reached the Arena entrance")
+            for _ in range(60):
+                for index in range(16):
+                    obj = symbols["gObjectEvents"] + index * 36
+                    if game.read(obj, width=8) & 1 and game.read(obj + 8, width=8) == 8:
+                        _check(game.read(obj + 5, width=8) == expected_gfx,
+                               f"Arena replaced avatar {avatar_id} with graphics {game.read(obj + 5, width=8)}")
+                        sprite = symbols["gSprites"] + game.read(obj + 4, width=8) * SPRITE_SIZE
+                        _check(game.read(sprite + 5, width=8) >> 4 == 0,
+                               "Arena stand-in does not use the player palette")
+                        game.screenshot("entrance.png")
+                        break
+                else:
+                    game.run_frames(1)
+                    continue
+                break
+            else:
+                raise AvatarSelectionFailure("Arena entrance has no scripted player stand-in")
+
+
 def run(artifact_dir: Path) -> None:
     artifact_dir = Path(artifact_dir).resolve()
     save = artifact_dir / "avatar-selection.sav"
@@ -348,3 +386,4 @@ def run(artifact_dir: Path) -> None:
         _on_foot(game, symbols)
         game.screenshot("passed.png")
     _legacy_travel(artifact_dir, save, symbols)
+    _frontier_standins(artifact_dir, symbols)
