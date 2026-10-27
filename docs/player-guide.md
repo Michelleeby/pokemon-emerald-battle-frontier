@@ -5,8 +5,16 @@
 At the start of a new game, press Up or Down to cycle through Brendan, May,
 Red, Leaf, Ruby/Sapphire Brendan, Ruby/Sapphire May, Wally, and Steven. The
 arrows show the controls, and the character preview updates as you cycle.
-Press A to choose the displayed avatar and enter your name. Save through the
-normal game menu to keep your choice after restarting.
+Press A to choose the displayed avatar. Next, pick your bag shape (backpack or
+satchel), then pick blue or pink interface colors. Use Up/Down to preview each
+choice, A to continue, and B to return to the previous choice. Bag shape and
+colors are independent of your avatar and of each other.
+
+Enter your name after choosing your colors. Name suggestions share one pool for
+all avatars. Save through the normal game menu to keep all three choices after
+restarting. Menu colors apply to the Bag, Pokémon Lab item picker, save text,
+Trainer Card accents, Berry information, mail backgrounds, and battle-intro
+backgrounds. Earned Trainer Card rank colors stay tied to your progress.
 
 ## Travel
 

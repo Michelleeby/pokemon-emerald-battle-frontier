@@ -77,8 +77,9 @@ names and the rules that select scenarios from changed file paths. Current
 scenarios cover:
 
 - Eight-avatar new-game selection, both D-pad wrap directions, front previews,
-  naming, normal save/reload, running acceleration and coasting, disabled legacy
-  key items, and safe recovery of water/underwater saves
+  independent bag/color previews, back navigation, all four bag/theme combinations,
+  avatar-specific Frontier map icons, naming, normal save/reload, running acceleration
+  and coasting, disabled legacy key items, and safe recovery of water/underwater saves
 - Normal and Hard Frontier Brain boundaries for Tower, Factory, Dome, Arena,
   Palace, Pike, and Pyramid
 - Hard-mode Factory rental setup

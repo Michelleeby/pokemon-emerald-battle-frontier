@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "player_avatar.h"
 #include "battle.h"
 #include "battle_transition.h"
@@ -904,10 +905,10 @@ static const u16 *const sOpponentMugshotsPals[MUGSHOTS_COUNT] =
     [MUGSHOT_CHAMPION] = sMugshotPal_Champion
 };
 
-static const u16 *const sPlayerMugshotsPals[GENDER_COUNT] =
+static const u16 *const sPlayerMugshotsPals[PLAYER_THEME_COUNT] =
 {
-    [MALE] = sMugshotPal_Brendan,
-    [FEMALE] = sMugshotPal_May
+    [PLAYER_THEME_BLUE] = sMugshotPal_Brendan,
+    [PLAYER_THEME_PINK] = sMugshotPal_May
 };
 
 static const u16 sUnusedTrainerPalette[] = INCGFX_U16("graphics/battle_transitions/unused_trainer.pal", ".gbapal");
@@ -2333,7 +2334,7 @@ static bool8 Mugshot_SetGfx(struct Task *task)
     GetBg0TilesDst(&tilemap, &tileset);
     CpuSet(sEliteFour_Tileset, tileset, 0xF0);
     LoadPalette(sOpponentMugshotsPals[task->tMugshotId], BG_PLTT_ID(15), PLTT_SIZE_4BPP);
-    LoadPalette(sPlayerMugshotsPals[GetPlayerAvatarStyle()], BG_PLTT_ID(15) + 10, PLTT_SIZEOF(6));
+    LoadPalette(sPlayerMugshotsPals[GetPlayerUiTheme()], BG_PLTT_ID(15) + 10, PLTT_SIZEOF(6));
 
     for (i = 0; i < 20; i++)
     {

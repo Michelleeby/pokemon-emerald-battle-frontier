@@ -6,6 +6,8 @@ These are the gameplay changes from the upstream `pret/pokeemerald` base.
 
 - Begin a new game with a short route to the Battle Frontier, skipping
   Emerald's main-story progression.
+- Choose from eight avatars, then independently preview a backpack or satchel
+  and blue or pink interface colors before entering your name.
 - Start with Frontier access, all eight badges, the PokéNav, Frontier Pass,
   and running shoes. Running accelerates to the Mach Bike’s top speed.
 - Learn to use the PokéNav and Pokémon Lab through a guided introduction.

@@ -10,6 +10,7 @@ except ModuleNotFoundError:
 
 from .audio_options import wait_for_title_input
 from .arena import create_arena_battle_room_save
+from .avatar_map_icons import MAP_ICON_SYMBOLS, verify_avatar_map_icons
 from .overworld_menu import save_normally
 from .session import E2EError, Session
 from .symbols import load_symbols, require_symbols
@@ -57,11 +58,11 @@ def _preview(game: Session, symbols: dict[str, int], task: int, expected: int) -
     _check(actual_pixels == expected_pixels, f"avatar {expected} preview shows another trainer")
 
 
-def _decompress_picture(data: bytes) -> bytes:
+def _decompress_picture(data: bytes, *, max_size: int = 4096) -> bytes:
     """Decode a bounded GBA LZ77 trainer picture for a pixel comparison."""
     _check(data[0] == 0x10, "trainer picture is not a GBA LZ77 asset")
     size = int.from_bytes(data[1:4], "little")
-    _check(0 < size <= 4096, f"invalid trainer picture size {size}")
+    _check(0 < size <= max_size, f"invalid picture size {size}")
     result = bytearray()
     cursor = 4
     while len(result) < size:
@@ -314,6 +315,116 @@ def _frontier_standins(artifact_dir: Path, symbols: dict[str, int]) -> None:
             else:
                 raise AvatarSelectionFailure("Arena entrance has no scripted player stand-in")
 
+def _customization_task(game: Session, symbols: dict[str, int], expected_stage: int) -> int:
+    for _ in range(240):
+        task = _find_task(game, symbols, "Task_NewGameBirchSpeech_ChooseCustomization")
+        if task is not None:
+            _check(game.read(task + 8 + 10 * 2, width=16) == expected_stage,
+                   "customization advanced to the wrong stage")
+            return task
+        game.run_frames(1)
+    raise AvatarSelectionFailure("new game never reached customization")
+
+
+def _customization_preview(game: Session, symbols: dict[str, int], task: int,
+                           bag: int, theme: int) -> None:
+    _check(game.read(symbols["gNewGameBagStyle"], width=8) == bag, "bag choice changed unexpectedly")
+    _check(game.read(symbols["gNewGameUiTheme"], width=8) == theme, "theme choice changed unexpectedly")
+    sprite_id = game.read(task + 8 + 11 * 2, width=16)
+    _check(sprite_id < 64, "customization bag preview has no valid sprite")
+    sprite = symbols["gSprites"] + sprite_id * SPRITE_SIZE
+    tiles = game.read_bytes(symbols["gBagMaleTiles" if bag == 0 else "gBagFemaleTiles"], 0x3000)
+    expected = _decompress_picture(tiles, max_size=0x3000)[0x800:0x1000]
+    tile_num = game.read(sprite + 4, width=16) & 0x3FF
+    _check(game.read_bytes(0x06010000 + tile_num * 32, 0x800) == expected,
+           "bag preview does not show the selected bag's pixels")
+    palette = _decompress_picture(game.read_bytes(
+        symbols["gBagScreenMale_Pal" if theme == 0 else "gBagScreenFemale_Pal"], 256))
+    actual = game.read_bytes(symbols["gPlttBufferUnfaded"] + (13 * 16 + 7) * 2, 2)
+    _check(actual == palette[14:16], "theme preview uses the wrong real menu palette")
+
+
+def _finish_customization(game: Session, symbols: dict[str, int], task: int,
+                          *, bag: int, theme: int, back: bool = False) -> None:
+    game.press("A", held_frames=1, released_frames=120)
+    custom = _customization_task(game, symbols, 0)
+    # New-game defaults never derive from the selected avatar.
+    _customization_preview(game, symbols, custom, 0, 0)
+    if bag:
+        game.press("DOWN", held_frames=1, released_frames=4)
+    _customization_preview(game, symbols, custom, bag, 0)
+    game.screenshot(f"bag-{bag}.png")
+    if back:
+        game.press("B", held_frames=1, released_frames=90)
+        game.wait(task, symbols["Task_NewGameBirchSpeech_ChooseGender"] | 1, max_frames=240)
+        _preview(game, symbols, task, game.read(symbols["gNewGameAvatarStyle"], width=8))
+        game.press("A", held_frames=1, released_frames=120)
+        custom = _customization_task(game, symbols, 0)
+        _customization_preview(game, symbols, custom, bag, 0)
+    game.press("A", held_frames=1, released_frames=120)
+    custom = _customization_task(game, symbols, 1)
+    if theme:
+        game.press("UP", held_frames=1, released_frames=4)
+    _customization_preview(game, symbols, custom, bag, theme)
+    game.screenshot(f"theme-{theme}.png")
+    if back:
+        game.press("B", held_frames=1, released_frames=120)
+        custom = _customization_task(game, symbols, 0)
+        _customization_preview(game, symbols, custom, bag, theme)
+        game.press("A", held_frames=1, released_frames=120)
+        custom = _customization_task(game, symbols, 1)
+        _customization_preview(game, symbols, custom, bag, theme)
+    game.press("A", held_frames=1, released_frames=60)
+    game.wait(symbols["gMain"] + 4, symbols["CB2_NamingScreen"] | 1, max_frames=600)
+
+
+def _saved_customization(game: Session, symbols: dict[str, int], bag: int, theme: int) -> None:
+    sb1 = game.read(symbols["gSaveBlock1Ptr"])
+    bag_offset = 0x139C + (0x40F8 - 0x4000) * 2
+    theme_offset = 0x139C + (0x40F9 - 0x4000) * 2
+    _check(game.read(sb1 + bag_offset, width=16) == (0xB100 | bag),
+           "saved bag choice does not match the selected bag")
+    _check(game.read(sb1 + theme_offset, width=16) == (0xB200 | theme),
+           "saved theme choice does not match the selected colors")
+
+
+def _open_avatar_selection(game: Session, symbols: dict[str, int]) -> int:
+    wait_for_title_input(game, symbols)
+    game.press("START", held_frames=1, released_frames=120)
+    game.press("A", held_frames=1, released_frames=60)
+    for _ in range(160):
+        task = _find_task(game, symbols, "Task_NewGameBirchSpeech_ChooseGender")
+        if task is not None:
+            _preview(game, symbols, task, 1)
+            return task
+        game.press("A", held_frames=1, released_frames=14)
+    raise AvatarSelectionFailure("new game never reached the avatar chooser")
+
+
+def _run_independent_combination(artifact_dir: Path, symbols: dict[str, int],
+                                *, avatar: int, bag: int, theme: int) -> None:
+    save = artifact_dir / f"combination-{avatar}-{bag}-{theme}.sav"
+    save.unlink(missing_ok=True)
+    with Session(GAMEPLAY_ROM, artifact_dir / f"combination-{avatar}-{bag}-{theme}", save=save) as game:
+        task = _open_avatar_selection(game, symbols)
+        for selected in range(2, avatar + 1):
+            _cycle(game, symbols, task, "DOWN", selected)
+        _finish_customization(game, symbols, task, bag=bag, theme=theme)
+        game.run_frames(120)
+        game.press("A", held_frames=1, released_frames=15)
+        game.press("START", held_frames=1, released_frames=30)
+        game.press("A", held_frames=1, released_frames=120)
+        _reach_field(game, symbols)
+        _check(_saved_avatar(game, symbols) == avatar, "new game lost the avatar choice")
+        _saved_customization(game, symbols, bag, theme)
+        if avatar == 3 and bag == 0 and theme == 0:
+            verify_avatar_map_icons(game, symbols, avatar)
+        save_normally(game, symbols)
+        game.restart()
+        boot_to_field(game, symbols)
+        _check(_saved_avatar(game, symbols) == avatar, "restart lost the avatar choice")
+        _saved_customization(game, symbols, bag, theme)
+
 
 def run(artifact_dir: Path) -> None:
     artifact_dir = Path(artifact_dir).resolve()
@@ -324,25 +435,16 @@ def run(artifact_dir: Path) -> None:
         "gTasks", "gSprites", "gMain", "Task_TitleScreenPhase3",
         "Task_NewGameBirchSpeech_ChooseGender", "CB2_NamingScreen",
         "gNewGameAvatarStyle", "gSaveBlock1Ptr", "gSaveBlock2Ptr",
-        "gTrainerFrontPicTable",
+        "gTrainerFrontPicTable", "gBagMaleTiles", "gBagFemaleTiles", "gBagScreenMale_Pal",
+        "gBagScreenFemale_Pal", "gPlttBufferUnfaded", "gNewGameBagStyle", "gNewGameUiTheme",
+        "Task_NewGameBirchSpeech_ChooseCustomization", *MAP_ICON_SYMBOLS,
         "gE2EFrontierIntroCheckpoint", "gE2EFrontierIntroFinishCount",
         "CB2_Overworld", "sLockFieldControls", "sNumStartMenuActions",
         "sStartMenuCursorPos", "sCurrentStartMenuActions", "sSaveDialogCallback",
         "SaveOverwriteInputCallback", "gSaveCounter", "gPlayerAvatar", "gObjectEvents",
     )
     with Session(GAMEPLAY_ROM, artifact_dir / "scenario", save=save) as game:
-        wait_for_title_input(game, symbols)
-        game.press("START", held_frames=1, released_frames=120)
-        # A fresh cartridge's main menu defaults to NEW GAME.
-        game.press("A", held_frames=1, released_frames=60)
-        task = None
-        for _ in range(160):
-            task = _find_task(game, symbols, "Task_NewGameBirchSpeech_ChooseGender")
-            if task is not None:
-                break
-            game.press("A", held_frames=1, released_frames=14)
-        _check(task is not None, "new game never reached the avatar chooser")
-        _preview(game, symbols, task, 1)
+        task = _open_avatar_selection(game, symbols)
 
         # Complete a cycle in each direction, including both wrap boundaries.
         for step in range(1, 9):
@@ -354,8 +456,7 @@ def run(artifact_dir: Path) -> None:
         _cycle(game, symbols, task, "UP", 0)
         _cycle(game, symbols, task, "UP", 7)
 
-        game.press("A", held_frames=1, released_frames=60)
-        game.wait(symbols["gMain"] + 4, symbols["CB2_NamingScreen"] | 1, max_frames=600)
+        _finish_customization(game, symbols, task, bag=1, theme=1, back=True)
         _check(game.read(symbols["gNewGameAvatarStyle"], width=8) == 7,
                "confirming Steven lost the selected avatar")
         game.run_frames(120)
@@ -365,6 +466,8 @@ def run(artifact_dir: Path) -> None:
         game.press("A", held_frames=1, released_frames=120)
         _reach_field(game, symbols)
         _check(_saved_avatar(game, symbols) == 7, "new-game initialization reset the avatar")
+        _saved_customization(game, symbols, 1, 1)
+        verify_avatar_map_icons(game, symbols, 7)
         # Story gender is deliberately fixed to FEMALE by this project's
         # existing new-game flow; visual avatar gender remains independent.
         _check(game.read(game.read(symbols["gSaveBlock2Ptr"]) + 8, width=8) == 1,
@@ -383,7 +486,10 @@ def run(artifact_dir: Path) -> None:
         game.restart()
         boot_to_field(game, symbols)
         _check(_saved_avatar(game, symbols) == 7, "avatar did not survive normal save/restart/load")
+        _saved_customization(game, symbols, 1, 1)
         _on_foot(game, symbols)
         game.screenshot("passed.png")
     _legacy_travel(artifact_dir, save, symbols)
     _frontier_standins(artifact_dir, symbols)
+    for avatar, bag, theme in ((3, 0, 0), (7, 0, 1), (3, 1, 0)):
+        _run_independent_combination(artifact_dir, symbols, avatar=avatar, bag=bag, theme=theme)

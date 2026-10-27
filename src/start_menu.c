@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "battle_pike.h"
 #include "battle_pyramid.h"
 #include "battle_pyramid_bag.h"
@@ -1332,7 +1333,7 @@ static void Task_SaveAfterLinkBattle(u8 taskId)
 static void ShowSaveInfoWindow(void)
 {
     struct WindowTemplate saveInfoWindow = sSaveInfoWindowTemplate;
-    u8 gender;
+    u8 theme;
     u8 color;
     u32 xOffset;
     u32 yOffset;
@@ -1345,10 +1346,10 @@ static void ShowSaveInfoWindow(void)
     sSaveInfoWindowId = AddWindow(&saveInfoWindow);
     DrawStdWindowFrame(sSaveInfoWindowId, FALSE);
 
-    gender = GetPlayerAvatarStyle();
-    color = TEXT_COLOR_RED;  // Red when female, blue when male.
+    theme = GetPlayerUiTheme();
+    color = TEXT_COLOR_RED;
 
-    if (gender == MALE)
+    if (theme == PLAYER_THEME_BLUE)
     {
         color = TEXT_COLOR_BLUE;
     }

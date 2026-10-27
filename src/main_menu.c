@@ -11,6 +11,7 @@
 #include "gpu_regs.h"
 #include "graphics.h"
 #include "international_string_util.h"
+#include "item_menu_icons.h"
 #include "link.h"
 #include "main.h"
 #include "menu.h"
@@ -22,6 +23,7 @@
 #include "overworld.h"
 #include "palette.h"
 #include "player_avatar.h"
+#include "player_customization.h"
 #include "pokeball.h"
 #include "pokedex.h"
 #include "pokemon.h"
@@ -217,6 +219,10 @@ static void DrawMainMenuWindowBorder(const struct WindowTemplate *, u16);
 static void Task_HighlightSelectedMainMenuItem(u8);
 static void Task_NewGameBirchSpeech_WaitToShowGenderMenu(u8);
 static void Task_NewGameBirchSpeech_ChooseGender(u8);
+static void Task_NewGameBirchSpeech_ChooseCustomization(u8);
+static void NewGameBirchSpeech_ShowCustomization(u8, u8);
+static void NewGameBirchSpeech_UpdateCustomizationPreview(u8);
+static void NewGameBirchSpeech_DestroyBagPreview(u8);
 static void NewGameBirchSpeech_ShowGenderMenu(void);
 static s8 NewGameBirchSpeech_ProcessGenderMenuInput(u8);
 static void NewGameBirchSpeech_ClearGenderWindow(u8, u8);
@@ -396,12 +402,12 @@ static const struct WindowTemplate sNewGameBirchSpeechTextWindows[] =
     },
     {
         .bg = 0,
-        .tilemapLeft = 3,
+        .tilemapLeft = 14,
         .tilemapTop = 2,
-        .width = 9,
+        .width = 11,
         .height = 10,
-        .paletteNum = 15,
-        .baseBlock = 0x85
+        .paletteNum = 13,
+        .baseBlock = 0x110
     },
     DUMMY_WIN_TEMPLATE
 };
@@ -458,6 +464,19 @@ static const union AffineAnimCmd *const sSpriteAffineAnimTable_PlayerShrink[] =
 static const u8 sText_AvatarUp[] = _("{UP_ARROW}");
 static const u8 sText_AvatarDown[] = _("{DOWN_ARROW}");
 static const u8 sText_WhoAreYou[] = _("Who are you?");
+static const u8 sText_PickYourBag[] = _("Pick your bag.\nA: Next  B: Back");
+static const u8 sText_PickYourColors[] = _("Pick your colors.\nA: Next  B: Back");
+static const u8 sText_Backpack[] = _("BACKPACK");
+static const u8 sText_Satchel[] = _("SATCHEL");
+static const u8 sText_BlueTheme[] = _("BLUE");
+static const u8 sText_PinkTheme[] = _("PINK");
+static const u8 sCustomizationPreviewTextColors[] = {0, 1, 8};
+
+enum
+{
+    CUSTOMIZATION_BAG,
+    CUSTOMIZATION_COLORS,
+};
 
 static const struct MenuAction sMenuActions_Gender[] = {
     {sText_AvatarUp, {NULL}},
@@ -510,9 +529,8 @@ static const u8 *const sFemalePresetNames[] = {
     gText_DefaultNameHalie
 };
 
-// The number of male vs. female names is assumed to be the same.
-// If they aren't, the smaller of the two sizes will be used and any extra names will be ignored.
-#define NUM_PRESET_NAMES min(ARRAY_COUNT(sMalePresetNames), ARRAY_COUNT(sFemalePresetNames))
+// Suggestions share one pool independently of avatar, bag, and colors.
+#define NUM_PRESET_NAMES (ARRAY_COUNT(sMalePresetNames) + ARRAY_COUNT(sFemalePresetNames))
 
 enum
 {
@@ -771,9 +789,8 @@ static void Task_DisplayMainMenu(u8 taskId)
         palette = RGB(26, 26, 25);
         LoadPalette(&palette, BG_PLTT_ID(15) + 12, PLTT_SIZEOF(1));
 
-        // Note: If there is no save file, the save block is zeroed out,
-        // so the default gender is MALE.
-        if (GetPlayerAvatarStyle() == MALE)
+        // A fresh save uses the blue theme independently of its avatar.
+        if (GetPlayerUiTheme() == PLAYER_THEME_BLUE)
         {
             palette = RGB(4, 16, 31);
             LoadPalette(&palette, BG_PLTT_ID(15) + 1, PLTT_SIZEOF(1));
@@ -1266,6 +1283,8 @@ static void HighlightSelectedMainMenuItem(u8 menuType, u8 selectedMenuItem, s16 
 #define tTimer data[7]
 #define tBirchSpriteId data[8]
 #define tLotadSpriteId data[9]
+#define tCustomizationStage data[10]
+#define tBagSpriteId data[11]
 
 static void Task_NewGameBirchSpeech_Init(u8 taskId)
 {
@@ -1289,6 +1308,8 @@ static void Task_NewGameBirchSpeech_Init(u8 taskId)
     FreeAllSpritePalettes();
     ResetAllPicSprites();
     gNewGameAvatarStyle = TRAINER_BACK_PIC_MAY;
+    gNewGameBagStyle = PLAYER_BAG_BACKPACK;
+    gNewGameUiTheme = PLAYER_THEME_BLUE;
     AddBirchSpeechObjects(taskId);
     BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
     gTasks[taskId].tBG1HOFS = 0;
@@ -1512,9 +1533,8 @@ static void Task_NewGameBirchSpeech_ChooseGender(u8 taskId)
         PlaySE(SE_SELECT);
         gNewGameAvatarStyle = avatarId;
         gSaveBlock2Ptr->playerGender = FEMALE;
-        NewGameBirchSpeech_ClearGenderWindow(1, 1);
-        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-        gTasks[taskId].func = Task_NewGameBirchSpeech_StartNamingScreen;
+        gSprites[gTasks[taskId].tPlayerSpriteId].invisible = TRUE;
+        NewGameBirchSpeech_ShowCustomization(taskId, CUSTOMIZATION_BAG);
         return;
     }
     if (oldAvatarId != gTasks[taskId].tPlayerAvatarId)
@@ -1522,6 +1542,113 @@ static void Task_NewGameBirchSpeech_ChooseGender(u8 taskId)
         gSprites[gTasks[taskId].tPlayerSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
         NewGameBirchSpeech_StartFadeOutTarget1InTarget2(taskId, 0);
         gTasks[taskId].func = Task_NewGameBirchSpeech_SlideOutOldGenderSprite;
+    }
+}
+
+static void NewGameBirchSpeech_DestroyBagPreview(u8 taskId)
+{
+    u8 spriteId = gTasks[taskId].tBagSpriteId;
+
+    if (spriteId != SPRITE_NONE)
+    {
+        DestroySpriteAndFreeResources(&gSprites[spriteId]);
+        gTasks[taskId].tBagSpriteId = SPRITE_NONE;
+    }
+}
+
+static void NewGameBirchSpeech_UpdateCustomizationPreview(u8 taskId)
+{
+    const u8 *label;
+    u8 spriteId;
+
+    NewGameBirchSpeech_DestroyBagPreview(taskId);
+    LoadCompressedSpriteSheet(gNewGameBagStyle == PLAYER_BAG_BACKPACK ? &gBagMaleSpriteSheet : &gBagFemaleSpriteSheet);
+    LoadCompressedSpritePalette(&gBagPaletteTable);
+    spriteId = CreateIndependentBagVisualSprite(0);
+    gTasks[taskId].tBagSpriteId = spriteId;
+    if (spriteId != SPRITE_NONE)
+    {
+        gSprites[spriteId].x = 156;
+        gSprites[spriteId].y = 64;
+        gSprites[spriteId].oam.priority = 0;
+    }
+
+    LoadCompressedPalette(gNewGameUiTheme == PLAYER_THEME_BLUE ? gBagScreenMale_Pal : gBagScreenFemale_Pal,
+                          BG_PLTT_ID(13), PLTT_SIZE_4BPP);
+    FillWindowPixelBuffer(2, PIXEL_FILL(7));
+    FillWindowPixelRect(2, 8, 0, 0, 88, 2);
+    FillWindowPixelRect(2, 8, 0, 78, 88, 2);
+    FillWindowPixelRect(2, 8, 0, 0, 2, 80);
+    FillWindowPixelRect(2, 8, 86, 0, 2, 80);
+    if (gTasks[taskId].tCustomizationStage == CUSTOMIZATION_BAG)
+        label = gNewGameBagStyle == PLAYER_BAG_BACKPACK ? sText_Backpack : sText_Satchel;
+    else
+        label = gNewGameUiTheme == PLAYER_THEME_BLUE ? sText_BlueTheme : sText_PinkTheme;
+    AddTextPrinterParameterized3(2, FONT_NORMAL, GetStringCenterAlignXOffset(FONT_NORMAL, label, 88), 3,
+                                sCustomizationPreviewTextColors, TEXT_SKIP_DRAW, label);
+    PutWindowTilemap(2);
+    CopyWindowToVram(2, COPYWIN_FULL);
+}
+
+static void NewGameBirchSpeech_ShowCustomization(u8 taskId, u8 stage)
+{
+    gTasks[taskId].tCustomizationStage = stage;
+    NewGameBirchSpeech_ClearWindow(0);
+    StringCopy(gStringVar4, stage == CUSTOMIZATION_BAG ? sText_PickYourBag : sText_PickYourColors);
+    AddTextPrinterForMessage(TRUE);
+    NewGameBirchSpeech_UpdateCustomizationPreview(taskId);
+    gTasks[taskId].func = Task_NewGameBirchSpeech_ChooseCustomization;
+}
+
+static void Task_NewGameBirchSpeech_ChooseCustomization(u8 taskId)
+{
+    if (RunTextPrintersAndIsPrinter0Active())
+        return;
+
+    if (JOY_NEW(B_BUTTON))
+    {
+        PlaySE(SE_SELECT);
+        if (gTasks[taskId].tCustomizationStage == CUSTOMIZATION_COLORS)
+        {
+            NewGameBirchSpeech_ShowCustomization(taskId, CUSTOMIZATION_BAG);
+        }
+        else
+        {
+            NewGameBirchSpeech_DestroyBagPreview(taskId);
+            ClearWindowTilemap(2);
+            CopyWindowToVram(2, COPYWIN_MAP);
+            gSprites[gTasks[taskId].tPlayerSpriteId].invisible = FALSE;
+            NewGameBirchSpeech_ClearWindow(0);
+            StringCopy(gStringVar4, sText_WhoAreYou);
+            AddTextPrinterForMessage(TRUE);
+            gTasks[taskId].func = Task_NewGameBirchSpeech_WaitToShowGenderMenu;
+        }
+    }
+    else if (JOY_NEW(A_BUTTON))
+    {
+        PlaySE(SE_SELECT);
+        if (gTasks[taskId].tCustomizationStage == CUSTOMIZATION_BAG)
+        {
+            NewGameBirchSpeech_ShowCustomization(taskId, CUSTOMIZATION_COLORS);
+        }
+        else
+        {
+            NewGameBirchSpeech_DestroyBagPreview(taskId);
+            NewGameBirchSpeech_ClearGenderWindow(1, TRUE);
+            ClearWindowTilemap(2);
+            CopyWindowToVram(2, COPYWIN_MAP);
+            BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+            gTasks[taskId].func = Task_NewGameBirchSpeech_StartNamingScreen;
+        }
+    }
+    else if (JOY_NEW(DPAD_UP | DPAD_DOWN))
+    {
+        PlaySE(SE_SELECT);
+        if (gTasks[taskId].tCustomizationStage == CUSTOMIZATION_BAG)
+            gNewGameBagStyle ^= 1;
+        else
+            gNewGameUiTheme ^= 1;
+        NewGameBirchSpeech_UpdateCustomizationPreview(taskId);
     }
 }
 
@@ -1907,6 +2034,7 @@ static void AddBirchSpeechObjects(u8 taskId)
     gSprites[lotadSpriteId].oam.priority = 0;
     gSprites[lotadSpriteId].invisible = TRUE;
     gTasks[taskId].tLotadSpriteId = lotadSpriteId;
+    gTasks[taskId].tBagSpriteId = SPRITE_NONE;
     gTasks[taskId].tPlayerAvatarId = NormalizePlayerAvatarId(gNewGameAvatarStyle);
     gTasks[taskId].tPlayerSpriteId = NewGameBirchSpeech_CreatePlayerSprite(gTasks[taskId].tPlayerAvatarId, 120);
 }
@@ -1916,6 +2044,8 @@ static void AddBirchSpeechObjects(u8 taskId)
 #undef tPlayerAvatarId
 #undef tBirchSpriteId
 #undef tLotadSpriteId
+#undef tCustomizationStage
+#undef tBagSpriteId
 
 #define tMainTask data[0]
 #define tAlphaCoeff1 data[1]
@@ -2103,10 +2233,10 @@ static void NewGameBirchSpeech_SetDefaultPlayerName(u8 nameId)
     const u8 *name;
     u8 i;
 
-    if (GetPlayerAvatarGender(gNewGameAvatarStyle) == MALE)
+    if (nameId < ARRAY_COUNT(sMalePresetNames))
         name = sMalePresetNames[nameId];
     else
-        name = sFemalePresetNames[nameId];
+        name = sFemalePresetNames[nameId - ARRAY_COUNT(sMalePresetNames)];
     for (i = 0; i < PLAYER_NAME_LENGTH; i++)
         gSaveBlock2Ptr->playerName[i] = name[i];
     gSaveBlock2Ptr->playerName[PLAYER_NAME_LENGTH] = EOS;

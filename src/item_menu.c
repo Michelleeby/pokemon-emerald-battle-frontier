@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "item_menu.h"
 #include "battle.h"
 #include "battle_controllers.h"
@@ -816,14 +817,14 @@ static bool8 LoadBagMenu_Graphics(void)
         }
         break;
     case 2:
-        if (!IsWallysBag() && GetPlayerAvatarStyle() != MALE)
+        if (!IsWallysBag() && GetPlayerUiTheme() != PLAYER_THEME_BLUE)
             LoadCompressedPalette(gBagScreenFemale_Pal, BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
         else
             LoadCompressedPalette(gBagScreenMale_Pal, BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
         gBagMenu->graphicsLoadState++;
         break;
     case 3:
-        if (IsWallysBag() == TRUE || GetPlayerAvatarStyle() == MALE)
+        if (IsWallysBag() == TRUE || GetPlayerBagStyle() == PLAYER_BAG_BACKPACK)
             LoadCompressedSpriteSheet(&gBagMaleSpriteSheet);
         else
             LoadCompressedSpriteSheet(&gBagFemaleSpriteSheet);

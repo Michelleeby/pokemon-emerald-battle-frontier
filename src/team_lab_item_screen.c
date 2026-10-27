@@ -1,4 +1,5 @@
 #include "global.h"
+#include "player_customization.h"
 #include "bg.h"
 #include "data.h"
 #include "decompress.h"
@@ -232,16 +233,14 @@ static void CB2_InitTeamLabItemSelector(void)
         {
             LZDecompressWram(gBagScreen_GfxTileMap, sItemSelector->bgTilemap);
             DrawPocketIndicators();
-            if (GetPlayerAvatarStyle() == MALE)
-            {
+            if (GetPlayerUiTheme() == PLAYER_THEME_BLUE)
                 LoadCompressedPalette(gBagScreenMale_Pal, BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
-                LoadCompressedSpriteSheet(&gBagMaleSpriteSheet);
-            }
             else
-            {
                 LoadCompressedPalette(gBagScreenFemale_Pal, BG_PLTT_ID(0), 2 * PLTT_SIZE_4BPP);
+            if (GetPlayerBagStyle() == PLAYER_BAG_BACKPACK)
+                LoadCompressedSpriteSheet(&gBagMaleSpriteSheet);
+            else
                 LoadCompressedSpriteSheet(&gBagFemaleSpriteSheet);
-            }
             LoadCompressedSpritePalette(&gBagPaletteTable);
             CopyBgTilemapBufferToVram(2);
             gMain.state++;

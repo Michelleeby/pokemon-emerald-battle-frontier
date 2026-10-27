@@ -265,8 +265,8 @@
 #define VAR_SCOTT_BF_CALL_STEP_COUNTER                   0x40F5
 #define VAR_RIVAL_RAYQUAZA_CALL_STEP_COUNTER             0x40F6
 #define VAR_PLAYER_AVATAR_STYLE                          0x40F7 // Saved avatar ID; see player_avatar.h (0/1 retain Brendan/May)
-#define VAR_UNUSED_0x40F8                                0x40F8 // Unused Var
-#define VAR_UNUSED_0x40F9                                0x40F9 // Unused Var
+#define VAR_PLAYER_BAG_STYLE                             0x40F8 // Versioned independent bag selection
+#define VAR_PLAYER_UI_THEME                              0x40F9 // Versioned independent interface palette
 #define VAR_UNUSED_0x40FA                                0x40FA // Unused Var
 #define VAR_UNUSED_0x40FB                                0x40FB // Unused Var
 #define VAR_UNUSED_0x40FC                                0x40FC // Unused Var

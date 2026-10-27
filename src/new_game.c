@@ -1,5 +1,6 @@
 #include "global.h"
 #include "player_avatar.h"
+#include "player_customization.h"
 #include "new_game.h"
 #include "random.h"
 #include "pokemon.h"
@@ -173,6 +174,7 @@ void NewGameInitData(void)
     ClearPokedexFlags();
     InitEventData();
     VarSet(VAR_PLAYER_AVATAR_STYLE, NormalizePlayerAvatarId(gNewGameAvatarStyle));
+    PlayerCustomization_Init(gNewGameBagStyle, gNewGameUiTheme);
     gSaveBlock2Ptr->playerGender = FEMALE;
     ClearTVShowData();
     ResetGabbyAndTy();
