@@ -11,12 +11,11 @@
 
 struct TrainerCard;
 
-extern u8 gNewGameBagStyle;
-extern u8 gNewGameUiTheme;
-
 void PlayerCustomization_Init(u8 bagStyle, u8 uiTheme);
 u8 GetPlayerBagStyle(void);
 u8 GetPlayerUiTheme(void);
+void SetPlayerBagStyle(u8 bagStyle);
+void SetPlayerUiTheme(u8 uiTheme);
 u8 EncodePlayerUiTheme(u8 uiTheme);
 u8 GetTrainerCardUiTheme(const struct TrainerCard *card);
 

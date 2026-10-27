@@ -2,12 +2,16 @@
 #include "option_menu.h"
 #include "audio_settings.h"
 #include "bg.h"
+#include "decompress.h"
+#include "graphics.h"
+#include "item_menu_icons.h"
 #include "gpu_regs.h"
 #include "international_string_util.h"
 #include "main.h"
 #include "m4a.h"
 #include "menu.h"
 #include "palette.h"
+#include "player_customization.h"
 #include "scanline_effect.h"
 #include "sprite.h"
 #include "strings.h"
@@ -45,7 +49,7 @@ enum
     MENUITEM_BATTLESTYLE,
     MENUITEM_AUDIO,
     MENUITEM_BUTTONMODE,
-    MENUITEM_FRAMETYPE,
+    MENUITEM_APPEARANCE,
     MENUITEM_CANCEL,
     MENUITEM_COUNT,
 };
@@ -62,8 +66,18 @@ enum
 
 enum
 {
+    APPEARANCE_BAG_STYLE,
+    APPEARANCE_UI_THEME,
+    APPEARANCE_FRAME,
+    APPEARANCE_BACK,
+    APPEARANCE_COUNT,
+};
+
+enum
+{
     WIN_HEADER,
-    WIN_OPTIONS
+    WIN_OPTIONS,
+    WIN_APPEARANCE_PREVIEW,
 };
 
 #define YPOS_TEXTSPEED    (MENUITEM_TEXTSPEED * 16)
@@ -72,13 +86,18 @@ enum
 #define YPOS_AUDIO        (MENUITEM_AUDIO * 16)
 #define PICKER_VISIBLE_ROWS 7
 #define YPOS_BUTTONMODE   (MENUITEM_BUTTONMODE * 16)
-#define YPOS_FRAMETYPE    (MENUITEM_FRAMETYPE * 16)
+#define YPOS_APPEARANCE   (MENUITEM_APPEARANCE * 16)
+#define YPOS_FRAMETYPE    (APPEARANCE_FRAME * 16)
 
 static void Task_OptionMenuFadeIn(u8 taskId);
 static void Task_OptionMenuProcessInput(u8 taskId);
 static void Task_OptionMenuSave(u8 taskId);
 static void Task_OptionMenuFadeOut(u8 taskId);
 static void Task_AudioMenuProcessInput(u8 taskId);
+static void Task_AppearanceMenuProcessInput(u8 taskId);
+static void DrawAppearanceMenu(u8 taskId);
+static void UpdateAppearanceBagPreview(void);
+static void DestroyAppearanceBagPreview(void);
 static void Task_TrainerMusicPickerProcessInput(u8 taskId);
 static void HighlightOptionMenuItem(u8 selection);
 static u8 TextSpeed_ProcessInput(u8 selection);
@@ -94,7 +113,8 @@ static void ButtonMode_DrawChoices(u8 selection);
 static void DrawHeaderText(const u8 *title);
 static void DrawOptionMenuTexts(void);
 static void DrawOptionMenuChoice(const u8 *text, u8 x, u8 y, u8 style);
-static void DrawAudioOptionChoice(const u8 *text, u8 x, u8 y, bool8 selected);
+static void DrawOptionColoredChoice(const u8 *text, u8 x, u8 y, bool8 selected);
+static void DrawOptionValue(const u8 *text, u8 y, bool8 selected);
 static void DrawOuterOptionChoices(u8 taskId);
 static void DrawAudioMenuTexts(void);
 static void DrawAudioMenuChoices(u8 taskId);
@@ -105,11 +125,37 @@ static void RestorePickerPriorMusic(u8 taskId);
 static void DrawBgWindowFrames(void);
 
 EWRAM_DATA static bool8 sArrowPressed = FALSE;
+// Keep pending appearance choices separate from the audio picker's task data.
+EWRAM_DATA static struct
+{
+    u8 selection;
+    u8 bagStyle;
+    u8 uiTheme;
+    u8 bagSpriteId;
+} sAppearanceMenu = {0};
 
 static const u16 sOptionMenuText_Pal[] = INCGFX_U16("graphics/interface/option_menu_text.pal", ".gbapal");
 // note: this is only used in the Japanese release
 static const u8 sEqualSignGfx[] = INCGFX_U8("graphics/interface/option_menu_equals_sign.png", ".4bpp");
 static const u8 sTextAudio[] = _("AUDIO");
+static const u8 sTextAppearance[] = _("APPEARANCE");
+static const u8 sTextBagStyle[] = _("BAG STYLE");
+static const u8 sTextInterfaceColor[] = _("INTERFACE COLOR");
+static const u8 sTextBackpack[] = _("BACKPACK");
+static const u8 sTextSatchel[] = _("SATCHEL");
+static const u8 sTextBlue[] = _("BLUE");
+static const u8 sTextPink[] = _("PINK");
+static const u8 sTextPreview[] = _("PREVIEW");
+static const u8 sPreviewTextColors[] = {0, 1, 8};
+static const union AffineAnimCmd sBagPreviewAffineAnim[] =
+{
+    AFFINEANIMCMD_FRAME(128, 128, 0, 0),
+    AFFINEANIMCMD_END
+};
+static const union AffineAnimCmd *const sBagPreviewAffineAnims[] =
+{
+    sBagPreviewAffineAnim,
+};
 static const u8 sTextPressA[] = _("PRESS A");
 static const u8 sTextTrainerMusicRow[] = _("TRAINER MUSIC");
 static const u8 sTextTrainerMusic[] = _("MUSIC SEL PREVIEW");
@@ -123,8 +169,8 @@ static const u8 sTextPoolAll[] = _("ALL BATTLES");
 static const u8 sTextOn[] = _("ON");
 static const u8 sTextOff[] = _("OFF");
 static const u8 sTextBack[] = _("BACK");
-static const u8 sAudioTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_GREEN, TEXT_COLOR_LIGHT_GREEN};
-static const u8 sAudioSelectedTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_RED, TEXT_COLOR_LIGHT_RED};
+static const u8 sOptionTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_GREEN, TEXT_COLOR_LIGHT_GREEN};
+static const u8 sOptionSelectedTextColors[] = {TEXT_COLOR_TRANSPARENT, TEXT_COLOR_RED, TEXT_COLOR_LIGHT_RED};
 
 static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
 {
@@ -133,7 +179,7 @@ static const u8 *const sOptionMenuItemsNames[MENUITEM_COUNT] =
     [MENUITEM_BATTLESTYLE] = gText_BattleStyle,
     [MENUITEM_AUDIO]       = sTextAudio,
     [MENUITEM_BUTTONMODE]  = gText_ButtonMode,
-    [MENUITEM_FRAMETYPE]   = gText_Frame,
+    [MENUITEM_APPEARANCE]  = sTextAppearance,
     [MENUITEM_CANCEL]      = gText_OptionMenuCancel,
 };
 
@@ -156,6 +202,15 @@ static const struct WindowTemplate sOptionMenuWinTemplates[] =
         .height = 14,
         .paletteNum = 1,
         .baseBlock = 0x36
+    },
+    [WIN_APPEARANCE_PREVIEW] = {
+        .bg = 0,
+        .tilemapLeft = 3,
+        .tilemapTop = 14,
+        .width = 24,
+        .height = 4,
+        .paletteNum = 13,
+        .baseBlock = 0x1AB
     },
     DUMMY_WIN_TEMPLATE
 };
@@ -227,8 +282,8 @@ void CB2_InitOptionMenu(void)
         DeactivateAllTextPrinters();
         SetGpuReg(REG_OFFSET_WIN0H, 0);
         SetGpuReg(REG_OFFSET_WIN0V, 0);
-        SetGpuReg(REG_OFFSET_WININ, WININ_WIN0_BG0);
-        SetGpuReg(REG_OFFSET_WINOUT, WINOUT_WIN01_BG0 | WINOUT_WIN01_BG1 | WINOUT_WIN01_CLR);
+        SetGpuReg(REG_OFFSET_WININ, WININ_WIN0_BG0 | WININ_WIN0_OBJ);
+        SetGpuReg(REG_OFFSET_WINOUT, WINOUT_WIN01_BG0 | WINOUT_WIN01_BG1 | WINOUT_WIN01_OBJ | WINOUT_WIN01_CLR);
         SetGpuReg(REG_OFFSET_BLDCNT, BLDCNT_TGT1_BG0 | BLDCNT_EFFECT_DARKEN);
         SetGpuReg(REG_OFFSET_BLDALPHA, 0);
         SetGpuReg(REG_OFFSET_BLDY, 4);
@@ -242,6 +297,7 @@ void CB2_InitOptionMenu(void)
         ScanlineEffect_Stop();
         ResetTasks();
         ResetSpriteData();
+        FreeAllSpritePalettes();
         gMain.state++;
         break;
     case 3:
@@ -289,13 +345,12 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tAudioPool = AudioSettings_GetMusicPool();
         gTasks[taskId].tAudioBeep = AudioSettings_IsLowHpBeepEnabled();
         gTasks[taskId].tAudioTrack = AudioSettings_GetTrainerTrack();
+        sAppearanceMenu.selection = APPEARANCE_BAG_STYLE;
+        sAppearanceMenu.bagStyle = GetPlayerBagStyle();
+        sAppearanceMenu.uiTheme = GetPlayerUiTheme();
+        sAppearanceMenu.bagSpriteId = MAX_SPRITES;
 
-        TextSpeed_DrawChoices(gTasks[taskId].tTextSpeed);
-        BattleScene_DrawChoices(gTasks[taskId].tBattleSceneOff);
-        BattleStyle_DrawChoices(gTasks[taskId].tBattleStyle);
-        DrawOptionMenuChoice(sTextPressA, GetStringRightAlignXOffset(FONT_NORMAL, sTextPressA, 198), YPOS_AUDIO, 0);
-        ButtonMode_DrawChoices(gTasks[taskId].tButtonMode);
-        FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
+        DrawOuterOptionChoices(taskId);
         HighlightOptionMenuItem(gTasks[taskId].tMenuSelection);
 
         CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
@@ -331,6 +386,15 @@ static void Task_OptionMenuProcessInput(u8 taskId)
             HighlightOptionMenuItem(gTasks[taskId].tAudioMenuSelection);
             gTasks[taskId].func = Task_AudioMenuProcessInput;
             CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
+        }
+        else if (gTasks[taskId].tMenuSelection == MENUITEM_APPEARANCE)
+        {
+            sAppearanceMenu.selection = APPEARANCE_BAG_STYLE;
+            DrawHeaderText(sTextAppearance);
+            UpdateAppearanceBagPreview();
+            DrawAppearanceMenu(taskId);
+            HighlightOptionMenuItem(sAppearanceMenu.selection);
+            gTasks[taskId].func = Task_AppearanceMenuProcessInput;
         }
     }
     else if (JOY_NEW(B_BUTTON))
@@ -389,13 +453,8 @@ static void Task_OptionMenuProcessInput(u8 taskId)
             if (previousOption != gTasks[taskId].tButtonMode)
                 ButtonMode_DrawChoices(gTasks[taskId].tButtonMode);
             break;
-        case MENUITEM_FRAMETYPE:
-            previousOption = gTasks[taskId].tWindowFrameType;
-            gTasks[taskId].tWindowFrameType = FrameType_ProcessInput(gTasks[taskId].tWindowFrameType);
-
-            if (previousOption != gTasks[taskId].tWindowFrameType)
-                FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
-            break;
+        case MENUITEM_APPEARANCE:
+            return;
         default:
             return;
         }
@@ -408,15 +467,138 @@ static void Task_OptionMenuProcessInput(u8 taskId)
     }
 }
 
-static void ReturnFromAudioMenu(u8 taskId)
+static void ReturnToOptionMenu(u8 taskId, u8 selection)
 {
     DrawHeaderText(gText_Option);
     DrawOptionMenuTexts();
     DrawOuterOptionChoices(taskId);
-    HighlightOptionMenuItem(MENUITEM_AUDIO);
-    gTasks[taskId].tMenuSelection = MENUITEM_AUDIO;
+    PutWindowTilemap(WIN_OPTIONS);
+    HighlightOptionMenuItem(selection);
+    gTasks[taskId].tMenuSelection = selection;
     gTasks[taskId].func = Task_OptionMenuProcessInput;
     CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
+}
+
+static void DestroyAppearanceBagPreview(void)
+{
+    if (sAppearanceMenu.bagSpriteId < MAX_SPRITES)
+        DestroySpriteAndFreeResources(&gSprites[sAppearanceMenu.bagSpriteId]);
+    else
+    {
+        // Loading can succeed even when no sprite slot remains.
+        FreeSpriteTilesByTag(gBagMaleSpriteSheet.tag);
+        FreeSpritePaletteByTag(gBagPaletteTable.tag);
+    }
+    sAppearanceMenu.bagSpriteId = MAX_SPRITES;
+}
+
+static void UpdateAppearanceBagPreview(void)
+{
+    struct Sprite *sprite;
+
+    DestroyAppearanceBagPreview();
+    LoadCompressedSpriteSheet(sAppearanceMenu.bagStyle == PLAYER_BAG_BACKPACK ? &gBagMaleSpriteSheet : &gBagFemaleSpriteSheet);
+    LoadCompressedSpritePalette(&gBagPaletteTable);
+    if (GetSpriteTileStartByTag(gBagMaleSpriteSheet.tag) == 0xFFFF
+        || IndexOfSpritePaletteTag(gBagPaletteTable.tag) == 0xFF)
+    {
+        DestroyAppearanceBagPreview();
+        return;
+    }
+
+    sAppearanceMenu.bagSpriteId = CreateIndependentBagVisualSprite(0);
+    if (sAppearanceMenu.bagSpriteId >= MAX_SPRITES)
+    {
+        DestroyAppearanceBagPreview();
+        return;
+    }
+
+    sprite = &gSprites[sAppearanceMenu.bagSpriteId];
+    sprite->x = 184;
+    sprite->y = 128;
+    sprite->oam.priority = 0;
+    sprite->affineAnims = sBagPreviewAffineAnims;
+    StartSpriteAffineAnim(sprite, 0);
+}
+
+static void DrawAppearanceMenu(u8 taskId)
+{
+    FillWindowPixelBuffer(WIN_OPTIONS, PIXEL_FILL(1));
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextBagStyle, 8, 1, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextInterfaceColor, 8, 17, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, gText_Frame, 8, 33, TEXT_SKIP_DRAW, NULL);
+    AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, sTextBack, 8, 49, TEXT_SKIP_DRAW, NULL);
+    DrawOptionValue(sAppearanceMenu.bagStyle == PLAYER_BAG_BACKPACK ? sTextBackpack : sTextSatchel,
+                   0, sAppearanceMenu.selection == APPEARANCE_BAG_STYLE);
+    DrawOptionValue(sAppearanceMenu.uiTheme == PLAYER_THEME_BLUE ? sTextBlue : sTextPink,
+                   16, sAppearanceMenu.selection == APPEARANCE_UI_THEME);
+    FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
+    CopyWindowToVram(WIN_OPTIONS, COPYWIN_FULL);
+
+    LoadCompressedPalette(sAppearanceMenu.uiTheme == PLAYER_THEME_BLUE ? gBagScreenMale_Pal : gBagScreenFemale_Pal,
+                          BG_PLTT_ID(13), PLTT_SIZE_4BPP);
+    FillWindowPixelBuffer(WIN_APPEARANCE_PREVIEW, PIXEL_FILL(7));
+    FillWindowPixelRect(WIN_APPEARANCE_PREVIEW, 8, 0, 0, 192, 2);
+    FillWindowPixelRect(WIN_APPEARANCE_PREVIEW, 8, 0, 30, 192, 2);
+    FillWindowPixelRect(WIN_APPEARANCE_PREVIEW, 8, 0, 0, 2, 32);
+    FillWindowPixelRect(WIN_APPEARANCE_PREVIEW, 8, 190, 0, 2, 32);
+    AddTextPrinterParameterized3(WIN_APPEARANCE_PREVIEW, FONT_NORMAL, 8, 9,
+                                sPreviewTextColors, TEXT_SKIP_DRAW, sTextPreview);
+    PutWindowTilemap(WIN_APPEARANCE_PREVIEW);
+    CopyWindowToVram(WIN_APPEARANCE_PREVIEW, COPYWIN_FULL);
+}
+
+static void Task_AppearanceMenuProcessInput(u8 taskId)
+{
+    bool8 redraw = FALSE;
+
+    if (JOY_NEW(B_BUTTON)
+        || (JOY_NEW(A_BUTTON) && sAppearanceMenu.selection == APPEARANCE_BACK))
+    {
+        DestroyAppearanceBagPreview();
+        ClearWindowTilemap(WIN_APPEARANCE_PREVIEW);
+        ReturnToOptionMenu(taskId, MENUITEM_APPEARANCE);
+        return;
+    }
+    else if (JOY_NEW(DPAD_UP))
+    {
+        if (sAppearanceMenu.selection == 0)
+            sAppearanceMenu.selection = APPEARANCE_BACK;
+        else
+            sAppearanceMenu.selection--;
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_DOWN))
+    {
+        sAppearanceMenu.selection = (sAppearanceMenu.selection + 1) % APPEARANCE_COUNT;
+        redraw = TRUE;
+    }
+    else if (JOY_NEW(DPAD_LEFT | DPAD_RIGHT))
+    {
+        switch (sAppearanceMenu.selection)
+        {
+        case APPEARANCE_BAG_STYLE:
+            sAppearanceMenu.bagStyle ^= 1;
+            UpdateAppearanceBagPreview();
+            redraw = TRUE;
+            break;
+        case APPEARANCE_UI_THEME:
+            sAppearanceMenu.uiTheme ^= 1;
+            redraw = TRUE;
+            break;
+        case APPEARANCE_FRAME:
+            gTasks[taskId].tWindowFrameType = FrameType_ProcessInput(gTasks[taskId].tWindowFrameType);
+            sArrowPressed = FALSE;
+            redraw = TRUE;
+            break;
+        }
+    }
+
+    if (redraw)
+    {
+        DrawAppearanceMenu(taskId);
+        HighlightOptionMenuItem(sAppearanceMenu.selection);
+    }
 }
 
 static void Task_AudioMenuProcessInput(u8 taskId)
@@ -453,11 +635,11 @@ static void Task_AudioMenuProcessInput(u8 taskId)
             redraw = TRUE;
         }
         else if (gTasks[taskId].tAudioMenuSelection == AUDIOMENU_BACK)
-            ReturnFromAudioMenu(taskId);
+            ReturnToOptionMenu(taskId, MENUITEM_AUDIO);
     }
     else if (JOY_NEW(B_BUTTON))
     {
-        ReturnFromAudioMenu(taskId);
+        ReturnToOptionMenu(taskId, MENUITEM_AUDIO);
     }
     else if (JOY_NEW(DPAD_UP))
     {
@@ -589,6 +771,9 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsSound = gTasks[taskId].tAudioSound;
     gSaveBlock2Ptr->optionsButtonMode = gTasks[taskId].tButtonMode;
     gSaveBlock2Ptr->optionsWindowFrameType = gTasks[taskId].tWindowFrameType;
+
+    SetPlayerBagStyle(sAppearanceMenu.bagStyle);
+    SetPlayerUiTheme(sAppearanceMenu.uiTheme);
 
     AudioSettings_SetMusicPool(gTasks[taskId].tAudioPool);
     AudioSettings_SetTrainerTrack(gTasks[taskId].tAudioTrack);
@@ -743,15 +928,15 @@ static const u8 *GetAudioPoolText(u8 pool)
     return sTextPoolKanto;
 }
 
-static void DrawAudioValue(const u8 *text, u8 y, bool8 selected)
+static void DrawOptionValue(const u8 *text, u8 y, bool8 selected)
 {
-    DrawAudioOptionChoice(text, GetStringRightAlignXOffset(FONT_NORMAL, text, 198), y, selected);
+    DrawOptionColoredChoice(text, GetStringRightAlignXOffset(FONT_NORMAL, text, 198), y, selected);
 }
 
-static void DrawAudioOptionChoice(const u8 *text, u8 x, u8 y, bool8 selected)
+static void DrawOptionColoredChoice(const u8 *text, u8 x, u8 y, bool8 selected)
 {
     AddTextPrinterParameterized3(WIN_OPTIONS, FONT_NORMAL, x, y + 1,
-                                 selected ? sAudioSelectedTextColors : sAudioTextColors,
+                                 selected ? sOptionSelectedTextColors : sOptionTextColors,
                                  TEXT_SKIP_DRAW, text);
 }
 
@@ -771,13 +956,13 @@ static void DrawAudioMenuChoices(u8 taskId)
 
     DrawAudioMenuTexts();
     style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_SOUND;
-    DrawAudioValue(gTasks[taskId].tAudioSound ? gText_SoundStereo : gText_SoundMono, 0, style);
+    DrawOptionValue(gTasks[taskId].tAudioSound ? gText_SoundStereo : gText_SoundMono, 0, style);
     style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_TRAINER_MUSIC;
-    DrawAudioValue(GetAudioModeText(gTasks[taskId].tAudioMusicMode, gTasks[taskId].tAudioTrack), 16, style);
+    DrawOptionValue(GetAudioModeText(gTasks[taskId].tAudioMusicMode, gTasks[taskId].tAudioTrack), 16, style);
     style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_POOL;
-    DrawAudioValue(GetAudioPoolText(gTasks[taskId].tAudioPool), 32, style);
+    DrawOptionValue(GetAudioPoolText(gTasks[taskId].tAudioPool), 32, style);
     style = gTasks[taskId].tAudioMenuSelection == AUDIOMENU_LOW_HP_BEEP;
-    DrawAudioValue(gTasks[taskId].tAudioBeep ? sTextOn : sTextOff, 48, style);
+    DrawOptionValue(gTasks[taskId].tAudioBeep ? sTextOn : sTextOff, 48, style);
 }
 
 static void DrawOuterOptionChoices(u8 taskId)
@@ -787,7 +972,7 @@ static void DrawOuterOptionChoices(u8 taskId)
     BattleStyle_DrawChoices(gTasks[taskId].tBattleStyle);
     DrawOptionMenuChoice(sTextPressA, GetStringRightAlignXOffset(FONT_NORMAL, sTextPressA, 198), YPOS_AUDIO, 0);
     ButtonMode_DrawChoices(gTasks[taskId].tButtonMode);
-    FrameType_DrawChoices(gTasks[taskId].tWindowFrameType);
+    DrawOptionMenuChoice(sTextPressA, GetStringRightAlignXOffset(FONT_NORMAL, sTextPressA, 198), YPOS_APPEARANCE, 0);
 }
 
 static void DrawTrainerMusicPicker(u8 taskId)
@@ -811,7 +996,7 @@ static void DrawTrainerMusicPicker(u8 taskId)
             text = AudioSettings_GetTrackName(AudioSettings_GetPoolTrack(gTasks[taskId].tPickerPool, index - 2));
         AddTextPrinterParameterized(WIN_OPTIONS, FONT_NORMAL, text, 8, i * 16 + 1, TEXT_SKIP_DRAW, NULL);
         if (index == gTasks[taskId].tPickerSelection)
-            DrawAudioOptionChoice(text, 8, i * 16, TRUE);
+            DrawOptionColoredChoice(text, 8, i * 16, TRUE);
     }
 }
 

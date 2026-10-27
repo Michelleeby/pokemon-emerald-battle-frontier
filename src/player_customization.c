@@ -11,9 +11,6 @@
 #define PLAYER_THEME_SAVE_TAG 0xB200
 #define PLAYER_THEME_LINK_TAG 0xB0
 
-EWRAM_DATA u8 gNewGameBagStyle = PLAYER_BAG_BACKPACK;
-EWRAM_DATA u8 gNewGameUiTheme = PLAYER_THEME_BLUE;
-
 void PlayerCustomization_Init(u8 bagStyle, u8 uiTheme)
 {
     VarSet(VAR_PLAYER_BAG_STYLE, PLAYER_BAG_SAVE_TAG | (bagStyle < PLAYER_BAG_COUNT ? bagStyle : PLAYER_BAG_BACKPACK));
@@ -49,6 +46,18 @@ u8 GetPlayerUiTheme(void)
 {
     NormalizePlayerCustomization();
     return VarGet(VAR_PLAYER_UI_THEME) - PLAYER_THEME_SAVE_TAG;
+}
+
+void SetPlayerBagStyle(u8 bagStyle)
+{
+    NormalizePlayerCustomization();
+    VarSet(VAR_PLAYER_BAG_STYLE, PLAYER_BAG_SAVE_TAG | (bagStyle < PLAYER_BAG_COUNT ? bagStyle : PLAYER_BAG_BACKPACK));
+}
+
+void SetPlayerUiTheme(u8 uiTheme)
+{
+    NormalizePlayerCustomization();
+    VarSet(VAR_PLAYER_UI_THEME, PLAYER_THEME_SAVE_TAG | (uiTheme < PLAYER_THEME_COUNT ? uiTheme : PLAYER_THEME_BLUE));
 }
 
 u8 EncodePlayerUiTheme(u8 uiTheme)

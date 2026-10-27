@@ -235,6 +235,25 @@ static void TestIndependentPlayerCustomization(void)
     TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
     TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
 
+    // Options setters change one preference without changing the other or
+    // the selected avatar. Out-of-range inputs use the corresponding default.
+    PlayerCustomization_Init(PLAYER_BAG_SATCHEL, PLAYER_THEME_PINK);
+    SetPlayerBagStyle(PLAYER_BAG_BACKPACK);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+    SetPlayerUiTheme(PLAYER_THEME_BLUE);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+    SetPlayerBagStyle(PLAYER_BAG_SATCHEL);
+    SetPlayerUiTheme(0xFF);
+    TEST_ASSERT_EQ(PLAYER_BAG_SATCHEL, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_BLUE, GetPlayerUiTheme());
+    SetPlayerUiTheme(PLAYER_THEME_PINK);
+    SetPlayerBagStyle(0xFF);
+    TEST_ASSERT_EQ(PLAYER_BAG_BACKPACK, GetPlayerBagStyle());
+    TEST_ASSERT_EQ(PLAYER_THEME_PINK, GetPlayerUiTheme());
+    TEST_ASSERT_EQ(TRAINER_BACK_PIC_STEVEN, GetPlayerAvatarId());
+
     // Appearance metadata does not repurpose the card's binary gender.
     PlayerCustomization_Init(PLAYER_BAG_SATCHEL, PLAYER_THEME_PINK);
     // The generic zeroed fixture has no EOS; real player names are terminated.
